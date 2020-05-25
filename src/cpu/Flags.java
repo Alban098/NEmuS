@@ -2,18 +2,18 @@ package cpu;
 
 public enum Flags {
 
-    C((short)(1)),
-    Z((short)(1 << 1)),
-    I((short)(1 << 2)),
-    D((short)(1 << 3)),
-    B((short)(1 << 4)),
-    U((short)(1 << 5)),
-    V((short)(1 << 6)),
-    N((short)(1 << 7));
+    C((int)(1)),
+    Z((int)(1 << 1)),
+    I((int)(1 << 2)),
+    D((int)(1 << 3)),
+    B((int)(1 << 4)),
+    U((int)(1 << 5)),
+    V((int)(1 << 6)),
+    N((int)(1 << 7));
 
-    short value;
+    int value;
 
-    Flags(short value) {
+    Flags(int value) {
         this.value = value;
     }
 }

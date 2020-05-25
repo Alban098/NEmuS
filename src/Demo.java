@@ -1,3 +1,4 @@
+import cartridge.Cartridge;
 import cpu.Bus;
 import cpu.Flags;
 
@@ -5,46 +6,93 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
-public class Demo extends Canvas {
+public class Demo extends JPanel {
 
     private static Bus console;
     private static Map<Integer, String> codeMap;
     private static boolean isKeyPressed = false;
+    private static boolean emulationRunning = true;
+    private static Thread emulation;
 
-    public static void main(String[] args) {
+    private static int ramPage = 0xFF;
+
+    public static void main(String[] args) throws IOException {
         console = new Bus();
+        Cartridge cart = new Cartridge("nestest.nes");
+        console.insertCartridge(cart);
 
-        console.loadStringByte("A2 0A 8E 00 00 A2 03 8E 01 00 AC 00 00 A9 00 18 6D 01 00 88 D0 FA 8D 02 00 EA EA EA", 0x8000);
-        console.getRam()[0xFFFC] = 0x00;
-        console.getRam()[0xFFFD] = 0x80;
         codeMap = console.getCpu().disassemble(0x0000, 0xFFFF);
         console.getCpu().reset();
 
         JFrame frame = new JFrame("NES");
-        Canvas screen = new Demo();
-        screen.setSize(1400, 800);
+        JPanel screen = new Demo();
+        screen.setDoubleBuffered(true);
+        screen.setSize(1920, 1080);
         frame.add(screen);
-        frame.pack();
+        frame.setSize(1920, 1080);
         frame.setVisible(true);
+        screen.requestFocus();
+
+        emulation = new Thread(() -> {
+            long time = 0;
+            while (true) {
+                if (emulationRunning) {
+                    time = System.currentTimeMillis();
+                    do {
+                        console.clock();
+                    } while (!console.getPpu().frameComplete);
+                    console.getPpu().frameComplete = false;
+                    SwingUtilities.invokeLater(screen::repaint);
+                    time = System.currentTimeMillis() - time;
+                    try {
+                        System.out.println(time);
+                        Thread.sleep(Math.max(1000/60 - time, 0));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    try {
+                        Thread.sleep(1000/60);
+                    } catch (InterruptedException e) {
+
+                    }
+                }
+            }
+        });
+        emulation.start();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         screen.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (!isKeyPressed) {
-                    if (e.getKeyCode() == 32)
-                        do {
-                            console.getCpu().clock();
-                        }
-                        while (!console.getCpu().complete());
-                    if (e.getKeyCode() == 82)
+                    if (e.getKeyCode() == KeyEvent.VK_C) {
+                        do { console.clock(); } while (!console.getCpu().complete());
+                        do { console.clock(); } while (console.getCpu().complete());
+                    }
+                    if (e.getKeyCode() == KeyEvent.VK_F) {
+                        do { console.clock(); } while (!console.getPpu().frameComplete);
+                        do { console.clock(); } while (console.getCpu().complete());
+                        console.getPpu().frameComplete = false;
+                    }
+                    if (e.getKeyCode() == KeyEvent. VK_SPACE)
+                        emulationRunning = !emulationRunning;
+                    if (e.getKeyCode() == KeyEvent. VK_R)
                         console.getCpu().reset();
-                    if (e.getKeyCode() == 73)
-                        console.getCpu().irq();
-                    if (e.getKeyCode() == 78)
-                        console.getCpu().nmi();
+                    if (e.getKeyCode() == KeyEvent.VK_LEFT)
+                        ramPage--;
+                    if (e.getKeyCode() == KeyEvent.VK_RIGHT)
+                        ramPage++;
+                    if (e.getKeyCode() == KeyEvent.VK_UP)
+                        ramPage += 0x10;
+                    if (e.getKeyCode() == KeyEvent.VK_DOWN)
+                        ramPage -= 0x10;
+                    if (ramPage < 0x00) ramPage += 0x100;
+                    if (ramPage > 0xFF) ramPage -= 0x100;
                     isKeyPressed = true;
                     screen.repaint();
                 }
@@ -62,11 +110,11 @@ public class Demo extends Canvas {
     public void paint(Graphics g) {
         g.setColor(Color.BLACK);
         g.setFont(new Font("monospaced", Font.BOLD, 18));
-        g.fillRect(0, 0, 1400, 800);
-        drawRam(5, 20, 0x0000, 16, 16, g);
-        drawRam(5, 400, 0x8000, 16, 16, g);
-        drawCpu(800, 20, g);
-        drawCode(800, 170, 26, g);
+        g.fillRect(0, 0, 1920, 1080);
+        drawSprite(30, 30, g);
+        drawRam(1100, 678, ramPage << 8, 16, 16, g);
+        drawCpu(1100, 48, g);
+        drawCode(1100, 178, 22, g);
 
     }
 
@@ -78,7 +126,7 @@ public class Demo extends Canvas {
             String sOffset = String.format("$%04X:", nAddr);
             for (int col = 0; col < nColumns; col++)
             {
-                sOffset += " " +  String.format("%02X", console.read(nAddr, true));
+                sOffset += " " +  String.format("%02X", console.cpuRead(nAddr, true));
                 nAddr += 1;
             }
             g.drawString(sOffset, nRamX, nRamY);
@@ -114,36 +162,47 @@ public class Demo extends Canvas {
 
     private static void drawCode(int x, int y, int nLines, Graphics g) {
         String currentLine = codeMap.get(console.getCpu().getPc());
-        Queue<String> before = new LinkedList<>();
-        Queue<String> after = new LinkedList<>();
-        boolean currentLineFound = false;
-        for (Map.Entry<Integer, String> line : codeMap.entrySet()) {
-            if (!currentLineFound) {
-                if (line.getKey() == console.getCpu().getPc())
-                    currentLineFound = true;
-                else
-                    before.offer(line.getValue());
-                if (before.size() > nLines/2)
-                    before.poll();
-            } else {
-                after.offer(line.getValue());
-                if (after.size() > nLines/2)
-                    break;
+        if (currentLine != null) {
+            Queue<String> before = new LinkedList<>();
+            Queue<String> after = new LinkedList<>();
+            boolean currentLineFound = false;
+            for (Map.Entry<Integer, String> line : codeMap.entrySet()) {
+                if (!currentLineFound) {
+                    if (line.getKey() == console.getCpu().getPc())
+                        currentLineFound = true;
+                    else
+                        before.offer(line.getValue());
+                    if (before.size() > nLines / 2)
+                        before.poll();
+                } else {
+                    after.offer(line.getValue());
+                    if (after.size() > nLines / 2)
+                        break;
+                }
+            }
+            int lineY = y;
+            g.setColor(Color.WHITE);
+            for (String line : before) {
+                g.drawString(line, x, lineY);
+                lineY += 19;
+            }
+            g.setColor(Color.CYAN);
+            g.drawString(currentLine, x, lineY);
+            lineY += 19;
+            g.setColor(Color.WHITE);
+            for (String line : after) {
+                g.drawString(line, x, lineY);
+                lineY += 19;
             }
         }
-        int lineY = y;
-        g.setColor(Color.WHITE);
-        for (String line : before) {
-            g.drawString(line, x, lineY);
-            lineY += 19;
-        }
-        g.setColor(Color.CYAN);
-        g.drawString(currentLine, x, lineY);
-        lineY += 19;
-        g.setColor(Color.WHITE);
-        for (String line : after) {
-            g.drawString(line, x, lineY);
-            lineY += 19;
+    }
+
+    private static void drawSprite(int x, int y, Graphics g) {
+        for (int i = 0; i < console.getPpu().getScreen().getWidth(); i++) {
+            for (int j = 0; j < console.getPpu().getScreen().getHeight(); j++) {
+                g.setColor(new Color(console.getPpu().getScreen().getRGB(i, j)));
+                g.fillRect(x + 4 * i, y + 4 * j, 4, 4);
+            }
         }
     }
 }
