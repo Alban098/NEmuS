@@ -1,6 +1,7 @@
 import cartridge.Cartridge;
 import cpu.Bus;
 import cpu.Flags;
+import graphics.Sprite;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,10 +17,11 @@ public class Demo extends JPanel {
     private static Bus console;
     private static Map<Integer, String> codeMap;
     private static boolean isKeyPressed = false;
-    private static boolean emulationRunning = true;
+    private static boolean emulationRunning = false;
     private static Thread emulation;
 
     private static int ramPage = 0xFF;
+    private static int selectedPalette = 0x00;
 
     public static void main(String[] args) throws IOException {
         console = new Bus();
@@ -50,7 +52,6 @@ public class Demo extends JPanel {
                     SwingUtilities.invokeLater(screen::repaint);
                     time = System.currentTimeMillis() - time;
                     try {
-                        System.out.println(time);
                         Thread.sleep(Math.max(1000/60 - time, 0));
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -75,9 +76,11 @@ public class Demo extends JPanel {
                         do { console.clock(); } while (console.getCpu().complete());
                     }
                     if (e.getKeyCode() == KeyEvent.VK_F) {
+                        long time = System.currentTimeMillis();
                         do { console.clock(); } while (!console.getPpu().frameComplete);
                         do { console.clock(); } while (console.getCpu().complete());
                         console.getPpu().frameComplete = false;
+                        System.out.println(System.currentTimeMillis() - time);
                     }
                     if (e.getKeyCode() == KeyEvent. VK_SPACE)
                         emulationRunning = !emulationRunning;
@@ -91,6 +94,8 @@ public class Demo extends JPanel {
                         ramPage += 0x10;
                     if (e.getKeyCode() == KeyEvent.VK_DOWN)
                         ramPage -= 0x10;
+                    if (e.getKeyCode() == KeyEvent.VK_P)
+                        selectedPalette = (selectedPalette + 1) & 0x07;
                     if (ramPage < 0x00) ramPage += 0x100;
                     if (ramPage > 0xFF) ramPage -= 0x100;
                     isKeyPressed = true;
@@ -108,13 +113,24 @@ public class Demo extends JPanel {
 
     @Override
     public void paint(Graphics g) {
-        g.setColor(Color.BLACK);
+        g.setColor(Color.DARK_GRAY);
         g.setFont(new Font("monospaced", Font.BOLD, 18));
         g.fillRect(0, 0, 1920, 1080);
-        drawSprite(30, 30, g);
+        drawSprite(30, 30, console.getPpu().getScreen(), g, 4);
         drawRam(1100, 678, ramPage << 8, 16, 16, g);
         drawCpu(1100, 48, g);
         drawCode(1100, 178, 22, g);
+        drawSprite(1435, 50, console.getPpu().getPatternTable(0, selectedPalette), g, 2);
+        drawSprite(1435, 350, console.getPpu().getPatternTable(0, selectedPalette), g, 2);
+        int swatchSize = 19;
+        g.setColor(Color.RED);
+        g.fillRect(1745, 46 + selectedPalette * swatchSize * 4 - 1, swatchSize * 4 + 10, swatchSize + 10);
+        for (int p = 0; p < 8; p++) {
+            for (int s = 0; s < 4; s++) {
+                g.setColor(console.getPpu().getColorFromPalette(p, s));
+                g.fillRect(1750 + s * swatchSize, 50 + p * swatchSize * 4, swatchSize, swatchSize);
+            }
+        }
 
     }
 
@@ -197,11 +213,11 @@ public class Demo extends JPanel {
         }
     }
 
-    private static void drawSprite(int x, int y, Graphics g) {
-        for (int i = 0; i < console.getPpu().getScreen().getWidth(); i++) {
-            for (int j = 0; j < console.getPpu().getScreen().getHeight(); j++) {
-                g.setColor(new Color(console.getPpu().getScreen().getRGB(i, j)));
-                g.fillRect(x + 4 * i, y + 4 * j, 4, 4);
+    private static void drawSprite(int x, int y, Sprite sprite, Graphics g, int scale) {
+        for (int i = 0; i < sprite.getWidth(); i++) {
+            for (int j = 0; j < sprite.getHeight(); j++) {
+                g.setColor(sprite.getPixel(i, j));
+                g.fillRect(x + scale * i, y + scale * j, scale, scale);
             }
         }
     }

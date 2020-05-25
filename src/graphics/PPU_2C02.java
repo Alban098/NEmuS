@@ -1,10 +1,12 @@
 package graphics;
 
 import cartridge.Cartridge;
+import graphics.registers.ControlRegister;
+import graphics.registers.MaskRegister;
+import graphics.registers.StatusRegister;
 import utils.IntegerWrapper;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 
 public class PPU_2C02 {
 
@@ -12,29 +14,42 @@ public class PPU_2C02 {
     public static final int SCREEN_HEIGHT = 240;
 
     private Color[] palScreen;
-    private BufferedImage screen;
-    private BufferedImage[] nameTable;
-    private BufferedImage[] patternTable;
+    private Sprite screen;
+    private Sprite[] nameTable;
+    private Sprite[] patternTable;
 
     public boolean frameComplete;
 
     private Cartridge cartridge;
     int[][] tblName;
     int[] tblPalette;
+    int[][] tblPattern;
+
+    private MaskRegister maskRegister;
+    private ControlRegister controlRegister;
+    private StatusRegister statusRegister;
+
+    private int address_latch = 0x00;
+    private int ppu_data_buffer = 0x00;
+    private int ppu_address = 0x0000;
 
     private int scanline;
     private int cycle;
 
     public PPU_2C02() {
         tblName = new int[2][1024];
+        tblPattern = new int[2][4096];
         tblPalette = new int[32];
         palScreen = new Color[0x40];
-        screen = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_3BYTE_BGR);
-        nameTable = new BufferedImage[]{new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_3BYTE_BGR), new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_3BYTE_BGR)};
-        patternTable = new BufferedImage[]{new BufferedImage(128, 128, BufferedImage.TYPE_3BYTE_BGR), new BufferedImage(128, 128, BufferedImage.TYPE_3BYTE_BGR)};
+        screen = new Sprite(SCREEN_WIDTH, SCREEN_HEIGHT);
+        nameTable = new Sprite[]{new Sprite(SCREEN_WIDTH, SCREEN_HEIGHT), new Sprite(SCREEN_WIDTH, SCREEN_HEIGHT)};
+        patternTable = new Sprite[]{new Sprite(128, 128), new Sprite(128, 128)};
         frameComplete = false;
         scanline = 0;
         cycle = 0;
+        maskRegister = new MaskRegister();
+        controlRegister = new ControlRegister();
+        statusRegister = new StatusRegister();
 
         palScreen[0x00] = new Color(84, 84, 84);
         palScreen[0x01] = new Color(0, 30, 116);
@@ -115,6 +130,10 @@ public class PPU_2C02 {
             case 0x0001: // Mask
                 break;
             case 0x0002: // Status
+                statusRegister.setVertical_blank(true);
+                data = statusRegister.get() & 0xE0 | (ppu_data_buffer & 0x1F);
+                statusRegister.setVertical_blank(false);
+                address_latch = 0;
                 break;
             case 0x0003: // OAM Address
                 break;
@@ -125,6 +144,10 @@ public class PPU_2C02 {
             case 0x0006: // PPU Address
                 break;
             case 0x0007: // PPU Data
+                data = ppu_data_buffer;
+                ppu_data_buffer = ppuRead(ppu_address);
+                if (ppu_address > 0x3F00) data = ppu_data_buffer;
+                ppu_address += controlRegister.isIncrement_mode() ? 32 : 1;
                 break;
         }
         return data;
@@ -133,8 +156,10 @@ public class PPU_2C02 {
     public void cpuWrite(int addr, int data) {
         switch(addr) {
             case 0x0000: // Control
+                controlRegister.set(data);
                 break;
             case 0x0001: // Mask
+                maskRegister.set(data);
                 break;
             case 0x0002: // Status
                 break;
@@ -145,29 +170,60 @@ public class PPU_2C02 {
             case 0x0005: // Scroll
                 break;
             case 0x0006: // PPU Address
+                if (address_latch == 0) {
+                    ppu_address = (ppu_address & 0x00FF) | ((data & 0x3F) << 8);
+                    address_latch = 1;
+                } else {
+                    ppu_address = (ppu_address & 0xFF00) | data;
+                    address_latch = 0;
+                }
                 break;
             case 0x0007: // PPU Data
+                ppuWrite(ppu_address, data);
+                ppu_address += controlRegister.isIncrement_mode() ? 32 : 1;
                 break;
         }
     }
 
     public int ppuRead(int addr) {
-        return cpuRead(addr, false);
+        return ppuRead(addr, false);
     }
 
     public int ppuRead(int addr, boolean readOnly) {
-        addr &= 0x03FF;
+        addr &= 0x3FFF;
         IntegerWrapper data = new IntegerWrapper();
         if (cartridge.ppuRead(addr, data)) {
 
+        } else if (addr >= 0x0000 && addr <= 0x1FFF) {
+            data.value = tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF];
+        } else if (addr >= 0x2000 && addr <= 0x3EFF) {
+
+        } else if (addr >= 0x3F00 && addr <= 0x3FFF) {
+            addr &= 0x001F;
+            if (addr == 0x0010) addr = 0x0000;
+            if (addr == 0x0014) addr = 0x0004;
+            if (addr == 0x0018) addr = 0x0008;
+            if (addr == 0x001C) addr = 0x000C;
+            data.value = tblPalette[addr];
         }
-        return 0;
+        return data.value;
     }
 
     public void ppuWrite(int addr, int data) {
-        addr &= 0x03FF;
+        addr &= 0x3FFF;
         if (cartridge.ppuWrite(addr, data)) {
 
+        } else if (addr >= 0x0000 && addr <= 0x1FFF) {
+            tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = data;
+        } else if (addr >= 0x2000 && addr <= 0x3EFF) {
+
+        } else if (addr >= 0x3F00 && addr <= 0x3FFF) {
+            addr &= 0x001F;
+            if (addr == 0x0010) addr = 0x0000;
+            if (addr == 0x0014) addr = 0x0004;
+            if (addr == 0x0018) addr = 0x0008;
+            if (addr == 0x001C) addr = 0x000C;
+            tblPalette[addr] = data;
         }
     }
 
@@ -176,9 +232,7 @@ public class PPU_2C02 {
     }
 
     public void clock() {
-        if (cycle > 0 && cycle < SCREEN_WIDTH && scanline >= 0 && scanline < SCREEN_HEIGHT) {
-            screen.setRGB(cycle - 1, scanline, palScreen[(int) (Math.random() * palScreen.length)].getRGB());
-        }
+        screen.setPixel(cycle - 1, scanline, palScreen[(int) (Math.random() * palScreen.length)]);
         cycle++;
         if (cycle >= 341) {
             cycle = 0;
@@ -190,16 +244,35 @@ public class PPU_2C02 {
         }
     }
 
-    public BufferedImage getScreen() {
+    public Sprite getScreen() {
         return screen;
     }
 
-    public BufferedImage getNameTable(int i) {
+    public Sprite getNameTable(int i) {
         return nameTable[i % 2];
     }
 
-    public BufferedImage getPatternTable(int i) {
-        return patternTable[i % 2];
+    public Sprite getPatternTable(int i, int paletteId) {
+        for (int tileY = 0; tileY < 16; tileY++) {
+            for (int tileX = 0; tileX < 16; tileX++) {
+                int offset = tileY * 256 + tileX * 16;
+                for (int row = 0; row < 8; row++) {
+                    int tile_lsb = ppuRead(i * 0x1000 + offset + row);
+                    int tile_msb = ppuRead(i * 0x1000 + offset + row + 8);
+                    for (int col = 0; col < 8; col++) {
+                        int pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
+                        tile_lsb >>= 1;
+                        tile_msb >>= 1;
+                        patternTable[i].setPixel(tileX * 8 + (7 - col), tileY * 8 + row, getColorFromPalette(paletteId, pixel));
+                    }
+                }
+            }
+        }
+        return patternTable[i];
+    }
+
+    public Color getColorFromPalette(int paletteId, int pixel) {
+        return palScreen[ppuRead(0x3F00 + (paletteId << 2) + pixel)];
     }
 
 }
