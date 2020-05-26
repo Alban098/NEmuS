@@ -25,11 +25,13 @@ public class Demo extends JPanel {
 
     public static void main(String[] args) throws IOException {
         console = new Bus();
-        Cartridge cart = new Cartridge("nestest.nes");
+        Cartridge cart = new Cartridge("smb.nes");
+        System.out.println(1);
         console.insertCartridge(cart);
-
+        System.out.println(2);
         codeMap = console.getCpu().disassemble(0x0000, 0xFFFF);
         console.getCpu().reset();
+        System.out.println(3);
 
         JFrame frame = new JFrame("NES");
         JPanel screen = new Demo();
@@ -75,12 +77,23 @@ public class Demo extends JPanel {
                         do { console.clock(); } while (!console.getCpu().complete());
                         do { console.clock(); } while (console.getCpu().complete());
                     }
+                    if (e.getKeyCode() == KeyEvent.VK_V) {
+                        for (int i = 0; i < 10; i++) {
+                            do { console.clock(); } while (!console.getCpu().complete());
+                            do { console.clock(); } while (console.getCpu().complete());
+                        }
+                    }
+                    if (e.getKeyCode() == KeyEvent.VK_B) {
+                        for (int i = 0; i < 50; i++) {
+                            do { console.clock(); } while (!console.getCpu().complete());
+                            do { console.clock(); } while (console.getCpu().complete());
+                        }
+                    }
                     if (e.getKeyCode() == KeyEvent.VK_F) {
                         long time = System.currentTimeMillis();
                         do { console.clock(); } while (!console.getPpu().frameComplete);
                         do { console.clock(); } while (console.getCpu().complete());
                         console.getPpu().frameComplete = false;
-                        System.out.println(System.currentTimeMillis() - time);
                     }
                     if (e.getKeyCode() == KeyEvent. VK_SPACE)
                         emulationRunning = !emulationRunning;
@@ -121,7 +134,7 @@ public class Demo extends JPanel {
         drawCpu(1100, 48, g);
         drawCode(1100, 178, 22, g);
         drawSprite(1435, 50, console.getPpu().getPatternTable(0, selectedPalette), g, 2);
-        drawSprite(1435, 350, console.getPpu().getPatternTable(0, selectedPalette), g, 2);
+        drawSprite(1435, 350, console.getPpu().getPatternTable(1, selectedPalette), g, 2);
         int swatchSize = 19;
         g.setColor(Color.RED);
         g.fillRect(1745, 46 + selectedPalette * swatchSize * 4 - 1, swatchSize * 4 + 10, swatchSize + 10);

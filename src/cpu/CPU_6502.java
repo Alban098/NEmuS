@@ -298,7 +298,7 @@ public class CPU_6502 {
             line_addr = addr;
             String line = String.format("$%04X: ", addr);
             int opcode = bus.cpuRead(addr, true);
-            addr++;
+            addr = (addr+1) & 0x1FFFF;
             Instruction instr = opcodes.get(opcode);
             line += instr.name + " ";
             switch (instr.addr_mode) {
@@ -307,65 +307,65 @@ public class CPU_6502 {
                     break;
                 case "IMM":
                     value = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     line += String.format("#$%02X {IMM}", value);
                     break;
                 case "ZP0":
                     low = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     line += String.format("$%02X {ZP0}", low);
                     break;
                 case "ZPX":
                     low = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     line += String.format("$%02X, X {ZPX}", low);
                     break;
                 case "ZPY":
                     low = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     line += String.format("$%02X, Y {ZPY}", low);
                     break;
                 case "IZX":
                     low = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     line += String.format("($%02X, X) {IZX}", low);
                     break;
                 case "IZY":
                     low = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     line +=  String.format("($%02X), Y {IZY}", low);
                     break;
                 case "ABS":
                     low = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     high = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     line += String.format("$%04X {ABS}", (high << 8) | low);
                     break;
                 case "ABX":
                     low = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     high = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     line += String.format("$%04X, X {ABX}", (high << 8) | low);
                     break;
                 case "ABY":
                     low = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     high = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     line += String.format("$%04X, Y {ABY}", (high << 8) | low);
                     break;
                 case "IND":
                     low = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     high = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     line += String.format("($%04X) {IND}", (high << 8) | low);
                     break;
                 case "REL":
                     value = bus.cpuRead(addr, true);
-                    addr++;
+                    addr = (addr+1) & 0x1FFFF;
                     line += String.format("$%02X ", value) + String.format("[$%04X] {IND}", addr + (byte)(value));
             }
             code.put(line_addr, line);
@@ -398,38 +398,38 @@ public class CPU_6502 {
 
     // ================================= Addressing Modes =================================
     private int imp() {
-        fetched = a;
+        fetched = a & 0x00FF;
         return 0;
     }
 
     private int zp0() {
         addr_abs = read(pc);
         addr_abs &= 0x00FF;
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         return 0;
     }
 
     private int zpy() {
-        addr_abs = read(pc) + y;
+        addr_abs = read(pc) + (y & 0x00FF);
         addr_abs &= 0x00FF;
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         return 0;
     }
 
     private int abs() {
         int low = read(pc);
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         int high = read(pc);
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         addr_abs =  (high << 8) | low;
         return 0;
     }
 
     private int aby() {
         int low = read(pc);
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         int high = read(pc);
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         addr_abs = (high << 8 | low) + y;
         if ((addr_abs & 0xFF00) != (high << 8))
             return 1;
@@ -438,7 +438,7 @@ public class CPU_6502 {
 
     private int izx() {
         int ptr = read(pc);
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         int low = read((ptr + x) & 0x00FF);
         int high = read((ptr + x + 1) & 0x00FF);
         addr_abs =  (high << 8) | low;
@@ -447,20 +447,20 @@ public class CPU_6502 {
 
     private int imm() {
         addr_abs = pc;
-        pc++;
+        pc =(pc+1) & 0xFFFF;
         return 0;
     }
 
     private int zpx() {
-        addr_abs =  (read(pc) + x);
+        addr_abs =  (read(pc) + (x & 0x00FF));
         addr_abs &= 0x00FF;
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         return 0;
     }
 
     private int rel() {
         addr_rel = read(pc);
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         if ((addr_rel & 0x80) != 0x0000)
             addr_rel |= 0xFFFFFF00;
         return 0;
@@ -468,10 +468,10 @@ public class CPU_6502 {
 
     private int abx() {
         int low = read(pc);
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         int high = read(pc);
-        pc++;
-        addr_abs =  ((high << 8) | low) + x;
+        pc = (pc+1) & 0xFFFF;
+        addr_abs =  ((high << 8) | low) + (x & 0x00FF);
         if ((addr_abs & 0xFF00) != (high << 8))
             return 1;
         return 0;
@@ -479,9 +479,9 @@ public class CPU_6502 {
 
     private int ind() {
         int low = read(pc);
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         int high = read(pc);
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         int ptr =  (high << 8) | low;
 
         if (low == 0xFF)
@@ -493,10 +493,10 @@ public class CPU_6502 {
 
     private int izy() {
         int ptr = read(pc);
-        pc++;
-        int low = read(ptr & 0x00FF);
-        int high = read((ptr  + 1) & 0x00FF);
-        addr_abs = (high << 8) | low + y;
+        pc = (pc+1) & 0xFFFF;
+        int low = read(ptr & 0x00FF) & 0x00FF;
+        int high = read((ptr  + 1) & 0x00FF) & 0x00FF;
+        addr_abs = (high << 8) | low + (y & 0x00FF);
         if ((addr_abs & 0xFF00) != (high << 8))
             return 1;
         return 0;
@@ -507,7 +507,7 @@ public class CPU_6502 {
     // ====================================== Opcodes ======================================
     private int adc() {
         fetch();
-        tmp =  (a + fetched + (getFlag(Flags.C) ? 0x1 : 0x0));
+        tmp =  (a + fetched + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF;
         setFlag(Flags.C, tmp > 0x00FF);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -518,7 +518,7 @@ public class CPU_6502 {
 
     private int and() {
         fetch();
-        a =  (a & fetched);
+        a =  (a & fetched) & 0x00FF;
         setFlag(Flags.Z, a == 0x00);
         setFlag(Flags.N, (a & 0x80) != 0x00);
         return 1;
@@ -526,7 +526,7 @@ public class CPU_6502 {
 
     private int asl() {
         fetch();
-        tmp =  (fetched << 1);
+        tmp =  (fetched << 1) & 0x01FF;
         setFlag(Flags.C, (tmp & 0xFF00) > 0);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -543,7 +543,7 @@ public class CPU_6502 {
             addr_abs = pc + addr_rel;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            pc = addr_abs & 0xFFFF;
         }
         return 0;
     }
@@ -554,7 +554,7 @@ public class CPU_6502 {
             addr_abs = pc + addr_rel;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            pc = addr_abs & 0xFFFF;
         }
         return 0;
     }
@@ -565,14 +565,14 @@ public class CPU_6502 {
             addr_abs = pc + addr_rel;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            pc = addr_abs & 0xFFFF;
         }
         return 0;
     }
 
     private int bit() {
         fetch();
-        tmp =  (a & fetched);
+        tmp =  (a & fetched) & 0x00FF;
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (fetched & (1 << 7)) == (1 << 7));
         setFlag(Flags.V, (fetched & (1 << 6)) == (1 << 6));
@@ -585,7 +585,7 @@ public class CPU_6502 {
             addr_abs = pc + addr_rel;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            pc = addr_abs & 0xFFFF;
         }
         return 0;
     }
@@ -596,7 +596,7 @@ public class CPU_6502 {
             addr_abs = pc + addr_rel;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            pc = addr_abs & 0xFFFF;
         }
         return 0;
     }
@@ -607,23 +607,23 @@ public class CPU_6502 {
             addr_abs = pc + addr_rel;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            pc = addr_abs & 0xFFFF;
         }
         return 0;
     }
 
     private int brk() {
-        pc++;
+        pc = (pc+1) & 0xFFFF;
         setFlag(Flags.I, true);
         write(0x0100 + stkp,  ((pc >> 8) & 0x00FF));
-        stkp--;
+        stkp = (stkp-1) & 0x00FF;
         write(0x0100 + stkp,  (pc & 0x00FF));
-        stkp--;
+        stkp = (stkp-1) & 0x00FF;
         setFlag(Flags.B, true);
         write(0x0100 + stkp, status);
-        stkp--;
+        stkp = (stkp-1) & 0x00FF;
         setFlag(Flags.B, false);
-        pc = read(0xFFFE) | (read(0xFFFF) << 8);
+        pc = read(0xFFFE) | (read(0xFFFF)<< 8);
         return 0;
     }
 
@@ -633,7 +633,7 @@ public class CPU_6502 {
             addr_abs = pc + addr_rel;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            pc = addr_abs & 0xFFFF;
         }
         return 0;
     }
@@ -644,7 +644,7 @@ public class CPU_6502 {
             addr_abs = pc + addr_rel;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            pc = addr_abs & 0xFFFF;
         }
         return 0;
     }
@@ -671,7 +671,7 @@ public class CPU_6502 {
 
     private int cmp() {
         fetch();
-        tmp =  (a - fetched);
+        tmp =  (a - fetched) & 0x00FF;
         setFlag(Flags.C, a >= fetched);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -680,7 +680,7 @@ public class CPU_6502 {
 
     private int cpx() {
         fetch();
-        tmp =  (x - fetched);
+        tmp =  (x - fetched) & 0x00FF;
         setFlag(Flags.C, x >= fetched);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -689,7 +689,7 @@ public class CPU_6502 {
 
     private int cpy() {
         fetch();
-        tmp =  (y - fetched);
+        tmp =  (y - fetched) & 0x00FF;
         setFlag(Flags.C, y >= fetched);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -698,7 +698,7 @@ public class CPU_6502 {
 
     private int dec() {
         fetch();
-        tmp =  (fetched - 1);
+        tmp =  (fetched - 1) & 0x00FF;
         write(addr_abs,  (tmp & 0x00FF));
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -706,14 +706,14 @@ public class CPU_6502 {
     }
 
     private int dex() {
-        x--;
+        x = (x-1) & 0x00FF;
         setFlag(Flags.Z, (x & 0x00FF) == 0x0000);
         setFlag(Flags.N, (x & 0x0080) == 0x0080);
         return 0;
     }
 
     private int dey() {
-        y--;
+        y = (y-1) & 0x00FF;
         setFlag(Flags.Z, (y & 0x00FF) == 0x0000);
         setFlag(Flags.N, (y & 0x0080) == 0x0080);
         return 0;
@@ -721,7 +721,7 @@ public class CPU_6502 {
 
     private int eor() {
         fetch();
-        a =  (a ^ fetched);
+        a =  (a ^ fetched) & 0x00FF;
         setFlag(Flags.Z, (a & 0x00FF) == 0x0000);
         setFlag(Flags.N, (a & 0x0080) == 0x0080);
         return 1;
@@ -729,7 +729,7 @@ public class CPU_6502 {
 
     private int inc() {
         fetch();
-        tmp =  (fetched + 1);
+        tmp =  (fetched + 1) & 0x00FF;
         write(addr_abs,  (tmp & 0x00FF));
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -737,37 +737,37 @@ public class CPU_6502 {
     }
 
     private int inx() {
-        x++;
+        x = (x+1) & 0x00FF;
         setFlag(Flags.Z, (x & 0x00FF) == 0x0000);
         setFlag(Flags.N, (x & 0x0080) == 0x0080);
         return 0;
     }
 
     private int iny() {
-        y++;
+        y = (y+1) & 0x00FF;
         setFlag(Flags.Z, (y & 0x00FF) == 0x0000);
         setFlag(Flags.N, (y & 0x0080) == 0x0080);
         return 0;
     }
 
     private int jmp() {
-        pc = addr_abs;
+        pc = addr_abs & 0xFFFF;
         return 0;
     }
 
     private int jsr() {
-        pc--;
+        pc = (pc-1) & 0xFFFF;
         write(0x0100 + stkp,  ((pc >> 8) & 0x00FF));
-        stkp--;
+        stkp = (stkp-1) & 0x00FF;
         write(0x0100 + stkp,  (pc & 0x00FF));
-        stkp--;
-        pc = addr_abs;
+        stkp = (stkp-1) & 0x00FF;
+        pc = addr_abs & 0xFFFF;
         return 0;
     }
 
     private int lda() {
         fetch();
-        a = fetched;
+        a = fetched & 0x00FF;
         setFlag(Flags.Z, (a & 0x00FF) == 0x0000);
         setFlag(Flags.N, (a & 0x0080) == 0x0080);
         return 1;
@@ -775,7 +775,7 @@ public class CPU_6502 {
 
     private int ldx() {
         fetch();
-        x = fetched;
+        x = fetched & 0x00FF;
         setFlag(Flags.Z, (x & 0x00FF) == 0x0000);
         setFlag(Flags.N, (x & 0x0080) == 0x0080);
         return 1;
@@ -783,7 +783,7 @@ public class CPU_6502 {
 
     private int ldy() {
         fetch();
-        y = fetched;
+        y = fetched & 0x00FF;
         setFlag(Flags.Z, (y & 0x00FF) == 0x0000);
         setFlag(Flags.N, (y & 0x0080) == 0x0080);
         return 1;
@@ -817,28 +817,28 @@ public class CPU_6502 {
 
     private int ora() {
         fetch();
-        a =  (a | fetched);
+        a =  (a | fetched) & 0x00FF;
         setFlag(Flags.Z, a == 0x00);
         setFlag(Flags.N, (a & 0x0080) == 0x0080);
         return 1;
     }
 
     private int pha() {
-        write(0x0100 + stkp, a);
-        stkp--;
+        write(0x0100 + (stkp & 0x00FF), a & 0x00FF);
+        stkp = (stkp-1) & 0x00FF;
         return 0;
     }
 
     private int php() {
-        write(0x0100 + stkp,  (status | Flags.U.value | Flags.B.value));
+        write(0x0100 + (stkp & 0x00FF),  ((status | Flags.U.value | Flags.B.value) & 0x00FF));
         setFlag(Flags.B, false);
         setFlag(Flags.U, false);
-        stkp--;
+        stkp = (stkp-1) & 0x00FF;
         return 0;
     }
 
     private int pla() {
-        stkp++;
+        stkp = (stkp+1) & 0x00FF;
         a = read(0x0100 + stkp);
         setFlag(Flags.Z, a == 0x00);
         setFlag(Flags.N, (a & 0x80) != 0x00);
@@ -846,7 +846,7 @@ public class CPU_6502 {
     }
 
     private int plp() {
-        stkp++;
+        stkp = (stkp+1) & 0x00FF;
         status = read(0x0100 + stkp);
         setFlag(Flags.U, true);
         return 0;
@@ -879,23 +879,24 @@ public class CPU_6502 {
     }
 
     private int rti() {
-        stkp++;
+        stkp = (stkp+1) & 0x00FF;
         status = read(0x0100 + stkp);
         status &= ~Flags.B.value;
         status &= ~Flags.U.value;
 
-        stkp++;
+        stkp = (stkp+1) & 0x00FF;
         pc = read(0x0100 + stkp);
-        stkp++;
+        stkp = (stkp+1) & 0x00FF;
         pc |= read(0x0100 + stkp) << 8;
         return 0;
     }
 
     private int rts() {
-        stkp++;
+        stkp = (stkp+1) & 0x00FF;
         pc = read(0x0100 + stkp);
-        stkp++;
+        stkp = (stkp+1) & 0x00FF;
         pc |= read(0x0100 + stkp) << 8;
+        pc++;
         return 0;
     }
 
@@ -903,7 +904,7 @@ public class CPU_6502 {
         fetch();
         int value =  (fetched ^ 0x00FF);
 
-        tmp =  (a + value + (getFlag(Flags.C) ? 0x1 : 0x0));
+        tmp =  (a + value + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF;
         setFlag(Flags.C, tmp > 0x00FF);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -928,55 +929,55 @@ public class CPU_6502 {
     }
 
     private int sta() {
-        write(addr_abs, a);
+        write(addr_abs, a & 0x00FF);
         return 0;
     }
 
     private int stx() {
-        write(addr_abs, x);
+        write(addr_abs, x & 0x00FF);
         return 0;
     }
 
     private int sty() {
-        write(addr_abs, y);
+        write(addr_abs, y & 0x00FF);
         return 0;
     }
 
     private int tax() {
-        x = a;
+        x = a & 0x00FF;
         setFlag(Flags.Z, x == 0x00);
         setFlag(Flags.N, (x & 0x80) != 0x00);
         return 0;
     }
 
     private int tay() {
-        y = a;
+        y = a  & 0x00FF;
         setFlag(Flags.Z, y == 0x00);
         setFlag(Flags.N, (y & 0x80) != 0x00);
         return 0;
     }
 
     private int tsx() {
-        x = stkp;
+        x = stkp & 0x00FF;
         setFlag(Flags.Z, x == 0x00);
         setFlag(Flags.N, (x & 0x80) != 0x00);
         return 0;
     }
 
     private int txa() {
-        a = x;
+        a = x & 0x00FF;
         setFlag(Flags.Z, a == 0x00);
         setFlag(Flags.N, (a & 0x80) != 0x00);
         return 0;
     }
 
     private int txs() {
-        stkp = x;
+        stkp = x & 0x00FF;
         return 0;
     }
 
     private int tya() {
-        a = y;
+        a = y & 0x00FF;
         setFlag(Flags.Z, a == 0x00);
         setFlag(Flags.N, (a & 0x80) != 0x00);
         return 0;
@@ -991,7 +992,7 @@ public class CPU_6502 {
     public void clock() {
         if (cycles == 0) {
             opcode = read(pc);
-            pc++;
+            pc = (pc+1) & 0xFFFF;
 
             Instruction instr = opcodes.get(opcode);
             cycles = instr.cycles;
@@ -1024,15 +1025,15 @@ public class CPU_6502 {
     public void irq() {
         if (!getFlag(Flags.I)) {
             write(0x0100 + stkp,  ((pc >> 8) & 0x00FF));
-            stkp--;
+            stkp = (stkp-1) & 0x00FF;
             write(0x0100 + stkp,  (pc & 0x00FF));
-            stkp--;
+            stkp = (stkp-1) & 0x00FF;
 
             setFlag(Flags.B, false);
             setFlag(Flags.U, true);
             setFlag(Flags.I, true);
             write(0x0100 + stkp, status);
-            stkp--;
+            stkp = (stkp-1) & 0x00FF;
 
             addr_abs = 0xFFFE;
             int low = read(addr_abs);
@@ -1045,15 +1046,15 @@ public class CPU_6502 {
 
     public void nmi() {
         write(0x0100 + stkp,  ((pc >> 8) & 0x00FF));
-        stkp--;
+        stkp = (stkp-1) & 0x00FF;
         write(0x0100 + stkp,  (pc & 0x00FF));
-        stkp--;
+        stkp = (stkp-1) & 0x00FF;
 
         setFlag(Flags.B, false);
         setFlag(Flags.U, true);
         setFlag(Flags.I, true);
         write(0x0100 + stkp, status);
-        stkp--;
+        stkp = (stkp-1) & 0x00FF;
 
         addr_abs = 0xFFFA;
         int low = read(addr_abs);
@@ -1066,7 +1067,7 @@ public class CPU_6502 {
     private int fetch() {
         if (!opcodes.get(opcode).addr_mode.equals("IMP"))
             fetched = read(addr_abs);
-        return fetched;
+        return fetched & 0x00FF;
     }
 
     public boolean complete() {

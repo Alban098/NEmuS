@@ -21,9 +21,9 @@ public class PPU_2C02 {
     public boolean frameComplete;
 
     private Cartridge cartridge;
-    int[][] tblName;
-    int[] tblPalette;
-    int[][] tblPattern;
+    private int[][] tblName;
+    private int[] tblPalette;
+    private int[][] tblPattern;
 
     private MaskRegister maskRegister;
     private ControlRegister controlRegister;
@@ -35,6 +35,7 @@ public class PPU_2C02 {
 
     private int scanline;
     private int cycle;
+    private boolean nmi;
 
     public PPU_2C02() {
         tblName = new int[2][1024];
@@ -130,7 +131,6 @@ public class PPU_2C02 {
             case 0x0001: // Mask
                 break;
             case 0x0002: // Status
-                statusRegister.setVertical_blank(true);
                 data = statusRegister.get() & 0xE0 | (ppu_data_buffer & 0x1F);
                 statusRegister.setVertical_blank(false);
                 address_latch = 0;
@@ -147,13 +147,14 @@ public class PPU_2C02 {
                 data = ppu_data_buffer;
                 ppu_data_buffer = ppuRead(ppu_address);
                 if (ppu_address > 0x3F00) data = ppu_data_buffer;
-                ppu_address += controlRegister.isIncrement_mode() ? 32 : 1;
+                ppu_address++;
                 break;
         }
-        return data;
+        return data & 0x00FF;
     }
 
     public void cpuWrite(int addr, int data) {
+        data &= 0x00FF;
         switch(addr) {
             case 0x0000: // Control
                 controlRegister.set(data);
@@ -180,7 +181,7 @@ public class PPU_2C02 {
                 break;
             case 0x0007: // PPU Data
                 ppuWrite(ppu_address, data);
-                ppu_address += controlRegister.isIncrement_mode() ? 32 : 1;
+                ppu_address++;
                 break;
         }
     }
@@ -206,11 +207,12 @@ public class PPU_2C02 {
             if (addr == 0x001C) addr = 0x000C;
             data.value = tblPalette[addr];
         }
-        return data.value;
+        return data.value & 0x00FF;
     }
 
     public void ppuWrite(int addr, int data) {
         addr &= 0x3FFF;
+        data&= 0x00FF;
         if (cartridge.ppuWrite(addr, data)) {
 
         } else if (addr >= 0x0000 && addr <= 0x1FFF) {
@@ -232,6 +234,16 @@ public class PPU_2C02 {
     }
 
     public void clock() {
+
+        if (scanline == -1 && cycle == 1) {
+            statusRegister.setVertical_blank(false);
+        }
+        if (scanline == 241 && cycle == 1) {
+            statusRegister.setVertical_blank(true);
+            if (controlRegister.isEnable_nmi())
+                nmi = true;
+        }
+
         screen.setPixel(cycle - 1, scanline, palScreen[(int) (Math.random() * palScreen.length)]);
         cycle++;
         if (cycle >= 341) {
@@ -273,6 +285,14 @@ public class PPU_2C02 {
 
     public Color getColorFromPalette(int paletteId, int pixel) {
         return palScreen[ppuRead(0x3F00 + (paletteId << 2) + pixel)];
+    }
+
+    public boolean nmi() {
+        if (nmi) {
+            nmi = false;
+            return true;
+        }
+        return false;
     }
 
 }

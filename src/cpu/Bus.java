@@ -56,7 +56,7 @@ public class Bus {
             data.value = ppu.cpuRead(addr & 0x0007);
         }
 
-        return data.value;
+        return data.value & 0x00FF;
     }
 
     public void insertCartridge(Cartridge cart) {
@@ -73,6 +73,8 @@ public class Bus {
         ppu.clock();
         if (systemTicks % 3 == 0)
             cpu.clock();
+        if (ppu.nmi())
+            cpu.nmi();
         systemTicks++;
     }
 

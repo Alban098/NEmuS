@@ -24,6 +24,8 @@ public class Cartridge {
         FileReader reader = new FileReader(filename);
         Header header = new Header(reader);
         mapperId = ((header.mapper2 >> 4) << 4) | header.mapper1 >> 4;
+        if ((header.mapper1 & 0x04) == 0x04)
+            reader.readBytes(512);
 
         if (fileType == 1) {
             nPRGBanks = header.prg_rom_chunks;
