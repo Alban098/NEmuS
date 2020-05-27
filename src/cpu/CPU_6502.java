@@ -430,7 +430,9 @@ public class CPU_6502 {
         pc = (pc+1) & 0xFFFF;
         int high = read(pc);
         pc = (pc+1) & 0xFFFF;
-        addr_abs = (high << 8 | low) + y;
+        addr_abs = (high << 8 | low) & 0xFFFF;
+        addr_abs += y & 0x00FF;
+        addr_abs &= 0xFFFF;
         if ((addr_abs & 0xFF00) != (high << 8))
             return 1;
         return 0;
@@ -494,9 +496,12 @@ public class CPU_6502 {
     private int izy() {
         int ptr = read(pc);
         pc = (pc+1) & 0xFFFF;
+
         int low = read(ptr & 0x00FF) & 0x00FF;
         int high = read((ptr  + 1) & 0x00FF) & 0x00FF;
-        addr_abs = (high << 8) | low + (y & 0x00FF);
+        addr_abs = ((high << 8) | low ) & 0xFFFF;
+        addr_abs += y & 0x00FF;
+        addr_abs &= 0xFFFF;
         if ((addr_abs & 0xFF00) != (high << 8))
             return 1;
         return 0;
@@ -671,16 +676,16 @@ public class CPU_6502 {
 
     private int cmp() {
         fetch();
-        tmp =  (a - fetched) & 0x00FF;
+        tmp =  (a + (fetched ^ 0x00FF) + 1) & 0x00FF;
         setFlag(Flags.C, a >= fetched);
-        setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
+        setFlag(Flags.Z, (a & 0xFF) == (fetched & 0xFF));
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
         return 1;
     }
 
     private int cpx() {
         fetch();
-        tmp =  (x - fetched) & 0x00FF;
+        tmp =  (x + (fetched ^ 0x00FF) + 1) & 0x00FF;
         setFlag(Flags.C, x >= fetched);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -689,7 +694,7 @@ public class CPU_6502 {
 
     private int cpy() {
         fetch();
-        tmp =  (y - fetched) & 0x00FF;
+        tmp =  (y + (fetched ^ 0x00FF) + 1) & 0x00FF;
         setFlag(Flags.C, y >= fetched);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -855,7 +860,7 @@ public class CPU_6502 {
     private int rol() {
         fetch();
         tmp =  ((getFlag(Flags.C) ? 1 : 0) | fetched << 1);
-        setFlag(Flags.C, (fetched & 0x01) == 0x01);
+        setFlag(Flags.C, (tmp & 0xFF00) != 0x0000);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x00);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
         if (opcodes.get(opcode).addr_mode.equals("IMP"))

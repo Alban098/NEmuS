@@ -43,4 +43,9 @@ public class StatusRegister {
     public void setVertical_blank(boolean vertical_blank) {
         this.vertical_blank = vertical_blank;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%02X", get()) + "[" + Integer.toBinaryString(get()) + "]";
+    }
 }

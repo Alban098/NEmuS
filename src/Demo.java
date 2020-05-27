@@ -17,7 +17,7 @@ public class Demo extends JPanel {
     private static Bus console;
     private static Map<Integer, String> codeMap;
     private static boolean isKeyPressed = false;
-    private static boolean emulationRunning = false;
+    private static boolean emulationRunning = true;
     private static Thread emulation;
 
     private static int ramPage = 0xFF;
@@ -25,7 +25,7 @@ public class Demo extends JPanel {
 
     public static void main(String[] args) throws IOException {
         console = new Bus();
-        Cartridge cart = new Cartridge("smb.nes");
+        Cartridge cart = new Cartridge("dk.nes");
         System.out.println(1);
         console.insertCartridge(cart);
         System.out.println(2);
@@ -98,14 +98,14 @@ public class Demo extends JPanel {
                     if (e.getKeyCode() == KeyEvent. VK_SPACE)
                         emulationRunning = !emulationRunning;
                     if (e.getKeyCode() == KeyEvent. VK_R)
-                        console.getCpu().reset();
+                        console.reset();
                     if (e.getKeyCode() == KeyEvent.VK_LEFT)
                         ramPage--;
                     if (e.getKeyCode() == KeyEvent.VK_RIGHT)
                         ramPage++;
-                    if (e.getKeyCode() == KeyEvent.VK_UP)
+                    if (e.getKeyCode() == KeyEvent.VK_Y)
                         ramPage += 0x10;
-                    if (e.getKeyCode() == KeyEvent.VK_DOWN)
+                    if (e.getKeyCode() == KeyEvent.VK_U)
                         ramPage -= 0x10;
                     if (e.getKeyCode() == KeyEvent.VK_P)
                         selectedPalette = (selectedPalette + 1) & 0x07;
@@ -114,12 +114,28 @@ public class Demo extends JPanel {
                     isKeyPressed = true;
                     screen.repaint();
                 }
+                if (e.getKeyCode() == KeyEvent.VK_DOWN) console.controller[0] |= 0x04;
+                if (e.getKeyCode() == KeyEvent.VK_UP) console.controller[0] |= 0x08;
+                if (e.getKeyCode() == KeyEvent.VK_LEFT) console.controller[0] |= 0x02;
+                if (e.getKeyCode() == KeyEvent.VK_RIGHT) console.controller[0] |= 0x01;
+                if (e.getKeyCode() == KeyEvent.VK_S) console.controller[0] |= 0x10;
+                if (e.getKeyCode() == KeyEvent.VK_A) console.controller[0] |= 0x20;
+                if (e.getKeyCode() == KeyEvent.VK_Z) console.controller[0] |= 0x40;
+                if (e.getKeyCode() == KeyEvent.VK_X) console.controller[0] |= 0x80;
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
                 if (isKeyPressed)
                     isKeyPressed = false;
+                if (e.getKeyCode() == KeyEvent.VK_DOWN) console.controller[0] &= ~0x04;
+                if (e.getKeyCode() == KeyEvent.VK_UP) console.controller[0] &= ~0x08;
+                if (e.getKeyCode() == KeyEvent.VK_LEFT) console.controller[0] &= ~0x02;
+                if (e.getKeyCode() == KeyEvent.VK_RIGHT) console.controller[0] &= ~0x01;
+                if (e.getKeyCode() == KeyEvent.VK_S) console.controller[0] &= ~0x10;
+                if (e.getKeyCode() == KeyEvent.VK_A) console.controller[0] &= ~0x20;
+                if (e.getKeyCode() == KeyEvent.VK_Z) console.controller[0] &= ~0x40;
+                if (e.getKeyCode() == KeyEvent.VK_X) console.controller[0] &= ~0x80;
             }
         });
     }
@@ -127,9 +143,17 @@ public class Demo extends JPanel {
     @Override
     public void paint(Graphics g) {
         g.setColor(Color.DARK_GRAY);
-        g.setFont(new Font("monospaced", Font.BOLD, 18));
+        g.setFont(new Font("monospaced", Font.BOLD, 25));
         g.fillRect(0, 0, 1920, 1080);
         drawSprite(30, 30, console.getPpu().getScreen(), g, 4);
+        /*g.setColor(Color.WHITE);
+        for (int y = 0; y < 30; y++) {
+            for (int x = 0; x < 32; x++) {
+                g.drawString(String.format("%02X", console.getPpu().tblName[0][y * 32 + x]), x*32 + 30, y*32 + 55);
+            }
+        }*/
+        g.setFont(new Font("monospaced", Font.BOLD, 18));
+
         drawRam(1100, 678, ramPage << 8, 16, 16, g);
         drawCpu(1100, 48, g);
         drawCode(1100, 178, 22, g);

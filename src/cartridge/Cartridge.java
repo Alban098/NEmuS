@@ -1,11 +1,10 @@
 package cartridge;
 
+import graphics.Mirror;
 import utils.FileReader;
 import utils.IntegerWrapper;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 public class Cartridge {
 
@@ -14,9 +13,11 @@ public class Cartridge {
 
     private Mapper mapper;
 
-    int mapperId;
-    int nPRGBanks;
-    int nCHRBanks;
+    private int mapperId;
+    private int nPRGBanks;
+    private int nCHRBanks;
+
+    private Mirror mirror;
 
     public Cartridge(String filename) throws IOException {
         int fileType = 1;
@@ -24,6 +25,7 @@ public class Cartridge {
         FileReader reader = new FileReader(filename);
         Header header = new Header(reader);
         mapperId = ((header.mapper2 >> 4) << 4) | header.mapper1 >> 4;
+        mirror = (header.mapper1 & 0x01) == 0x01 ? Mirror.VERTICAL : Mirror.HORIZONTAL;
         if ((header.mapper1 & 0x04) == 0x04)
             reader.readBytes(512);
 
@@ -48,7 +50,7 @@ public class Cartridge {
     public boolean cpuRead(int addr, IntegerWrapper data) {
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.cpuMapRead(addr, mapped)) {
-            data.value = sPRGMemory[mapped.value];
+            data.value = sPRGMemory[mapped.value] & 0x00FF;
             return true;
         }
         return false;
@@ -57,7 +59,7 @@ public class Cartridge {
     public boolean cpuWrite(int addr, int data) {
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.cpuMapWrite(addr, mapped)) {
-             sPRGMemory[mapped.value] = data;
+             sPRGMemory[mapped.value] = data & 0x00FF;
             return true;
         }
         return false;
@@ -66,7 +68,7 @@ public class Cartridge {
     public boolean ppuRead(int addr, IntegerWrapper data) {
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.ppuMapRead(addr, mapped)) {
-            data.value = sCHRMemory[mapped.value];
+            data.value = sCHRMemory[mapped.value] & 0x00FF;
             return true;
         }
         return false;
@@ -75,10 +77,14 @@ public class Cartridge {
     public boolean ppuWrite(int addr, int data) {
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.ppuMapWrite(addr, mapped)) {
-            sCHRMemory[mapped.value] = data;
+            sCHRMemory[mapped.value] = data & 0x00FF;
             return true;
         }
         return false;
+    }
+
+    public Mirror getMirror() {
+        return mirror;
     }
 }
 

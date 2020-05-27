@@ -98,4 +98,9 @@ public class MaskRegister {
     public void setEnhance_blue(boolean enhance_blue) {
         this.enhance_blue = enhance_blue;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%02X", get()) + "[" + Integer.toBinaryString(get()) + "]";
+    }
 }

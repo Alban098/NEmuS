@@ -98,4 +98,9 @@ public class ControlRegister {
     public void setEnable_nmi(boolean enable_nmi) {
         this.enable_nmi = enable_nmi;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%02X", get()) + "[" + Integer.toBinaryString(get()) + "]";
+    }
 }
