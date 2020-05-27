@@ -19,7 +19,7 @@ public class Cartridge {
 
     private Mirror mirror;
 
-    public Cartridge(String filename) throws IOException {
+    public Cartridge(String filename)  {
         int fileType = 1;
 
         FileReader reader = new FileReader(filename);

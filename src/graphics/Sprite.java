@@ -1,30 +1,34 @@
 package graphics;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class Sprite {
 
-    private Color[] pixels;
+    private BufferedImage img;
     private int width;
     private int height;
 
     public Sprite(int width, int height) {
         this.width = width;
         this.height = height;
-        pixels = new Color[width * height];
-        for (int i = 0; i < pixels.length; i++)
-            pixels[i] = Color.BLACK;
+        img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     }
 
     public void setPixel(int x, int y, Color color) {
-        if (x >= 0 && x < width && y >= 0 && y < height)
-            pixels[y*width + x] = color;
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+            img.setRGB(x, y, color.getRGB());
+        }
     }
 
     public Color getPixel(int x, int y) {
         if (x >= 0 && x < width && y >= 0 && y < height)
-            return pixels[y*width + x];
+            return new Color(img.getRGB(x, y));
         return Color.BLACK;
+    }
+
+    public BufferedImage getImage() {
+        return img;
     }
 
     public int getWidth() {

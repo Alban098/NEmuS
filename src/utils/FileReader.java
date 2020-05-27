@@ -9,8 +9,12 @@ public class FileReader {
     private int currentIndex;
     private byte[] file;
 
-    public FileReader(String filename) throws IOException {
-        file = Files.readAllBytes(Paths.get(filename));
+    public FileReader(String filename) {
+        try {
+            file = Files.readAllBytes(Paths.get(filename));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         currentIndex = 0;
     }
 

@@ -3,6 +3,7 @@ package graphics;
 import cartridge.Cartridge;
 import graphics.registers.*;
 import utils.IntegerWrapper;
+import utils.NumberUtils;
 
 import java.awt.*;
 
@@ -27,7 +28,12 @@ public class PPU_2C02 {
     private ControlRegister controlRegister;
     private StatusRegister statusRegister;
     private ScrollRegister scrollRegister;
-    private ObjectAttribute[] oams;
+
+    public ObjectAttribute[] oams;
+    private ObjectAttribute[] visible_oams;
+    private int sprite_count;
+    private int[] sprite_shift_pattern_low;
+    private int[] sprite_shift_pattern_high;
 
     private int address_latch = 0x00;
     private int ppu_data_buffer = 0x00;
@@ -46,6 +52,9 @@ public class PPU_2C02 {
     private int bg_shift_pattern_high = 0x0000;
     private int bg_shift_attrib_low = 0x0000;
     private int bg_shift_attrib_high = 0x0000;
+
+    private boolean spriteZeroHitPossible = false;
+    private boolean spriteZeroBeingRendered = false;
 
     private int scanline;
     private int cycle;
@@ -70,6 +79,11 @@ public class PPU_2C02 {
         oams = new ObjectAttribute[64];
         for (int i = 0; i < oams.length; i++)
             oams[i] = new ObjectAttribute();
+        visible_oams = new ObjectAttribute[8];
+        for (int i = 0; i < visible_oams.length; i++)
+            visible_oams[i] = new ObjectAttribute();
+        sprite_shift_pattern_low = new int[8];
+        sprite_shift_pattern_high = new int[8];
 
         palScreen[0x00] = new Color(84, 84, 84);
         palScreen[0x01] = new Color(0, 30, 116);
@@ -159,7 +173,7 @@ public class PPU_2C02 {
                 case 0x0003: // OAM Address
                     break;
                 case 0x0004: // OAM Data
-                    data = (oams[oam_addr >> 2].get() >> (oam_addr & 0x03)) & 0x00FF;
+                    data = getOamData();
                     break;
                 case 0x0005: // Scroll
                     break;
@@ -183,7 +197,7 @@ public class PPU_2C02 {
             case 0x0003: // OAM Address
                 break;
             case 0x0004: // OAM Data
-                data = (oams[oam_addr >> 2].get() >> (oam_addr & 0x03)) & 0x00FF;
+                data = getOamData();
                 break;
             case 0x0005: // Scroll
                 break;
@@ -198,6 +212,20 @@ public class PPU_2C02 {
                 break;
         }
         return data & 0x00FF;
+    }
+
+    private int getOamData() {
+        switch(oam_addr & 0x03) {
+            case 0x0:
+                return oams[oam_addr >> 2].getY() & 0x00FF;
+            case 0x1:
+                 return oams[oam_addr >> 2].getId() & 0x00FF;
+            case 0x2:
+                return oams[oam_addr >> 2].getAttribute() & 0x00FF;
+            case 0x3:
+                return oams[oam_addr >> 2].getX() & 0x00FF;
+        }
+        return 0x00;
     }
 
     public void cpuWrite(int addr, int data) {
@@ -217,8 +245,16 @@ public class PPU_2C02 {
                 oam_addr = data;
                 break;
             case 0x0004: // OAM Data
-                int oam = oams[oam_addr >> 2].get() & (~(0xFF000000 >> ((oam_addr & 0x03) << 3)));
-                oams[oam_addr >> 2].set(oam | ((data << 24) >> ((oam_addr & 0x03) << 3)));
+                switch(oam_addr & 0x03) {
+                    case 0x0:
+                        oams[oam_addr >> 2].setY(data);
+                    case 0x1:
+                        oams[oam_addr >> 2].setId(data);
+                    case 0x2:
+                        oams[oam_addr >> 2].setAttribute(data);
+                    case 0x3:
+                        oams[oam_addr >> 2].setX(data);
+                }
                 break;
             case 0x0005: // Scroll
                 if (address_latch == 0) {
@@ -258,9 +294,8 @@ public class PPU_2C02 {
     public int ppuRead(int addr, boolean readOnly) {
         addr &= 0x3FFF;
         IntegerWrapper data = new IntegerWrapper();
-        if (cartridge.ppuRead(addr, data)) {
-
-        } else if (addr >= 0x0000 && addr <= 0x1FFF) {
+        if (cartridge.ppuRead(addr, data)) {}
+        else if (addr >= 0x0000 && addr <= 0x1FFF) {
             data.value = tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF];
         } else if (addr >= 0x2000 && addr <= 0x3EFF) {
             addr &= 0x0FFF;
@@ -297,9 +332,8 @@ public class PPU_2C02 {
     public void ppuWrite(int addr, int data) {
         addr &= 0x3FFF;
         data &= 0x00FF;
-        if (cartridge.ppuWrite(addr, data)) {
-
-        } else if (addr >= 0x0000 && addr <= 0x1FFF) {
+        if (cartridge.ppuWrite(addr, data)) {}
+        else if (addr >= 0x0000 && addr <= 0x1FFF) {
             tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = data;
         } else if (addr >= 0x2000 && addr <= 0x3EFF) {
             addr &= 0x0FFF;
@@ -412,6 +446,16 @@ public class PPU_2C02 {
                 bg_shift_attrib_low = (bg_shift_attrib_low << 1) & 0xFFFF;
                 bg_shift_attrib_high = (bg_shift_attrib_high << 1) & 0xFFFF;
             }
+            if (maskRegister.isRender_sprites() && cycle >= 1 && cycle < 258) {
+                for (int i = 0; i < sprite_count; i++) {
+                    if (visible_oams[i].getX() > 0)
+                        visible_oams[i].setX(visible_oams[i].getX() - 1);
+                    else {
+                        sprite_shift_pattern_low[i] = (sprite_shift_pattern_low[i] << 1) & 0x00FF;
+                        sprite_shift_pattern_high[i] = (sprite_shift_pattern_high[i] << 1) & 0x00FF;
+                    }
+                }
+            }
         };
 
         if (scanline >= -1 && scanline < 240) {
@@ -420,6 +464,12 @@ public class PPU_2C02 {
             }
             if (scanline == -1 && cycle == 1) {
                 statusRegister.setVertical_blank(false);
+                statusRegister.setSprite_overflow(false);
+                statusRegister.setSprite_zero_hit(false);
+                for (int i = 0; i < 8; i++) {
+                    sprite_shift_pattern_low[i] = 0x00;
+                    sprite_shift_pattern_high[i] = 0x00;
+                }
             }
             if ((cycle >= 2 && cycle < 258) || (cycle >= 321 && cycle < 338)) {
                 updateShifter.run();
@@ -452,12 +502,79 @@ public class PPU_2C02 {
                 loadBackgroundShifter.run();
                 transferAddressX.run();
             }
+            if (scanline == -1 && cycle >= 280 && cycle < 305) {
+                transferAddressY.run();
+            }
             if (cycle == 338 || cycle == 340)
             {
                 bg_next_tile_id = ppuRead(0x2000 | (vram_addr.get() & 0x0FFF));
             }
-            if (scanline == -1 && cycle >= 280 && cycle < 305) {
-                transferAddressY.run();
+
+            // Foregorund
+            if (cycle == 257 && scanline >= 0) {
+                for (int i = 0; i < visible_oams.length; i++)
+                    visible_oams[i].clear(0xFF);
+                sprite_count = 0;
+
+                int oam_entry = 0;
+                spriteZeroHitPossible = false;
+                while (oam_entry < 64 && sprite_count < 9) {
+                    int diff = scanline - oams[oam_entry].getY();
+                    if (diff >= 0 && diff < (controlRegister.isSprite_size() ? 16 : 8)) {
+                        if (sprite_count < 8) {
+                            if (oam_entry == 0) {
+                                spriteZeroHitPossible = true;
+                            }
+                            visible_oams[sprite_count].set(oams[oam_entry]);
+                            sprite_count++;
+                        }
+                    }
+                    oam_entry++;
+                }
+                statusRegister.setSprite_overflow(sprite_count > 8);
+            }
+            if (cycle == 330) {
+                for (int i = 0; i < sprite_count; i++) {
+                    int sprite_pattern_low, sprite_pattern_high;
+                    int sprite_pattern_addr_low, sprite_pattern_addr_high;
+                    if (!controlRegister.isSprite_size()) {
+                        //8x8
+                        if (!((visible_oams[i].getAttribute() & 0x80) == 0x80)) {
+                            sprite_pattern_addr_low = (controlRegister.isPattern_sprite() ? 0x1 << 12 : 0x0) | ((visible_oams[i].getId() & 0x00FF) << 4) | (scanline - (visible_oams[i].getY() & 0x00FF));
+                        } else {
+                            //flipped vertically
+                            sprite_pattern_addr_low = (controlRegister.isPattern_sprite() ? 0x1 << 12 : 0x0) | ((visible_oams[i].getId() & 0x00FF) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)));
+                        }
+                    } else {
+                        //8x16
+                        if (!((visible_oams[i].getAttribute() & 0x80) == 0x80)) {
+                            if (scanline - (visible_oams[i].getY() & 0x00FF) < 8) {
+                                sprite_pattern_addr_low = ((visible_oams[i].getId() & 0x01) << 12) | ((visible_oams[i].getId() & 0x00FE) << 4) | ((scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07);
+                            } else {
+                                sprite_pattern_addr_low = ((visible_oams[i].getId() & 0x01) << 12) | (((visible_oams[i].getId() & 0x00FE) + 1) << 4) | ((scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07);
+                            }
+                        } else {
+                            //flipped vertically
+                            if (scanline - (visible_oams[i].getY() & 0x00FF) < 8) {
+                                sprite_pattern_addr_low = ((visible_oams[i].getId() & 0x01) << 12) | (((visible_oams[i].getId() & 0x00FE) + 1) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07);
+                            } else {
+                                sprite_pattern_addr_low = ((visible_oams[i].getId() & 0x01) << 12) | ((visible_oams[i].getId() & 0x00FE) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07);
+                            }
+                        }
+                    }
+                    sprite_pattern_addr_high = (sprite_pattern_addr_low + 8) & 0xFFFF;
+                    sprite_pattern_low = ppuRead(sprite_pattern_addr_low);
+                    sprite_pattern_high = ppuRead(sprite_pattern_addr_high);
+
+                    if ((visible_oams[i].getAttribute() & 0x40) == 0x40) {
+                        sprite_pattern_low = NumberUtils.byteFlip(sprite_pattern_low);
+                        sprite_pattern_high = NumberUtils.byteFlip(sprite_pattern_high);
+                    }
+
+                    sprite_shift_pattern_low[i] = sprite_pattern_low;
+                    sprite_shift_pattern_high[i] = sprite_pattern_high;
+
+                }
             }
         }
 
@@ -486,7 +603,63 @@ public class PPU_2C02 {
             bg_palette = ((bg_pal1 << 1) | bg_pal0) & 0x000F;
         }
 
-        screen.setPixel(cycle - 1, scanline, getColorFromPalette(bg_palette, bg_pixel));
+        int fg_pixel = 0x00;
+        int fg_palette = 0x00;
+        boolean fg_priority = false;
+
+        if (maskRegister.isRender_sprites()) {
+            spriteZeroBeingRendered = false;
+            for (int i = 0; i < sprite_count; i++) {
+                if (visible_oams[i].getX() == 0) {
+                    int fg_pixel_low = (sprite_shift_pattern_low[i] & 0x80) == 0x80 ? 0x1 : 0x0;
+                    int fg_pixel_high = (sprite_shift_pattern_high[i] & 0x80) == 0x80 ? 0x1 : 0x0;
+                    fg_pixel = ((fg_pixel_high << 1) | fg_pixel_low) & 0x03;
+                    fg_palette = (visible_oams[i].getAttribute() & 0x03) + 0x04;
+                    fg_priority = (visible_oams[i].getAttribute() & 0x20) == 0;
+
+                    if (fg_pixel != 0) {
+                        if (i == 0)
+                            spriteZeroBeingRendered = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        int pixel = 0x00;
+        int palette = 0x00;
+
+        if (bg_pixel == 0 && fg_pixel == 0) {
+            pixel = 0x00;
+            palette = 0x00;
+        }
+        if (bg_pixel == 0 && fg_pixel > 0) {
+            pixel = fg_pixel;
+            palette = fg_palette;
+        }
+        if (bg_pixel > 0 && fg_pixel == 0) {
+            pixel = bg_pixel;
+            palette = bg_palette;
+        }
+        if (bg_pixel > 0 && fg_pixel > 0) {
+            if (fg_priority) {
+                pixel = fg_pixel;
+                palette = fg_palette;
+            } else {
+                pixel = bg_pixel;
+                palette = bg_palette;
+            }
+            if (spriteZeroBeingRendered && spriteZeroHitPossible)
+                if (maskRegister.isRender_background() && maskRegister.isRender_sprites())
+                    if (!(maskRegister.isRender_background_left() || maskRegister.isRender_sprite_left())) {
+                        if (cycle >= 9 && cycle < 258)
+                            statusRegister.setSprite_zero_hit(true);
+                    } else
+                        if (cycle >= 1 && cycle < 258)
+                            statusRegister.setSprite_zero_hit(true);
+        }
+
+        screen.setPixel(cycle - 1, scanline, getColorFromPalette(palette, pixel));
 
         cycle++;
         if (cycle >= 341) {
@@ -515,7 +688,7 @@ public class PPU_2C02 {
                     int tile_lsb = ppuRead(i * 0x1000 + offset + row) & 0x00FF;
                     int tile_msb = ppuRead(i * 0x1000 + offset + row + 8) & 0x00FF;
                     for (int col = 0; col < 8; col++) {
-                        int pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
+                        int pixel = ((tile_lsb & 0x01) << 1) | (tile_msb & 0x01);
                         tile_lsb >>= 1;
                         tile_msb >>= 1;
                         patternTable[i].setPixel(tileX * 8 + (7 - col), tileY * 8 + row, getColorFromPalette(paletteId, pixel));

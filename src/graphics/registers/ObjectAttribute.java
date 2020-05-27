@@ -7,19 +7,49 @@ public class ObjectAttribute {
     private int attribute = 0x00;
     private int x = 0x00;
 
-    public void set(int val) {
-        x = val & 0x000000FF;
-        attribute = val & (0x0000FF00) >> 8;
-        id = val & (0x00FF0000) >> 16;
-        y = val & (0xFF000000) >> 24;
+    public void clear(int val) {
+        y = val;
+        id = val;
+        attribute = val;
+        x = val;
     }
 
-    public int get() {
-        int val = 0x00000000;
-        val |= x;
-        val |= attribute << 8;
-        val |= id << 16;
-        val |= y << 24;
-        return val;
+    public void set(ObjectAttribute o) {
+        y = o.y;
+        x = o.x;
+        attribute = o.attribute;
+        id = o.id;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getAttribute() {
+        return attribute;
+    }
+
+    public void setAttribute(int attribute) {
+        this.attribute = attribute;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
     }
 }
