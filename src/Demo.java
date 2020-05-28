@@ -2,8 +2,6 @@ import cartridge.Cartridge;
 import cpu.Bus;
 import cpu.Flags;
 import graphics.Sprite;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWKeyCallback;
 
 import javax.swing.*;
 import java.awt.*;
@@ -135,7 +133,7 @@ public class Demo extends JPanel {
 
     @Override
     public void paint(Graphics g) {
-        g.setColor(Color.DARK_GRAY);
+        /*g.setColor(Color.DARK_GRAY);
         g.fillRect(0, 0, 1920, 1080);
         drawSprite(30, 30, console.getPpu().getScreen(), g, 4);
         g.setFont(new Font("monospaced", Font.BOLD, 16));
@@ -146,7 +144,7 @@ public class Demo extends JPanel {
         drawOams(1070, 41, g, 64);
         drawSprite(1550, 30, console.getPpu().getPatternTable(0, selectedPalette), g, 2);
         drawSprite(1550, 310, console.getPpu().getPatternTable(1, selectedPalette), g, 2);
-        drawPalette(1835, 50, g);
+        drawPalette(1835, 50, g);*/
     }
 
     private static void drawPalette(int x, int y, Graphics g) {
@@ -155,7 +153,7 @@ public class Demo extends JPanel {
         g.fillRect(x - 4, 46 + selectedPalette * swatchSize * 3 - 1, swatchSize * 4 + 8, swatchSize + 8);
         for (int p = 0; p < 8; p++) {
             for (int s = 0; s < 4; s++) {
-                g.setColor(console.getPpu().getColorFromPalette(p, s));
+                g.setColor(console.getPpu().threadSafeGetColorFromPalette(p, s));
                 g.fillRect(x + s * swatchSize, y + p * swatchSize * 3, swatchSize, swatchSize);
             }
         }
@@ -169,7 +167,7 @@ public class Demo extends JPanel {
             String sOffset = String.format("$%04X:", nAddr);
             for (int col = 0; col < nColumns; col++)
             {
-                sOffset += " " +  String.format("%02X", console.cpuRead(nAddr, true));
+                sOffset += " " +  String.format("%02X", console.threadSafeCpuRead(nAddr));
                 nAddr += 1;
             }
             g.drawString(sOffset, nRamX, nRamY);
@@ -180,39 +178,39 @@ public class Demo extends JPanel {
     private static void drawCpu(int x, int y, Graphics g)  {
         g.setColor(Color.WHITE);
         g.drawString("STATUS:", x , y );
-        if (console.getCpu().getFlag(Flags.N)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (console.getCpu().threadSafeGetState(Flags.N)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
         g.drawString("N", x  + 64, y);
-        if (console.getCpu().getFlag(Flags.V)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (console.getCpu().threadSafeGetState(Flags.V)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
         g.drawString("V", x  + 80, y);
-        if (console.getCpu().getFlag(Flags.U)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (console.getCpu().threadSafeGetState(Flags.U)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
         g.drawString("-", x  + 96, y);
-        if (console.getCpu().getFlag(Flags.B)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (console.getCpu().threadSafeGetState(Flags.B)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
         g.drawString("B", x  + 112, y);
-        if (console.getCpu().getFlag(Flags.D)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (console.getCpu().threadSafeGetState(Flags.D)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
         g.drawString("D", x  + 128, y);
-        if (console.getCpu().getFlag(Flags.I)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (console.getCpu().threadSafeGetState(Flags.I)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
         g.drawString("I", x  + 144, y);
-        if (console.getCpu().getFlag(Flags.Z)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (console.getCpu().threadSafeGetState(Flags.Z)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
         g.drawString("Z", x  + 160, y);
-        if (console.getCpu().getFlag(Flags.C)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (console.getCpu().threadSafeGetState(Flags.C)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
         g.drawString("C", x  + 178, y);
         g.setColor(Color.WHITE);
-        g.drawString("PC: $" + String.format("%02X", console.getCpu().getPc()), x , y + 15);
-        g.drawString("A: $" + String.format("%02X", console.getCpu().getA()) + "[" + console.getCpu().getA() + "]", x , y + 30);
-        g.drawString("X: $" + String.format("%02X", console.getCpu().getX()) + "[" + console.getCpu().getX() + "]", x , y + 45);
-        g.drawString("Y: $" + String.format("%02X", console.getCpu().getY()) + "[" + console.getCpu().getY() + "]", x , y + 60);
-        g.drawString("Stack P: $" + String.format("%04X", console.getCpu().getStkp()), x , y + 75);
+        g.drawString("PC: $" + String.format("%02X", console.getCpu().threadSafeGetPc()), x , y + 15);
+        g.drawString("A: $" + String.format("%02X", console.getCpu().threadSafeGetA()) + "[" + console.getCpu().threadSafeGetA() + "]", x , y + 30);
+        g.drawString("X: $" + String.format("%02X", console.getCpu().threadSafeGetX()) + "[" + console.getCpu().threadSafeGetX() + "]", x , y + 45);
+        g.drawString("Y: $" + String.format("%02X", console.getCpu().threadSafeGetY()) + "[" + console.getCpu().threadSafeGetY() + "]", x , y + 60);
+        g.drawString("Stack P: $" + String.format("%04X", console.getCpu().threadSafeGetStkp()), x , y + 75);
     }
 
     private static void drawCode(int x, int y, int nLines, Graphics g) {
-        String currentLine = codeMap.get(console.getCpu().getPc());
+        String currentLine = codeMap.get(console.getCpu().threadSafeGetPc());
         if (currentLine != null) {
             Queue<String> before = new LinkedList<>();
             Queue<String> after = new LinkedList<>();
             boolean currentLineFound = false;
             for (Map.Entry<Integer, String> line : codeMap.entrySet()) {
                 if (!currentLineFound) {
-                    if (line.getKey() == console.getCpu().getPc())
+                    if (line.getKey() == console.getCpu().threadSafeGetPc())
                         currentLineFound = true;
                     else
                         before.offer(line.getValue());
@@ -241,19 +239,12 @@ public class Demo extends JPanel {
         }
     }
 
-    private static void drawSprite(int x, int y, Sprite sprite, Graphics g, int scale) {
-        for (int i = 0; i < sprite.getWidth(); i++) {
-            for (int j = 0; j < sprite.getHeight(); j++) {
-                g.setColor(sprite.getPixel(i, j));
-                g.fillRect(x + scale * i, y + scale * j, scale, scale);
-            }
-        }
-    }
-
     private static void drawOams(int x, int y, Graphics g, int nb) {
-        for (int i = 0; i < nb; i++) {
-            String s = String.format("%02X:", i) + " (" + console.getPpu().oams[i].getX() + ", " + console.getPpu().oams[i].getY() + ") ID: " + String.format("%02X", console.getPpu().oams[i].getId()) + " AT: " + String.format("%02X", console.getPpu().oams[i].getAttribute());
-            g.drawString(s, x, y + 15*i);
+        synchronized (console.getPpu()) {
+            for (int i = 0; i < nb; i++) {
+                String s = String.format("%02X:", i) + " (" + console.getPpu().getOams()[i].getX() + ", " + console.getPpu().getOams()[i].getY() + ") ID: " + String.format("%02X", console.getPpu().getOams()[i].getId()) + " AT: " + String.format("%02X", console.getPpu().getOams()[i].getAttribute());
+                g.drawString(s, x, y + 15 * i);
+            }
         }
     }
 }

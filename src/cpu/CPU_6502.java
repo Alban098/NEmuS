@@ -24,6 +24,8 @@ public class CPU_6502 {
     private int addr_abs = 0x0000;
     private int addr_rel = 0x0000;
 
+    private long cpu_clock = 0L;
+
     private List<Instruction> opcodes;
 
     public CPU_6502() {
@@ -386,6 +388,10 @@ public class CPU_6502 {
     }
 
     public boolean getFlag(Flags flag) {
+        return (status & flag.value) == flag.value;
+    }
+
+    public synchronized boolean threadSafeGetState(Flags flag) {
         return (status & flag.value) == flag.value;
     }
 
@@ -995,6 +1001,7 @@ public class CPU_6502 {
     // =====================================================================================
 
     public void clock() {
+        cpu_clock++;
         if (cycles == 0) {
             opcode = read(pc);
             pc = (pc+1) & 0xFFFF;
@@ -1079,28 +1086,32 @@ public class CPU_6502 {
         return cycles == 0;
     }
 
-    public int getA() {
+    public int threadSafeGetA() {
         return a;
     }
 
-    public int getX() {
+    public int threadSafeGetX() {
         return x;
     }
 
-    public int getY() {
+    public int threadSafeGetY() {
         return y;
     }
 
-    public int getStkp() {
+    public int threadSafeGetStkp() {
         return stkp;
     }
 
-    public int getStatus() {
+    public int threadSafeGetStatus() {
         return status;
     }
 
-    public int getPc() {
+    public int threadSafeGetPc() {
         return pc;
+    }
+
+    public long threadSafeGetCpuClock() {
+        return cpu_clock;
     }
 }
 

@@ -2,7 +2,9 @@ package openGL;
 
 import graphics.Sprite;
 import org.lwjgl.BufferUtils;
+import org.w3c.dom.Text;
 
+import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -14,14 +16,18 @@ public class Texture {
     private int height;
     private ByteBuffer buf;
     private int[] pixels;
-    private Sprite sprite;
+    private BufferedImage img;
 
     public Texture(Sprite sprite) {
-        this.sprite = sprite;
-        this.width = sprite.getWidth();
-        this.height = sprite.getHeight();
+        this(sprite.getImage());
+    }
+
+    public Texture(BufferedImage image) {
+        img = image;
+        this.width = image.getWidth();
+        this.height = image.getHeight();
         pixels = new int[width*height];
-        sprite.getImage().getRGB(0, 0, width, height, pixels, 0, width);
+        image.getRGB(0, 0, width, height, pixels, 0, width);
 
         buf = BufferUtils.createByteBuffer(width * height * 4);
         for (int y = 0; y < height; y++) {
@@ -46,7 +52,7 @@ public class Texture {
     }
 
     public void update() {
-        sprite.getImage().getRGB(0, 0, width, height, pixels, 0, width);
+        img.getRGB(0, 0, width, height, pixels, 0, width);
 
         buf = BufferUtils.createByteBuffer(width * height * 4);
         for (int y = 0; y < height; y++) {
@@ -65,5 +71,17 @@ public class Texture {
 
     public void delete() {
         glDeleteTextures(id);
+    }
+
+    public BufferedImage getImg() {
+        return img;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
     }
 }

@@ -61,6 +61,10 @@ public class Bus {
         return cpuRead(addr, false);
     }
 
+    public synchronized int threadSafeCpuRead(int addr) {
+        return cpuRead(addr, true);
+    }
+
     public int cpuRead(int addr, boolean readOnly) {
         IntegerWrapper data = new IntegerWrapper();
         if (cartridge.cpuRead(addr, data)) {}
@@ -99,13 +103,13 @@ public class Bus {
                     else {
                         switch(dma_addr & 0x03) {
                             case 0x0:
-                                ppu.oams[dma_addr >> 2].setY(dma_data);
+                                ppu.getOams()[dma_addr >> 2].setY(dma_data);
                             case 0x1:
-                                ppu.oams[dma_addr >> 2].setId(dma_data);
+                                ppu.getOams()[dma_addr >> 2].setId(dma_data);
                             case 0x2:
-                                ppu.oams[dma_addr >> 2].setAttribute(dma_data);
+                                ppu.getOams()[dma_addr >> 2].setAttribute(dma_data);
                             case 0x3:
-                                ppu.oams[dma_addr >> 2].setX(dma_data);
+                                ppu.getOams()[dma_addr >> 2].setX(dma_data);
                         }
                         dma_addr = (dma_addr + 1) & 0x00FF;
                         if (dma_addr == 0x00) {

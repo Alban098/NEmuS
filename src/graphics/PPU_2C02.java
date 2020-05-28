@@ -20,16 +20,16 @@ public class PPU_2C02 {
     public boolean frameComplete;
 
     private Cartridge cartridge;
-    public int[][] tblName;
-    int[] tblPalette;
-    int[][] tblPattern;
+    private int[][] tblName;
+    private int[] tblPalette;
+    private int[][] tblPattern;
 
     private MaskRegister maskRegister;
     private ControlRegister controlRegister;
     private StatusRegister statusRegister;
     private ScrollRegister scrollRegister;
 
-    public ObjectAttribute[] oams;
+    private ObjectAttribute[] oams;
     private ObjectAttribute[] visible_oams;
     private int sprite_count;
     private int[] sprite_shift_pattern_low;
@@ -151,36 +151,33 @@ public class PPU_2C02 {
         palScreen[0x3F] = new Color(0, 0, 0);
     }
 
-    public int cpuRead(int addr) {
-        return cpuRead(addr, false);
-    }
-
     public int cpuRead(int addr, boolean readOnly) {
         int data = 0x00;
-
         if (readOnly) {
-            switch (addr)
-            {
-                case 0x0000: // Control
-                    data = controlRegister.get();
-                    break;
-                case 0x0001: // Mask
-                    data = maskRegister.get();
-                    break;
-                case 0x0002: // Status
-                    data = statusRegister.get();
-                    break;
-                case 0x0003: // OAM Address
-                    break;
-                case 0x0004: // OAM Data
-                    data = getOamData();
-                    break;
-                case 0x0005: // Scroll
-                    break;
-                case 0x0006: // PPU Address
-                    break;
-                case 0x0007: // PPU Data
-                    break;
+            synchronized (this) {
+                switch (addr) {
+                    case 0x0000: // Control
+                        data = controlRegister.get();
+                        break;
+                    case 0x0001: // Mask
+                        data = maskRegister.get();
+                        break;
+                    case 0x0002: // Status
+                        data = statusRegister.get();
+                        break;
+                    case 0x0003: // OAM Address
+                        break;
+                    case 0x0004: // OAM Data
+                        data = getOamData();
+                        break;
+                    case 0x0005: // Scroll
+                        break;
+                    case 0x0006: // PPU Address
+                        break;
+                    case 0x0007: // PPU Data
+                        break;
+                }
+                return data & 0x00FF;
             }
         }
 
@@ -287,11 +284,7 @@ public class PPU_2C02 {
         }
     }
 
-    public int ppuRead(int addr) {
-        return ppuRead(addr, false);
-    }
-
-    public int ppuRead(int addr, boolean readOnly) {
+    private int ppuRead(int addr) {
         addr &= 0x3FFF;
         IntegerWrapper data = new IntegerWrapper();
         if (cartridge.ppuRead(addr, data)) {}
@@ -324,12 +317,12 @@ public class PPU_2C02 {
             if (addr == 0x0014) addr = 0x0004;
             if (addr == 0x0018) addr = 0x0008;
             if (addr == 0x001C) addr = 0x000C;
-            data.value = tblPalette[addr] ;//& (maskRegister.isGrayscale() ? 0x30 : 0x3F);
+            data.value = tblPalette[addr] & (maskRegister.isGrayscale() ? 0x30 : 0x3F);
         }
         return data.value & 0x00FF;
     }
 
-    public void ppuWrite(int addr, int data) {
+    private void ppuWrite(int addr, int data) {
         addr &= 0x3FFF;
         data &= 0x00FF;
         if (cartridge.ppuWrite(addr, data)) {}
@@ -691,7 +684,7 @@ public class PPU_2C02 {
                         int pixel = ((tile_lsb & 0x01) << 1) | (tile_msb & 0x01);
                         tile_lsb >>= 1;
                         tile_msb >>= 1;
-                        patternTable[i].setPixel(tileX * 8 + (7 - col), tileY * 8 + row, getColorFromPalette(paletteId, pixel));
+                        patternTable[i].setPixel(tileX * 8 + (7 - col), tileY * 8 + row, threadSafeGetColorFromPalette(paletteId, pixel));
                     }
                 }
             }
@@ -699,8 +692,16 @@ public class PPU_2C02 {
         return patternTable[i];
     }
 
-    public Color getColorFromPalette(int paletteId, int pixel) {
+    public synchronized Color threadSafeGetColorFromPalette(int paletteId, int pixel) {
         return palScreen[ppuRead(0x3F00 + ((paletteId << 2) & 0x00FF) + (pixel & 0x00FF))];
+    }
+
+    private Color getColorFromPalette(int paletteId, int pixel) {
+        return palScreen[ppuRead(0x3F00 + ((paletteId << 2) & 0x00FF) + (pixel & 0x00FF))];
+    }
+
+    public ObjectAttribute[] getOams() {
+        return oams;
     }
 
     public boolean nmi() {
