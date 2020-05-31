@@ -58,6 +58,7 @@ public class Bus {
         return ppu;
     }
 
+
     /**
      * Write a value to the CPU Addressable range
      *
@@ -70,10 +71,10 @@ public class Bus {
             //Write to RAM (8Kb addressable, mirror in 4 2Kb chunks)
             if (addr >= 0x0000 && addr <= 0x1FFF) {
                 ram[addr & 0x07FF] = (byte) data;
-                //Write PPU Register (8 values mirrored over the range)
+            //Write PPU Register (8 values mirrored over the range)
             } else if (addr >= 0x2000 && addr <= 0x3FFF)
                 ppu.cpuWrite(addr & 0x0007, data);
-                //Write to DMA Register
+            //Write to DMA Register
             else if (addr == 0x4014) {
                 dma_page = data;
                 dma_addr = 0x00;
@@ -139,6 +140,7 @@ public class Bus {
     public synchronized void reset() {
         cpu.reset();
         ppu.reset();
+        cartridge.reset();
         systemTicks = 0;
     }
 

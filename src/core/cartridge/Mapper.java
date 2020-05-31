@@ -1,5 +1,7 @@
 package core.cartridge;
 
+import core.ppu.Mirror;
+import utils.ByteWrapper;
 import utils.IntegerWrapper;
 
 /**
@@ -29,7 +31,7 @@ abstract class Mapper {
      * @param mapped the Wrapper where to store the Mapped Address
      * @return Whether or not the Address was mapped
      */
-    public abstract boolean cpuMapRead(int addr, IntegerWrapper mapped);
+    public abstract boolean cpuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data);
 
     /**
      * Map an Address the CPU want to write to to a Program Memory Address
@@ -37,9 +39,10 @@ abstract class Mapper {
      *
      * @param addr   the CPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
+     * @param data   the data to write
      * @return Whether or not the Address was mapped
      */
-    public abstract boolean cpuMapWrite(int addr, IntegerWrapper mapped);
+    public abstract boolean cpuMapWrite(int addr, IntegerWrapper mapped, short data);
 
     /**
      * Map an Address the PPU want to read from to a Character Memory Address
@@ -49,7 +52,7 @@ abstract class Mapper {
      * @param mapped the Wrapper where to store the Mapped Address
      * @return Whether or not the Address was mapped
      */
-    public abstract boolean ppuMapRead(int addr, IntegerWrapper mapped);
+    public abstract boolean ppuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data);
 
     /**
      * Map an Address the PPU want to write to to a Character Memory Address
@@ -57,7 +60,19 @@ abstract class Mapper {
      *
      * @param addr   the PPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
+     * @param data   the data to write
      * @return Whether or not the Address was mapped
      */
-    public abstract boolean ppuMapWrite(int addr, IntegerWrapper mapped);
+    public abstract boolean ppuMapWrite(int addr, IntegerWrapper mapped, short data);
+
+    /**
+     * Interrogate the Mapper circuit for the mirroring mode
+     * @return the current mirroring mode
+     */
+    public abstract Mirror mirror();
+
+    /**
+     * Reset the Mapper if it has processing capabilities
+     */
+    public abstract void reset();
 }

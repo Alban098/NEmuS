@@ -4,6 +4,7 @@ import core.cartridge.Cartridge;
 import core.cpu.Flags;
 import core.ppu.PPU_2C02;
 import exceptions.InvalidFileException;
+import exceptions.UnsupportedMapperException;
 import openGL.Texture;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
@@ -97,7 +98,7 @@ public class NEmuS {
             game_name = romSelector.getSelectedFile().getName();
             try {
                 initEmulator(filename);
-            } catch (IOException e) {
+            } catch (IOException | UnsupportedMapperException e) {
                 JOptionPane.showMessageDialog(null, e.getMessage(), "ROM Loading Error", JOptionPane.ERROR_MESSAGE);
                 System.exit(-1);
             }
@@ -119,7 +120,7 @@ public class NEmuS {
                             game_name = romSelector.getSelectedFile().getName();
                             try {
                                 initEmulator(filename);
-                            } catch (IOException e) {
+                            } catch (IOException | UnsupportedMapperException e) {
                                 JOptionPane.showMessageDialog(null, e.getMessage() + "\nGame not loaded", "ROM Loading Error", JOptionPane.ERROR_MESSAGE);
                             }
                         }
@@ -278,7 +279,7 @@ public class NEmuS {
     /**
      * Create an instance of a NES and load the game
      */
-    private void initEmulator(String rom) throws IOException {
+    private void initEmulator(String rom) throws IOException, UnsupportedMapperException {
         Cartridge cart = new Cartridge(rom);
         //Create the Bus
         nes = new Bus();

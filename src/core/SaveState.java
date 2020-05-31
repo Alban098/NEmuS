@@ -17,10 +17,13 @@ import java.nio.file.StandardOpenOption;
  */
 public class SaveState {
 
+    //TODO add Header information and Mapper support
     private byte[] cpu;
     private byte[] ppu;
     private byte[] ram;
     private byte[] vram;
+    private byte[] mapperState;
+    private byte[] mapperVRAM;
 
     /**
      * Create a Savestate from the current Emulator state

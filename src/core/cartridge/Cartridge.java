@@ -1,11 +1,11 @@
 package core.cartridge;
 
 import core.ppu.Mirror;
+import exceptions.UnsupportedMapperException;
 import utils.ByteWrapper;
 import utils.FileReader;
 import utils.IntegerWrapper;
 
-import javax.swing.*;
 import java.io.IOException;
 
 /**
@@ -24,7 +24,7 @@ public class Cartridge {
      *
      * @param filename the path to the ROM
      */
-    public Cartridge(String filename) throws IOException {
+    public Cartridge(String filename) throws IOException, UnsupportedMapperException {
         int fileType = 1;
 
         //Initialize the file reader
@@ -46,17 +46,27 @@ public class Cartridge {
             //Read Character Memory
             int nCHRBanks = header.chr_rom_chunks;
             sCHRMemory = reader.readBytes(nCHRBanks * 8192);
-
+            if (nCHRBanks == 0)
+                sCHRMemory = new byte[8192];
             //Initialize the right Mapper
             switch (mapperId) {
                 case 0:
                     mapper = new Mapper000(nPRGBanks, nCHRBanks);
                     break;
                 case 1:
-                    JOptionPane.showMessageDialog(null, "Mapper " + mapperId + " not implemented yet", "ROM Loading Error", JOptionPane.ERROR_MESSAGE);
+                    mapper = new Mapper001(nPRGBanks, nCHRBanks);
+                    break;
+                case 2:
+                    mapper = new Mapper002(nPRGBanks, nCHRBanks);
+                    break;
+                case 3:
+                    mapper = new Mapper003(nPRGBanks, nCHRBanks);
+                    break;
+                case 66:
+                    mapper = new Mapper066(nPRGBanks, nCHRBanks);
                     break;
                 default:
-                    break;
+                    throw new UnsupportedMapperException("Mapper " + mapperId + " not implemented yet");
             }
         }
     }
@@ -70,7 +80,8 @@ public class Cartridge {
      */
     public boolean cpuRead(int addr, ByteWrapper data) {
         IntegerWrapper mapped = new IntegerWrapper();
-        if (mapper.cpuMapRead(addr, mapped)) {
+        if (mapper.cpuMapRead(addr, mapped, data)) {
+            if (mapped.value == -1) return true;
             data.value = (byte) (sPRGMemory[mapped.value] & 0xFF);
             return true;
         }
@@ -85,9 +96,10 @@ public class Cartridge {
      * @param data the data to write
      * @return was the data for the Cartridge
      */
-    public boolean cpuWrite(int addr, int data) {
+    public boolean cpuWrite(int addr, short data) {
         IntegerWrapper mapped = new IntegerWrapper();
-        if (mapper.cpuMapWrite(addr, mapped)) {
+        if (mapper.cpuMapWrite(addr, mapped, data)) {
+            if (mapped.value == -1) return true;
             sPRGMemory[mapped.value] = (byte) (data & 0xFF);
             return true;
         }
@@ -103,7 +115,7 @@ public class Cartridge {
      */
     public boolean ppuRead(int addr, ByteWrapper data) {
         IntegerWrapper mapped = new IntegerWrapper();
-        if (mapper.ppuMapRead(addr, mapped)) {
+        if (mapper.ppuMapRead(addr, mapped, data)) {
             data.value = (byte) (sCHRMemory[mapped.value] & 0xFF);
             return true;
         }
@@ -118,9 +130,9 @@ public class Cartridge {
      * @param data the data to write
      * @return was the data for the Cartridge
      */
-    public boolean ppuWrite(int addr, int data) {
+    public boolean ppuWrite(int addr, short  data) {
         IntegerWrapper mapped = new IntegerWrapper();
-        if (mapper.ppuMapWrite(addr, mapped)) {
+        if (mapper.ppuMapWrite(addr, mapped, data)) {
             sCHRMemory[mapped.value] = (byte) (data & 0xFF);
             return true;
         }
@@ -133,6 +145,17 @@ public class Cartridge {
      * @return the game's mirroring mode
      */
     public Mirror getMirror() {
-        return mirror;
+        Mirror mirroring_mode = mapper.mirror();
+        if (mirroring_mode == Mirror.HARDWARE)
+            return mirror;
+        return mirroring_mode;
+    }
+
+    /**
+     * Reset the Mapper if it has processing capabilities
+     */
+    public void reset() {
+        if (mapper != null)
+            mapper.reset();
     }
 }
