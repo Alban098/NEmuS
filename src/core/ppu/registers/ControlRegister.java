@@ -16,6 +16,7 @@ public class ControlRegister {
 
     /**
      * Load the Register with an 8bit value
+     *
      * @param val the value to set (only the 8lsb are considered)
      */
     public void set(int val) {
@@ -31,8 +32,10 @@ public class ControlRegister {
 
     /**
      * Return the value of the Register as an 8bit value
+     *
      * @return an int with the 8 lsb set accordingly
      */
+    @SuppressWarnings("DuplicatedCode")
     public int get() {
         int val = 0x00;
         val |= nametable_x ? 0x01 : 0x00;
@@ -48,6 +51,7 @@ public class ControlRegister {
 
     /**
      * Return whether or not the nametable_x bit set
+     *
      * @return is the nametable_x bit set
      */
     public boolean isNametableXSet() {
@@ -56,6 +60,7 @@ public class ControlRegister {
 
     /**
      * Set the nametable_x bit high or low
+     *
      * @param nametable_x is the nametable_x bit high
      */
     public void setNametableX(boolean nametable_x) {
@@ -64,6 +69,7 @@ public class ControlRegister {
 
     /**
      * Return whether or not the nametable_y bit set
+     *
      * @return is the nametable_y bit set
      */
     public boolean isNametableYSet() {
@@ -72,6 +78,7 @@ public class ControlRegister {
 
     /**
      * Set the nametable_y bit high or low
+     *
      * @param nametable_y is the nametable_y bit high
      */
     public void setNametableY(boolean nametable_y) {
@@ -80,6 +87,7 @@ public class ControlRegister {
 
     /**
      * Return whether or not the increment_mode bit set
+     *
      * @return is the increment_mode bit set
      */
     public boolean isIncrementModeSet() {
@@ -88,6 +96,7 @@ public class ControlRegister {
 
     /**
      * Set the increment_mode bit high or low
+     *
      * @param increment_mode is the increment_mode bit high
      */
     public void setIncrementMode(boolean increment_mode) {
@@ -96,6 +105,7 @@ public class ControlRegister {
 
     /**
      * Return whether or not the pattern_sprite bit set
+     *
      * @return is the pattern_sprite bit set
      */
     public boolean isPatternSpriteSet() {
@@ -104,6 +114,7 @@ public class ControlRegister {
 
     /**
      * Set the pattern_sprite bit high or low
+     *
      * @param pattern_sprite is the pattern_sprite bit high
      */
     public void setPatternSprite(boolean pattern_sprite) {
@@ -112,6 +123,7 @@ public class ControlRegister {
 
     /**
      * Return whether or not the pattern_background bit set
+     *
      * @return is the pattern_background bit set
      */
     public boolean isPatternBackgroundSet() {
@@ -120,6 +132,7 @@ public class ControlRegister {
 
     /**
      * Set the pattern_background bit high or low
+     *
      * @param pattern_background is the pattern_background bit high
      */
     public void setPatternBackground(boolean pattern_background) {
@@ -128,6 +141,7 @@ public class ControlRegister {
 
     /**
      * Return whether or not the sprite_size bit set
+     *
      * @return is the sprite_size bit set
      */
     public boolean isSpriteSizeSet() {
@@ -136,6 +150,7 @@ public class ControlRegister {
 
     /**
      * Set the sprite_size bit high or low
+     *
      * @param sprite_size is the sprite_size bit high
      */
     public void setSpriteSize(boolean sprite_size) {
@@ -144,6 +159,7 @@ public class ControlRegister {
 
     /**
      * Return whether or not the slave_mode bit set
+     *
      * @return is the slave_mode bit set
      */
     public boolean isSlaveModeSet() {
@@ -152,6 +168,7 @@ public class ControlRegister {
 
     /**
      * Set the slave_mode bit high or low
+     *
      * @param slave_mode is the slave_mode bit high
      */
     public void setSlaveMode(boolean slave_mode) {
@@ -160,6 +177,7 @@ public class ControlRegister {
 
     /**
      * Return whether or not the enable_nmi bit set
+     *
      * @return is the enable_nmi bit set
      */
     public boolean isEnableNmiSet() {
@@ -168,6 +186,7 @@ public class ControlRegister {
 
     /**
      * Set the enable_nmi bit high or low
+     *
      * @param enable_nmi is the enable_nmi bit high
      */
     public void setEnableNmi(boolean enable_nmi) {

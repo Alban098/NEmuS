@@ -3,7 +3,7 @@ package core.ppu;
 import core.cartridge.Cartridge;
 import core.ppu.registers.*;
 import org.lwjgl.BufferUtils;
-import utils.IntegerWrapper;
+import utils.ByteWrapper;
 import utils.NumberUtils;
 
 import java.awt.*;
@@ -17,61 +17,58 @@ public class PPU_2C02 {
 
     public static final int SCREEN_WIDTH = 256;
     public static final int SCREEN_HEIGHT = 240;
-
-    private Color[] palScreen;
-    private ByteBuffer screen_buffer;
-    private ByteBuffer[] patterntables;
-    private ByteBuffer[] nametables;
-
     public boolean frameComplete;
-
+    private final Color[] palScreen;
+    private final ByteBuffer screen_buffer;
+    private final ByteBuffer[] patterntables;
+    private final ByteBuffer[] nametables;
     private Cartridge cartridge;
-    private int[][] tblName;
-    private int[] tblPalette;
-    private int[][] tblPattern;
+    private final byte[][] tblName;
+    private final byte[] tblPalette;
+    private final byte[][] tblPattern;
 
-    private MaskRegister maskRegister;
-    private ControlRegister controlRegister;
-    private StatusRegister statusRegister;
+    private final MaskRegister maskRegister;
+    private final ControlRegister controlRegister;
+    private final StatusRegister statusRegister;
 
-    private ObjectAttribute[] oams;
-    private ObjectAttribute[] visible_oams;
-    private int sprite_count;
-    private int[] sprite_shift_pattern_low;
-    private int[] sprite_shift_pattern_high;
+    private final ObjectAttribute[] oams;
+    private final ObjectAttribute[] visible_oams;
+    private byte sprite_count;
+    private final short[] sprite_shift_pattern_low;
+    private final short[] sprite_shift_pattern_high;
 
-    private int address_latch = 0x00;
-    private int ppu_data_buffer = 0x00;
-    private int oam_addr = 0x00;
+    private byte address_latch = 0x00;
+    private byte ppu_data_buffer = 0x00;
+    private byte oam_addr = 0x00;
 
-    private LoopyRegister vram_addr;
-    private LoopyRegister tram_addr;
-    private int fine_x = 0x00;
+    private final LoopyRegister vram_addr;
+    private final LoopyRegister tram_addr;
+    private byte fine_x = 0x00;
 
-    private int bg_next_tile_id = 0x00;
-    private int bg_next_tile_attrib = 0x00;
-    private int bg_next_tile_lsb = 0x00;
-    private int bg_next_tile_msb = 0x00;
+    private short bg_next_tile_id = 0x00;
+    private short bg_next_tile_attrib = 0x00;
+    private short bg_next_tile_lsb = 0x00;
+    private short bg_next_tile_msb = 0x00;
 
-    private int bg_shift_pattern_low = 0x0000;
-    private int bg_shift_pattern_high = 0x0000;
-    private int bg_shift_attrib_low = 0x0000;
-    private int bg_shift_attrib_high = 0x0000;
+    private short bg_shift_pattern_low = 0x0000;
+    private short bg_shift_pattern_high = 0x0000;
+    private short bg_shift_attrib_low = 0x0000;
+    private short bg_shift_attrib_high = 0x0000;
 
     private boolean spriteZeroHitPossible = false;
     private boolean spriteZeroBeingRendered = false;
 
-    private int scanline;
-    private int cycle;
+    private short scanline;
+    private short cycle;
     private boolean nmi;
 
     /**
      * Create a new PPU, instantiate its components and fill up the palettes
      */
     public PPU_2C02() {
-        tblName = new int[2][1024];
-        tblPattern = new int[2][4096];
-        tblPalette = new int[32];
+        tblName = new byte[2][1024];
+        tblPattern = new byte[2][4096];
+        tblPalette = new byte[32];
         palScreen = new Color[0x40];
         screen_buffer = BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4);
         patterntables = new ByteBuffer[]{BufferUtils.createByteBuffer(128 * 128 * 4), BufferUtils.createByteBuffer(128 * 128 * 4)};
@@ -90,8 +87,8 @@ public class PPU_2C02 {
         visible_oams = new ObjectAttribute[8];
         for (int i = 0; i < visible_oams.length; i++)
             visible_oams[i] = new ObjectAttribute();
-        sprite_shift_pattern_low = new int[8];
-        sprite_shift_pattern_high = new int[8];
+        sprite_shift_pattern_low = new short[8];
+        sprite_shift_pattern_high = new short[8];
 
         palScreen[0x00] = new Color(84, 84, 84);
         palScreen[0x01] = new Color(0, 30, 116);
@@ -161,6 +158,7 @@ public class PPU_2C02 {
 
     /**
      * Return the screen buffer
+     *
      * @return a ByteBuffer that can be loaded into a texture to be displayed on the screen
      */
     public ByteBuffer getScreenBuffer() {
@@ -169,6 +167,7 @@ public class PPU_2C02 {
 
     /**
      * Connect a Cartridge to the CPU
+     *
      * @param cartridge the Cartridge to connect
      */
     public void connectCartridge(Cartridge cartridge) {
@@ -177,11 +176,12 @@ public class PPU_2C02 {
 
     /**
      * Called when the CPU wants to read from the PPU Memory (Registers)
-     * @param addr the address to read from (8 locations mirrored through the addressable range)
+     *
+     * @param addr     the address to read from (8 locations mirrored through the addressable range)
      * @param readOnly is the access allowed to alter the PPU state
      * @return the read data as an 8bit unsigned value
      */
-    public int cpuRead(int addr, boolean readOnly) {
+    public short cpuRead(int addr, boolean readOnly) {
         int data = 0x00;
         if (readOnly) {
             //If in read only, the data access is Thread safe and don't alter the PPU state used for debug purposes
@@ -208,11 +208,11 @@ public class PPU_2C02 {
                     case 0x0007: // PPU Data
                         break;
                 }
-                return data & 0x00FF;
+                return (short) (data & 0x00FF);
             }
         }
 
-        switch(addr) {
+        switch (addr) {
             case 0x0000: // Control
                 break;
             case 0x0001: // Mask
@@ -238,7 +238,7 @@ public class PPU_2C02 {
                 //Nametable reads are delayed by one cycle
                 //When reading the last fetched data is returned and the next is fetched
                 data = ppu_data_buffer;
-                ppu_data_buffer = ppuRead(vram_addr.get());
+                ppu_data_buffer = (byte) ppuRead(vram_addr.get());
                 //Except palette, here their is no delay
                 if (vram_addr.get() > 0x3F00) data = ppu_data_buffer;
                 int vram = vram_addr.get() & 0xFFFF;
@@ -246,17 +246,18 @@ public class PPU_2C02 {
                 vram_addr.set(vram + (controlRegister.isIncrementModeSet() ? 32 : 1));
                 break;
         }
-        return data & 0x00FF;
+        return (short) (data & 0x00FF);
     }
 
     /**
      * Called when the CPU wants to write to the PPU Memory (Registers)
+     *
      * @param addr the address to write to (8 locations mirrored through the addressable range)
      * @param data the data to write
      */
-    public void cpuWrite(int addr, int data) {
+    public void cpuWrite(int addr, short data) {
         data &= 0x00FF;
-        switch(addr) {
+        switch (addr) {
             case 0x0000: // Control
                 controlRegister.set(data);
                 //When writing to the Control Register, one of the Loopy Register need to be updated (in case the nametable has changed)
@@ -269,10 +270,10 @@ public class PPU_2C02 {
             case 0x0002: // Status
                 break;
             case 0x0003: // OAM Address
-                oam_addr = data;
+                oam_addr = (byte) data;
                 break;
             case 0x0004: // OAM Data
-                switch(oam_addr & 0x03) {
+                switch (oam_addr & 0x03) {
                     case 0x0:
                         oams[oam_addr >> 2].setY(data);
                     case 0x1:
@@ -287,14 +288,14 @@ public class PPU_2C02 {
                 //When writing to the Scroll Register, we first write the X offset
                 if (address_latch == 0) {
                     //The offset is spliced into coarseX and fineX
-                    fine_x = data & 0x07;
-                    tram_addr.setCoarseX(data >> 3);
+                    fine_x = (byte) (data & 0x07);
+                    tram_addr.setCoarseX((byte) (data >> 3));
                     address_latch = 1;
-                //The second write is the Y offset
+                    //The second write is the Y offset
                 } else {
                     //The offset is spliced into coarseY and fineY
-                    tram_addr.setFineY(data & 0x07);
-                    tram_addr.setCoarseY(data >> 3);
+                    tram_addr.setFineY((byte) (data & 0x07));
+                    tram_addr.setCoarseY((byte) (data >> 3));
                     address_latch = 0;
                 }
                 break;
@@ -305,7 +306,7 @@ public class PPU_2C02 {
                 if (address_latch == 0) {
                     tram_addr.set((tram & 0x00FF) | ((data & 0x3F) << 8));
                     address_latch = 1;
-                //The second write is the 8 LSB of the address
+                    //The second write is the 8 LSB of the address
                 } else {
                     tram_addr.set((tram & 0xFF00) | data);
                     //When the address has been fully fetched, it is store into the main Loopy Register
@@ -325,122 +326,126 @@ public class PPU_2C02 {
 
     /**
      * Called when the PPU wants to read from its Memory
+     *
      * @param addr the address to read from
      * @return the read data
      */
-    private int ppuRead(int addr) {
+    private short ppuRead(int addr) {
         addr &= 0x3FFF;
         //A Wrapper used to store the data gathered by the Cartridge
-        IntegerWrapper data = new IntegerWrapper();
+        ByteWrapper data = new ByteWrapper();
         //If the address is mapped by the cartridge, let it handle and return read value
         if (!cartridge.ppuRead(addr, data)) {
             //Read from pattern table
-            if (addr >= 0x0000 && addr <= 0x1FFF) {
+            if (addr <= 0x1FFF) {
                 data.value = tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF];
-            //Read from nametable
-            } else if (addr >= 0x2000 && addr <= 0x3EFF) {
+                //Read from nametable
+            } else if (addr <= 0x3EFF) {
                 addr &= 0x0FFF;
                 if (cartridge.getMirror() == Mirror.VERTICAL) {
-                    if (addr >= 0x0000 && addr <= 0x03FF)
+                    if (addr <= 0x03FF)
                         data.value = tblName[0][addr & 0x03FF];
                     if (addr >= 0x0400 && addr <= 0x07FF)
                         data.value = tblName[1][addr & 0x03FF];
                     if (addr >= 0x0800 && addr <= 0x0BFF)
                         data.value = tblName[0][addr & 0x03FF];
-                    if (addr >= 0x0C00 && addr <= 0x0FFF)
+                    if (addr >= 0x0C00)
                         data.value = tblName[1][addr & 0x03FF];
                 } else if (cartridge.getMirror() == Mirror.HORIZONTAL) {
-                    if (addr >= 0x0000 && addr <= 0x03FF)
+                    if (addr <= 0x03FF)
                         data.value = tblName[0][addr & 0x03FF];
                     if (addr >= 0x0400 && addr <= 0x07FF)
                         data.value = tblName[0][addr & 0x03FF];
                     if (addr >= 0x0800 && addr <= 0x0BFF)
                         data.value = tblName[1][addr & 0x03FF];
-                    if (addr >= 0x0C00 && addr <= 0x0FFF)
+                    if (addr >= 0x0C00)
                         data.value = tblName[1][addr & 0x03FF];
                 }
-            //Read from palette memory
-            } else if (addr >= 0x3F00 && addr <= 0x3FFF) {
+                //Read from palette memory
+            } else {
                 addr &= 0x001F;
                 if (addr == 0x0010) addr = 0x0000;
                 if (addr == 0x0014) addr = 0x0004;
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
-                data.value = tblPalette[addr] & (maskRegister.isGrayscaleSet() ? 0x30 : 0x3F);
+                data.value = (byte) (tblPalette[addr] & (maskRegister.isGrayscaleSet() ? 0x30 : 0x3F));
             }
         }
-        return data.value & 0x00FF;
+        return (short) (data.value & 0x00FF);
     }
 
     /**
      * Called when the PPU wants to write to its Memory
+     *
      * @param addr the address to write to
      * @param data the data to write
      */
-    private void ppuWrite(int addr, int data) {
+    private void ppuWrite(int addr, short data) {
         addr &= 0x3FFF;
         data &= 0x00FF;
         //If the address is mapped by the cartridge, let it handle and return
         if (!cartridge.ppuWrite(addr, data)) {
             //Write to pattern table
-            if (addr >= 0x0000 && addr <= 0x1FFF) {
-                tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = data;
-            //Write to nametable
-            } else if (addr >= 0x2000 && addr <= 0x3EFF) {
+            if (addr <= 0x1FFF) {
+                tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = (byte) (data & 0xFF);
+                //Write to nametable
+            } else if (addr <= 0x3EFF) {
                 addr &= 0x0FFF;
                 if (cartridge.getMirror() == Mirror.VERTICAL) {
-                    if (addr >= 0x0000 && addr <= 0x03FF)
-                        tblName[0][addr & 0x03FF] = data;
+                    if (addr <= 0x03FF)
+                        tblName[0][addr & 0x03FF] = (byte) (data & 0xFF);
                     if (addr >= 0x0400 && addr <= 0x07FF)
-                        tblName[1][addr & 0x03FF] = data;
+                        tblName[1][addr & 0x03FF] = (byte) (data & 0xFF);
                     if (addr >= 0x0800 && addr <= 0x0BFF)
-                        tblName[0][addr & 0x03FF] = data;
-                    if (addr >= 0x0C00 && addr <= 0x0FFF)
-                        tblName[1][addr & 0x03FF] = data;
+                        tblName[0][addr & 0x03FF] = (byte) (data & 0xFF);
+                    if (addr >= 0x0C00)
+                        tblName[1][addr & 0x03FF] = (byte) (data & 0xFF);
                 } else if (cartridge.getMirror() == Mirror.HORIZONTAL) {
-                    if (addr >= 0x0000 && addr <= 0x03FF)
-                        tblName[0][addr & 0x03FF] = data;
+                    if (addr <= 0x03FF)
+                        tblName[0][addr & 0x03FF] = (byte) (data & 0xFF);
                     if (addr >= 0x0400 && addr <= 0x07FF)
-                        tblName[0][addr & 0x03FF] = data;
+                        tblName[0][addr & 0x03FF] = (byte) (data & 0xFF);
                     if (addr >= 0x0800 && addr <= 0x0BFF)
-                        tblName[1][addr & 0x03FF] = data;
-                    if (addr >= 0x0C00 && addr <= 0x0FFF)
-                        tblName[1][addr & 0x03FF] = data;
+                        tblName[1][addr & 0x03FF] = (byte) (data & 0xFF);
+                    if (addr >= 0x0C00)
+                        tblName[1][addr & 0x03FF] = (byte) (data & 0xFF);
                 }
-            //Writting to palette memory
-            } else if (addr >= 0x3F00 && addr <= 0x3FFF) {
+                //Writting to palette memory
+            } else {
                 addr &= 0x001F;
                 if (addr == 0x0010) addr = 0x0000;
                 if (addr == 0x0014) addr = 0x0004;
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
-                tblPalette[addr] = data;
+                tblPalette[addr] = (byte) (data & 0xFF);
             }
         }
     }
 
     /**
      * Return the an 8bit value from the Object Attribute Memory pointed by the current OAM address
+     *
      * @return an 8bit unsigned value pointed by the current OAM address
      */
-    private int getOamData() {
-        switch(oam_addr & 0x03) {
+    private short getOamData() {
+        switch (oam_addr & 0x03) {
             case 0x0:
-                return oams[oam_addr >> 2].getY() & 0x00FF;
+                return (short) (oams[oam_addr >> 2].getY() & 0x00FF);
             case 0x1:
-                return oams[oam_addr >> 2].getId() & 0x00FF;
+                return (short) (oams[oam_addr >> 2].getId() & 0x00FF);
             case 0x2:
-                return oams[oam_addr >> 2].getAttribute() & 0x00FF;
+                return (short) (oams[oam_addr >> 2].getAttribute() & 0x00FF);
             case 0x3:
-                return oams[oam_addr >> 2].getX() & 0x00FF;
+                return (short) (oams[oam_addr >> 2].getX() & 0x00FF);
         }
         return 0x00;
     }
 
     /**
      * Return a palette color given a palette ID and a pixel ID
+     *
      * @param paletteId the palette ID
-     * @param pixel the pixel ID
+     * @param pixel     the pixel ID
      * @return the corresponding Color
      */
     private Color getColorFromPalette(int paletteId, int pixel) {
@@ -449,6 +454,7 @@ public class PPU_2C02 {
 
     /**
      * Return whether or not a Non Maskable Interrupt should be fired to the CPU
+     *
      * @return do we have to fire a NMI
      */
     public boolean nmi() {
@@ -482,6 +488,7 @@ public class PPU_2C02 {
         controlRegister.set(0x00);
         vram_addr.set(0x0000);
         tram_addr.set(0x0000);
+        screen_buffer.clear();
     }
 
     /**
@@ -493,11 +500,11 @@ public class PPU_2C02 {
             if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
                 //If we cross a nametable boundary we invert the nametableX bit to fetch from the other nametable
                 if (vram_addr.getCoarseX() == 31) {
-                    vram_addr.setCoarseX(0);
+                    vram_addr.setCoarseX((byte) 0);
                     vram_addr.setNametableX(!vram_addr.isNametableXSet());
-                //Or we just continue in the same one
+                    //Or we just continue in the same one
                 } else {
-                    vram_addr.setCoarseX((vram_addr.getCoarseX() + 1) & 0x001F);
+                    vram_addr.setCoarseX((byte) ((vram_addr.getCoarseX() + 1) & 0x1F));
                 }
             }
         };
@@ -506,21 +513,21 @@ public class PPU_2C02 {
             if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
                 //If we are still in the same tile row
                 if (vram_addr.getFineY() < 7) {
-                    vram_addr.setFineY((vram_addr.getFineY() + 1) & 0x000F);
-                //If we have passed to the next tile row
+                    vram_addr.setFineY((byte) ((vram_addr.getFineY() + 1) & 0x0F));
+                    //If we have passed to the next tile row
                 } else {
                     //reset the offset inside the row to 0
-                    vram_addr.setFineY(0);
+                    vram_addr.setFineY((byte) 0);
                     //If we are at le last tile row, we skip the OAM and switch to the next nametable
                     if (vram_addr.getCoarseY() == 29) {
-                        vram_addr.setCoarseY(0);
+                        vram_addr.setCoarseY((byte) 0);
                         vram_addr.setNametableY(!vram_addr.isNametableYSet());
-                    //Just in case we've gone behond the nametable
+                        //Just in case we've gone behond the nametable
                     } else if (vram_addr.getCoarseY() == 31) {
-                        vram_addr.setCoarseY(0);
-                    //Or we simply switch to the next tile row
+                        vram_addr.setCoarseY((byte) 0);
+                        //Or we simply switch to the next tile row
                     } else {
-                        vram_addr.setCoarseY((vram_addr.getCoarseY() + 1) & 0x001F);
+                        vram_addr.setCoarseY((byte) ((vram_addr.getCoarseY() + 1) & 0x1F));
                     }
                 }
             }
@@ -528,37 +535,37 @@ public class PPU_2C02 {
         Runnable transferAddressX = () -> {
             if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
                 vram_addr.setNametableX(tram_addr.isNametableXSet());
-                vram_addr.setCoarseX(tram_addr.getCoarseX() & 0x001F);
+                vram_addr.setCoarseX((byte) (tram_addr.getCoarseX() & 0x1F));
             }
         };
         Runnable transferAddressY = () -> {
             if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
                 vram_addr.setNametableY(tram_addr.isNametableYSet());
-                vram_addr.setCoarseY(tram_addr.getCoarseY() & 0x00FF);
-                vram_addr.setFineY(tram_addr.getFineY() & 0x000F);
+                vram_addr.setCoarseY((byte) (tram_addr.getCoarseY() & 0xFF));
+                vram_addr.setFineY((byte) (tram_addr.getFineY() & 0x0F));
             }
         };
         Runnable loadBackgroundShifter = () -> {
-            bg_shift_pattern_low = ((bg_shift_pattern_low & 0xFF00) | bg_next_tile_lsb) & 0xFFFF;
-            bg_shift_pattern_high = ((bg_shift_pattern_high & 0xFF00) | bg_next_tile_msb) & 0xFFFF;
-            bg_shift_attrib_low = ((bg_shift_attrib_low & 0xFF00) | (((bg_next_tile_attrib & 0b01) == 0b01) ? 0xFF : 0x00)) & 0xFFFF;
-            bg_shift_attrib_high = ((bg_shift_attrib_high & 0xFF00) | (((bg_next_tile_attrib & 0b10) == 0b10) ? 0xFF : 0x00)) & 0xFFFF;
+            bg_shift_pattern_low = (short) (((bg_shift_pattern_low & 0xFF00) | bg_next_tile_lsb) & 0xFFFF);
+            bg_shift_pattern_high = (short) (((bg_shift_pattern_high & 0xFF00) | bg_next_tile_msb) & 0xFFFF);
+            bg_shift_attrib_low = (short) (((bg_shift_attrib_low & 0xFF00) | (((bg_next_tile_attrib & 0b01) == 0b01) ? 0xFF : 0x00)) & 0xFFFF);
+            bg_shift_attrib_high = (short) (((bg_shift_attrib_high & 0xFF00) | (((bg_next_tile_attrib & 0b10) == 0b10) ? 0xFF : 0x00)) & 0xFFFF);
         };
         Runnable updateShifter = () -> {
             if (maskRegister.isRenderBackgroundSet()) {
-                bg_shift_pattern_low = (bg_shift_pattern_low << 1) & 0xFFFF;
-                bg_shift_pattern_high = (bg_shift_pattern_high << 1) & 0xFFFF;
-                bg_shift_attrib_low = (bg_shift_attrib_low << 1) & 0xFFFF;
-                bg_shift_attrib_high = (bg_shift_attrib_high << 1) & 0xFFFF;
+                bg_shift_pattern_low = (short) ((bg_shift_pattern_low << 1) & 0xFFFF);
+                bg_shift_pattern_high = (short) ((bg_shift_pattern_high << 1) & 0xFFFF);
+                bg_shift_attrib_low = (short) ((bg_shift_attrib_low << 1) & 0xFFFF);
+                bg_shift_attrib_high = (short) ((bg_shift_attrib_high << 1) & 0xFFFF);
             }
             if (maskRegister.isRenderSpritesSet() && cycle >= 1 && cycle < 258) {
                 for (int i = 0; i < sprite_count; i++) {
                     //for all visible sprites, we decrement the position by one until it is time to render it
                     if (visible_oams[i].getX() > 0)
-                        visible_oams[i].setX(visible_oams[i].getX() - 1);
+                        visible_oams[i].setX((short) (visible_oams[i].getX() - 1));
                     else {
-                        sprite_shift_pattern_low[i] = (sprite_shift_pattern_low[i] << 1) & 0x00FF;
-                        sprite_shift_pattern_high[i] = (sprite_shift_pattern_high[i] << 1) & 0x00FF;
+                        sprite_shift_pattern_low[i] = (byte) ((sprite_shift_pattern_low[i] << 1) & 0x00FF);
+                        sprite_shift_pattern_high[i] = (byte) ((sprite_shift_pattern_high[i] << 1) & 0x00FF);
                     }
                 }
             }
@@ -598,18 +605,20 @@ public class PPU_2C02 {
                         //We then fetch the next tile attribute
                         bg_next_tile_attrib = ppuRead(0x23C0 | (vram_addr.isNametableYSet() ? 0x1 << 11 : 0x0) | (vram_addr.isNametableXSet() ? 0x1 << 10 : 0x0) | ((vram_addr.getCoarseY() >> 2) << 3) | (vram_addr.getCoarseX() >> 2));
                         //We use the Coarses 2 lsb to get select the correct 2 bits of the attribute depending on the position of the tile in the 4*4 grid
-                        if ((vram_addr.getCoarseY() & 0x02) == 0x02) bg_next_tile_attrib = (bg_next_tile_attrib >> 4) & 0x00FF;
-                        if ((vram_addr.getCoarseX() & 0x02) == 0x02) bg_next_tile_attrib = (bg_next_tile_attrib >> 2) & 0x00FF;
+                        if ((vram_addr.getCoarseY() & 0x02) == 0x02)
+                            bg_next_tile_attrib = (short) ((bg_next_tile_attrib >> 4) & 0x00FF);
+                        if ((vram_addr.getCoarseX() & 0x02) == 0x02)
+                            bg_next_tile_attrib = (short) ((bg_next_tile_attrib >> 2) & 0xFF);
                         //We only keep the 2 lsb of the attribute
                         bg_next_tile_attrib &= 0x03;
                         break;
                     case 4:
                         //We use the next tile ID and row index (fineY) to fetch the next 8 pixels lsb
-                        bg_next_tile_lsb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY()) & 0x00FF;
+                        bg_next_tile_lsb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY());
                         break;
                     case 6:
                         //Same but we fetch the msb
-                        bg_next_tile_msb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY() + 8) & 0x00FF;
+                        bg_next_tile_msb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY() + 8);
                         break;
                     case 7:
                         //We pass to next tile rendering
@@ -633,8 +642,7 @@ public class PPU_2C02 {
             //At the end of a scanline, we fetch the sprite that will be visible on the next scanline
             if (cycle == 257 && scanline >= 0) {
                 //We clear all visible Object Attribute
-                for (int i = 0; i < visible_oams.length; i++)
-                    visible_oams[i].clear(0xFF);
+                for (ObjectAttribute visible_oam : visible_oams) visible_oam.clear((byte) 0xFF);
                 //And reset the scripte count
                 sprite_count = 0;
 
@@ -668,45 +676,45 @@ public class PPU_2C02 {
             if (cycle == 330) {
                 //For each sprite
                 for (int i = 0; i < sprite_count; i++) {
-                    int sprite_pattern_low, sprite_pattern_high;
-                    int sprite_pattern_addr_low, sprite_pattern_addr_high;
+                    short sprite_pattern_low, sprite_pattern_high;
+                    short sprite_pattern_addr_low, sprite_pattern_addr_high;
                     //If the sprites are 8x8
                     if (!controlRegister.isSpriteSizeSet()) {
                         //If the sprite normally oriented
                         if (!((visible_oams[i].getAttribute() & 0x80) == 0x80))
-                            sprite_pattern_addr_low = (controlRegister.isPatternSpriteSet() ? 0x1 << 12 : 0x0) | ((visible_oams[i].getId() & 0x00FF) << 4) | (scanline - (visible_oams[i].getY() & 0x00FF));
-                        //If the sprite is flipped vertically
+                            sprite_pattern_addr_low = (short) ((controlRegister.isPatternSpriteSet() ? 0x1 << 12 : 0x0) | ((visible_oams[i].getId() & 0x00FF) << 4) | (scanline - (visible_oams[i].getY() & 0x00FF)));
+                            //If the sprite is flipped vertically
                         else
-                            sprite_pattern_addr_low = (controlRegister.isPatternSpriteSet() ? 0x1 << 12 : 0x0) | ((visible_oams[i].getId() & 0x00FF) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)));
-                    //If the sprites are 8x16
+                            sprite_pattern_addr_low = (short) ((controlRegister.isPatternSpriteSet() ? 0x1 << 12 : 0x0) | ((visible_oams[i].getId() & 0x00FF) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF))));
+                        //If the sprites are 8x16
                     } else {
                         //If the sprite normally oriented
                         if (!((visible_oams[i].getAttribute() & 0x80) == 0x80)) {
                             //Reading top half
                             if (scanline - (visible_oams[i].getY() & 0x00FF) < 8)
-                                sprite_pattern_addr_low = ((visible_oams[i].getId() & 0x01) << 12) | ((visible_oams[i].getId() & 0x00FE) << 4) | ((scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07);
-                            //Reading bottom half
+                                sprite_pattern_addr_low = (short) (((visible_oams[i].getId() & 0x01) << 12) | ((visible_oams[i].getId() & 0x00FE) << 4) | ((scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07));
+                                //Reading bottom half
                             else
-                                sprite_pattern_addr_low = ((visible_oams[i].getId() & 0x01) << 12) | (((visible_oams[i].getId() & 0x00FE) + 1) << 4) | ((scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07);
-                        //If the sprite is flipped vertically
+                                sprite_pattern_addr_low = (short) (((visible_oams[i].getId() & 0x01) << 12) | (((visible_oams[i].getId() & 0x00FE) + 1) << 4) | ((scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07));
+                            //If the sprite is flipped vertically
                         } else {
                             //Reading top half
                             if (scanline - (visible_oams[i].getY() & 0x00FF) < 8)
-                                sprite_pattern_addr_low = ((visible_oams[i].getId() & 0x01) << 12) | (((visible_oams[i].getId() & 0x00FE) + 1) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07);
-                            //Reading bottom half
+                                sprite_pattern_addr_low = (short) (((visible_oams[i].getId() & 0x01) << 12) | (((visible_oams[i].getId() & 0x00FE) + 1) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07));
+                                //Reading bottom half
                             else
-                                sprite_pattern_addr_low = ((visible_oams[i].getId() & 0x01) << 12) | ((visible_oams[i].getId() & 0x00FE) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07);
+                                sprite_pattern_addr_low = (short) (((visible_oams[i].getId() & 0x01) << 12) | ((visible_oams[i].getId() & 0x00FE) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07));
                         }
                     }
                     //We compute the complete address and fetch the the sprite's bitplane
-                    sprite_pattern_addr_high = (sprite_pattern_addr_low + 8) & 0xFFFF;
+                    sprite_pattern_addr_high = (short) ((sprite_pattern_addr_low + 8) & 0xFFFF);
                     sprite_pattern_low = ppuRead(sprite_pattern_addr_low);
                     sprite_pattern_high = ppuRead(sprite_pattern_addr_high);
 
                     //If the sprite is flipped horizontally, the sprite bitplane are flipped
                     if ((visible_oams[i].getAttribute() & 0x40) == 0x40) {
-                        sprite_pattern_low = NumberUtils.byteFlip(sprite_pattern_low);
-                        sprite_pattern_high = NumberUtils.byteFlip(sprite_pattern_high);
+                        sprite_pattern_low = NumberUtils.byteFlip((byte) sprite_pattern_low);
+                        sprite_pattern_high = NumberUtils.byteFlip((byte) sprite_pattern_high);
                     }
 
                     //We load the sprites to the Shift Registers
@@ -789,7 +797,7 @@ public class PPU_2C02 {
             if (fg_priority) {
                 pixel = fg_pixel;
                 palette = fg_palette;
-            //Otherwise the final color is the background one
+                //Otherwise the final color is the background one
             } else {
                 pixel = bg_pixel;
                 palette = bg_palette;
@@ -798,7 +806,7 @@ public class PPU_2C02 {
             if (spriteZeroBeingRendered && spriteZeroHitPossible)
                 //If we are rendering background and sprites
                 if (maskRegister.isRenderBackgroundSet() && maskRegister.isRenderSpritesSet())
-                    //If we are in the valid test space (if we don't render the first columns we don't test for hit in it)
+                    //If we are in the valid test.state space (if we don't render the first columns we don't test.state for hit in it)
                     if (!(maskRegister.isRenderBackgroundLeftSet() || maskRegister.isRenderSpriteLeftSet())) {
                         if (cycle >= 9 && cycle < 258)
                             statusRegister.setSpriteZeroHit(true);
@@ -809,10 +817,10 @@ public class PPU_2C02 {
         //If we are in the visible area we push a pixel into the screen buffer
         if (cycle - 1 >= 0 && cycle - 1 < SCREEN_WIDTH && scanline >= 0 && scanline < SCREEN_HEIGHT) {
             int rgba = getColorFromPalette(palette, pixel).getRGB();
-            screen_buffer.put((byte)((rgba >> 16) & 0xFF));
-            screen_buffer.put((byte)((rgba >> 8) & 0xFF));
-            screen_buffer.put((byte)((rgba) & 0xFF));
-            screen_buffer.put((byte)((rgba >> 24) & 0xFF));
+            screen_buffer.put((byte) ((rgba >> 16) & 0xFF));
+            screen_buffer.put((byte) ((rgba >> 8) & 0xFF));
+            screen_buffer.put((byte) ((rgba) & 0xFF));
+            screen_buffer.put((byte) ((rgba >> 24) & 0xFF));
         }
 
         cycle++;
@@ -834,6 +842,7 @@ public class PPU_2C02 {
 
     /**
      * Return the Object Attribute Memory as an array of ObjectAttribute
+     *
      * @return an array of ObjectAttribute containing all the OAM
      */
     public synchronized ObjectAttribute[] getOams() {
@@ -842,7 +851,8 @@ public class PPU_2C02 {
 
     /**
      * Return a ByteBuffer that can be loaded in a texture to display the pattern table
-     * @param i the pattern table index
+     *
+     * @param i         the pattern table index
      * @param paletteId the paletteId to be used
      * @return a ByteBuffer containing the pixel values of the pattern table already flipped and ready to be fed to OpenGL
      */
@@ -850,23 +860,23 @@ public class PPU_2C02 {
         //Clear the patterntable buffer
         patterntables[i].clear();
         //Create a temporary buffer because the pixels are not calculated in screen order
-        int[] tmp = new int[128*128];
+        int[] tmp = new int[128 * 128];
         //For each row of tiles starting at the top
-        for (int tileY = 0; tileY < 16; tileY++) {
+        for (byte tileY = 0; tileY < 16; tileY++) {
             //For each tile starting at the left
-            for (int tileX = 0; tileX < 16; tileX++) {
+            for (byte tileX = 0; tileX < 16; tileX++) {
                 //We compute the tile offset inside the Pattern Memory
-                int offset = tileY * 256 + tileX * 16;
+                short offset = (short) (tileY * 256 + tileX * 16);
                 //For each row of the tile
-                for (int row = 0; row < 8; row++) {
+                for (byte row = 0; row < 8; row++) {
                     //We get the lsb of the pixels of the row
-                    int tile_lsb = ppuRead(i * 0x1000 + offset + row) & 0x00FF;
+                    short tile_lsb = ppuRead(i * 0x1000 + offset + row);
                     //We get the msb of the pixels of the row
-                    int tile_msb = ppuRead(i * 0x1000 + offset + row + 8) & 0x00FF;
+                    short tile_msb = ppuRead(i * 0x1000 + offset + row + 8);
                     //for each pixel of the row
-                    for (int col = 0; col < 8; col++) {
+                    for (byte col = 0; col < 8; col++) {
                         //We compute the pixel id
-                        int pixel = ((tile_lsb & 0x01) << 1) | (tile_msb & 0x01);
+                        byte pixel = (byte) (((tile_lsb & 0x01) << 1) | (tile_msb & 0x01));
                         //We shift the tile registers to get the next pixel id
                         tile_lsb >>= 1;
                         tile_msb >>= 1;
@@ -877,19 +887,24 @@ public class PPU_2C02 {
             }
         }
         //We populate the pixels buffer in the right order
+        fillBuffer(tmp, i, patterntables);
+        return patterntables[i];
+    }
+
+    private void fillBuffer(int[] tmp, int i, ByteBuffer[] patterntables) {
         for (int rgba : tmp) {
-            patterntables[i].put((byte)((rgba >> 16) & 0xFF));
-            patterntables[i].put((byte)((rgba >> 8) & 0xFF));
-            patterntables[i].put((byte)((rgba) & 0xFF));
-            patterntables[i].put((byte)((rgba >> 24) & 0xFF));
+            patterntables[i].put((byte) ((rgba >> 16) & 0xFF));
+            patterntables[i].put((byte) ((rgba >> 8) & 0xFF));
+            patterntables[i].put((byte) ((rgba) & 0xFF));
+            patterntables[i].put((byte) ((rgba >> 24) & 0xFF));
         }
         //The buffer is then flipped to be read by OpenGL
         patterntables[i].flip();
-        return patterntables[i];
     }
 
     /**
      * Return a ByteBuffer that can be loaded in a texture to display the nametable
+     *
      * @param i the nametable index
      * @return a ByteBuffer containing the pixel values of the nametable already flipped and ready to be fed to OpenGL
      */
@@ -897,69 +912,151 @@ public class PPU_2C02 {
         //Clear the nametable buffer
         nametables[i].clear();
         //Create a temporary buffer because the pixels are not calculated in screen order
-        int[] tmp = new int[256*240];
+        int[] tmp = new int[256 * 240];
         //For each row of tiles starting at the top
-        for (int y = 0; y < 30; y++) {
+        for (byte y = 0; y < 30; y++) {
             //For each tile starting at the left
-            for (int x = 0; x < 32; x++) {
+            for (byte x = 0; x < 32; x++) {
                 //For each column of the tile
-                for (int row = 0; row < 8; row++) {
+                for (byte row = 0; row < 8; row++) {
                     //We read the tile ID by selecting the correct nametable using the mirroring mode
-                    int tile_id = ppuRead(0x2000 | (i == 1 ? 0x1 << (cartridge.getMirror() == Mirror.VERTICAL ? 10 : 11) : 0x0) | y << 5 | x);
+                    short tile_id = ppuRead(0x2000 | (i == 1 ? 0x1 << (cartridge.getMirror() == Mirror.VERTICAL ? 10 : 11) : 0x0) | y << 5 | x);
                     //We read the tile attribute starting at offset 0x03C0 of the selected nametable, the attribute offset is calculated using the tile pos divided by 4
-                    int tile_attrib = ppuRead(0x23C0  | (i == 1 ? 0x1 << (cartridge.getMirror() == Mirror.VERTICAL ? 10 : 11)  : 0x0) | ((y >> 2) << 3) | (x) >> 2);
+                    short tile_attrib = ppuRead(0x23C0 | (i == 1 ? 0x1 << (cartridge.getMirror() == Mirror.VERTICAL ? 10 : 11) : 0x0) | ((y >> 2) << 3) | (x) >> 2);
                     //We select the right attribute depending on the tile pos inside the current 4x4 tile grid
                     if ((y & 0x02) == 0x02)
-                        tile_attrib = (tile_attrib >> 4) & 0x00FF;
+                        tile_attrib = (short) ((tile_attrib >> 4) & 0x00FF);
                     if ((x & 0x02) == 0x02)
-                        tile_attrib = (tile_attrib >> 2) & 0x00FF;
+                        tile_attrib = (short) ((tile_attrib >> 2) & 0x00FF);
                     //We only keep the 2 lsb of the attribute
                     tile_attrib &= 0x03;
                     //We use the tile id and the current row index to get the lsb of the 8 pixel IDs of the row (low bitplane)
-                    int tile_lsb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row) & 0x00FF;
+                    short tile_lsb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row);
                     //We use the tile id and the current row index to get the msb of the 8 pixels of the row (high bitplane)
-                    int tile_msb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row + 8) & 0x00FF;
+                    short tile_msb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row + 8);
                     //We use the attribute to determinate the tile palette
-                    int palette = tile_attrib & 0b11;
-                    int pid;
+                    byte palette = (byte) (tile_attrib & 0b11);
+                    byte pid;
                     //For each pixel of the row
-                    for (int col = 0; col < 8; col++) {
+                    for (byte col = 0; col < 8; col++) {
                         //We get the correct pixel ID by reading the 2 bitplanes
-                        int p0_pixel = (tile_lsb & 0x80) > 0 ? 0x1 : 0x0;
-                        int p1_pixel = (tile_msb & 0x80) > 0 ? 0x1 : 0x0;
-                        int pixel = ((p1_pixel << 1) | p0_pixel) & 0x000F;
+                        byte p0_pixel = (byte) ((tile_lsb & 0x80) > 0 ? 0x1 : 0x0);
+                        byte p1_pixel = (byte) ((tile_msb & 0x80) > 0 ? 0x1 : 0x0);
+                        byte pixel = (byte) (((p1_pixel << 1) | p0_pixel) & 0x000F);
                         pid = palette;
                         //If the pixel ID is 0, then it's transparent so we use pixel 0 of palette 0
                         if (pixel == 0x00) pid = 0x00;
                         //We shift the tile registers to get the next pixel id
-                        tile_lsb = (tile_lsb << 1) & 0xFFFF;
-                        tile_msb = (tile_msb << 1) & 0xFFFF;
+                        tile_lsb = (short) ((tile_lsb << 1) & 0xFFFF);
+                        tile_msb = (short) ((tile_msb << 1) & 0xFFFF);
                         //We populate the buffer by getting the right color from the palette using the palette and pixel IDs
-                        tmp[(x * 8 + (col)) + 256 * (y * 8 + row)] = threadSafeGetColorFromPalette(pid , pixel).getRGB();
+                        tmp[(x * 8 + (col)) + 256 * (y * 8 + row)] = threadSafeGetColorFromPalette(pid, pixel).getRGB();
                     }
                 }
             }
         }
         //We populate the pixels buffer in the right order
-        for (int rgba : tmp) {
-            nametables[i].put((byte)((rgba >> 16) & 0xFF));
-            nametables[i].put((byte)((rgba >> 8) & 0xFF));
-            nametables[i].put((byte)((rgba) & 0xFF));
-            nametables[i].put((byte)((rgba >> 24) & 0xFF));
-        }
-        //The buffer is then flipped to be read by OpenGL
-        nametables[i].flip();
+        fillBuffer(tmp, i, nametables);
         return nametables[i];
     }
 
     /**
      * Return a palette color given a palette ID and a pixel ID
      * Thread safe, used by the Debug Window
+     *
      * @param paletteId the palette ID
-     * @param pixel the pixel ID
+     * @param pixel     the pixel ID
      * @return the corresponding Color
      */
     public synchronized Color threadSafeGetColorFromPalette(int paletteId, int pixel) {
         return palScreen[ppuRead(0x3F00 + ((paletteId << 2) & 0x00FF) + (pixel & 0x00FF))];
+    }
+
+    // ======================================= Savestates Methods ======================================= //
+    public byte[] dumpStatus() {
+        return new byte[]{
+                (byte) maskRegister.get(),
+                (byte) controlRegister.get(),
+                (byte) statusRegister.get(),
+                address_latch,
+                ppu_data_buffer,
+                oam_addr,
+                (byte) ((vram_addr.get() >> 8) & 0xFF),
+                (byte) (vram_addr.get() & 0xFF),
+                (byte) ((tram_addr.get() >> 8) & 0xFF),
+                (byte) (tram_addr.get() & 0xFF),
+                fine_x
+        };
+    }
+
+    public void restoreStatusDump(byte[] dump) {
+        maskRegister.set(dump[0] & 0xFF);
+        controlRegister.set(dump[1] & 0xFF);
+        statusRegister.set(dump[2] & 0xFF);
+        address_latch = dump[3];
+        ppu_data_buffer = dump[4];
+        oam_addr = dump[5];
+        vram_addr.set((((dump[6] & 0xFF) << 8) & 0xFF00) | ((dump[7] & 0xFF)));
+        tram_addr.set((((dump[8] & 0xFF) << 8) & 0xFF00) | ((dump[9] & 0xFF)));
+        fine_x = dump[10];
+    }
+
+    public byte[] dumpOAM() {
+        byte[] oam = new byte[256];
+        for (int i = 0; i < 64; i++) {
+            byte[] oa = oams[i].dump();
+            oam[4 * i] = oa[0];
+            oam[4 * i + 1] = oa[1];
+            oam[4 * i + 2] = oa[2];
+            oam[4 * i + 3] = oa[3];
+        }
+        return oam;
+    }
+
+    public void restoreOAMDump(byte[] dump) {
+        for (int i = 0; i < 64; i++) {
+            oams[i].setX(dump[4 * i]);
+            oams[i].setAttribute(dump[4 * i + 1]);
+            oams[i].setId(dump[4 * i + 2]);
+            oams[i].setY(dump[4 * i + 3]);
+        }
+    }
+
+    public byte[] dumpNametables() {
+        byte[] dump = new byte[2048];
+        for (int i = 0; i < 2; i++) {
+            System.arraycopy(tblName[i], 0, dump, i * 1024, 1024);
+        }
+        return dump;
+    }
+
+    public void restoreNametablesDump(byte[] dump) {
+        for (int i = 0; i < 2; i++) {
+            System.arraycopy(dump, i * 1024, tblName[i], 0, 1024);
+        }
+    }
+
+    public byte[] dumpPalette() {
+        byte[] dump = new byte[32];
+        System.arraycopy(tblPalette, 0, dump, 0, 32);
+        return dump;
+    }
+
+    public void restorePaletteDump(byte[] dump) {
+        System.arraycopy(dump, 0, tblPalette, 0, 32);
+    }
+
+    public byte[] dumpPatternTables() {
+        byte[] dump = new byte[8192];
+        for (int i = 0; i < 2; i++) {
+            System.arraycopy(tblPattern[i], 0, dump, i * 4096, 4096);
+        }
+        return dump;
+    }
+
+    public void restorePatternTablesDump(byte[] dump) {
+        for (int i = 0; i < 2; i++) {
+            System.arraycopy(dump, i * 4096, tblPattern[i], 0, 4096);
+        }
     }
 }

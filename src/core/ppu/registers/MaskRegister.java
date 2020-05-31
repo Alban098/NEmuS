@@ -16,6 +16,7 @@ public class MaskRegister {
 
     /**
      * Load the Register with an 8bit value
+     *
      * @param val the value to set (only the 8lsb are considered)
      */
     public void set(int val) {
@@ -31,6 +32,7 @@ public class MaskRegister {
 
     /**
      * Return the value of the Register as an 8bit value
+     *
      * @return an int with the 8 lsb set accordingly
      */
     public int get() {
@@ -48,6 +50,7 @@ public class MaskRegister {
 
     /**
      * Return whether or not the grayscale bit set
+     *
      * @return is the grayscale bit set
      */
     public boolean isGrayscaleSet() {
@@ -56,6 +59,7 @@ public class MaskRegister {
 
     /**
      * Set the grayscale bit high or low
+     *
      * @param grayscale is the grayscale bit high
      */
     public void setGrayscale(boolean grayscale) {
@@ -64,6 +68,7 @@ public class MaskRegister {
 
     /**
      * Return whether or not the render_background_left bit set
+     *
      * @return is the render_background_left bit set
      */
     public boolean isRenderBackgroundLeftSet() {
@@ -72,6 +77,7 @@ public class MaskRegister {
 
     /**
      * Set the render_background_left bit high or low
+     *
      * @param render_background_left is the render_background_left bit high
      */
     public void setRenderBackgroundLeftSet(boolean render_background_left) {
@@ -80,6 +86,7 @@ public class MaskRegister {
 
     /**
      * Return whether or not the render_sprite_left bit set
+     *
      * @return is the render_sprite_left bit set
      */
     public boolean isRenderSpriteLeftSet() {
@@ -88,6 +95,7 @@ public class MaskRegister {
 
     /**
      * Set the render_sprite_left bit high or low
+     *
      * @param render_sprite_left is the render_sprite_left bit high
      */
     public void setRenderSpriteLeft(boolean render_sprite_left) {
@@ -96,6 +104,7 @@ public class MaskRegister {
 
     /**
      * Return whether or not the render_background bit set
+     *
      * @return is the render_background bit set
      */
     public boolean isRenderBackgroundSet() {
@@ -104,6 +113,7 @@ public class MaskRegister {
 
     /**
      * Set the render_background bit high or low
+     *
      * @param render_background is the render_background bit high
      */
     public void setRenderBackground(boolean render_background) {
@@ -112,6 +122,7 @@ public class MaskRegister {
 
     /**
      * Return whether or not the render_sprites bit set
+     *
      * @return is the render_sprites bit set
      */
     public boolean isRenderSpritesSet() {
@@ -120,6 +131,7 @@ public class MaskRegister {
 
     /**
      * Set the render_sprites bit high or low
+     *
      * @param render_sprites is the render_sprites bit high
      */
     public void setRenderSprites(boolean render_sprites) {
@@ -128,6 +140,7 @@ public class MaskRegister {
 
     /**
      * Return whether or not the enhance_red bit set
+     *
      * @return is the enhance_red bit set
      */
     public boolean isEnhanceRedSet() {
@@ -136,6 +149,7 @@ public class MaskRegister {
 
     /**
      * Set the enhance_red bit high or low
+     *
      * @param enhance_red is the enhance_red bit high
      */
     public void setEnhanceRed(boolean enhance_red) {
@@ -144,6 +158,7 @@ public class MaskRegister {
 
     /**
      * Return whether or not the enhance_green bit set
+     *
      * @return is the enhance_green bit set
      */
     public boolean isEnhanceGreenSet() {
@@ -152,6 +167,7 @@ public class MaskRegister {
 
     /**
      * Set the enhance_green bit high or low
+     *
      * @param enhance_green is the enhance_green bit high
      */
     public void setEnhanceGreen(boolean enhance_green) {
@@ -160,6 +176,7 @@ public class MaskRegister {
 
     /**
      * Return whether or not the enhance_blue bit set
+     *
      * @return is the enhance_blue bit set
      */
     public boolean isEnhanceBlueSet() {
@@ -168,6 +185,7 @@ public class MaskRegister {
 
     /**
      * Set the enhance_blue bit high or low
+     *
      * @param enhance_blue is the enhance_blue bit high
      */
     public void setEnhanceBlue(boolean enhance_blue) {

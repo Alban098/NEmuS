@@ -1,16 +1,23 @@
-import core.cartridge.Cartridge;
 import core.Bus;
+import core.SaveState;
+import core.cartridge.Cartridge;
 import core.cpu.Flags;
 import core.ppu.PPU_2C02;
 import openGL.Texture;
-import org.lwjgl.glfw.*;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWKeyCallback;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.glfw.GLFWWindowSizeCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
 import utils.NumberUtils;
 
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -21,24 +28,25 @@ import java.util.Queue;
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.system.MemoryStack.*;
-import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
  * This class is the entry point of the Emulator
  */
 public class NEmuS {
 
-    private static final int FRAME_DURATION = 1000000000/60;
-    private static final String GAME = "smb.nes";
+    private static final int FRAME_DURATION = 1000000000 / 60;
     private static final float DEAD_ZONE_RADIUS = .4f;
+
+    private static String game = "smb.nes";
 
     private long game_window;
     private long info_window;
 
-    private int game_width = PPU_2C02.SCREEN_WIDTH*4;
-    private int game_height = PPU_2C02.SCREEN_HEIGHT*4;
-    private int info_width = 1400;
+    private int game_width = PPU_2C02.SCREEN_WIDTH * 4;
+    private int game_height = PPU_2C02.SCREEN_HEIGHT * 4;
+    private int info_width = 1365;
     private int info_height = 1020;
     private float game_aspect = (float) game_width / game_height;
     private float info_aspect = (float) info_width / info_height;
@@ -46,9 +54,6 @@ public class NEmuS {
     private Bus nes;
 
     private Texture screen_texture;
-
-    // ==================== Debug Variables ==================== //
-    private Thread info_thread;
 
     private boolean emulationRunning = true;
     private boolean redraw_game = false;
@@ -69,17 +74,33 @@ public class NEmuS {
     private Texture oam_texture;
     // ========================================================= //
 
+    public static void main(String[] args) {
+        new NEmuS().run();
+    }
 
     /**
      * Launch the Emulator and the Debug Window
      */
     private void run() {
         //Initialize the NES and the Game Window
-        initEmulator();
+        JFileChooser romSelector = new JFileChooser("./");
+        romSelector.setFileFilter(new FileNameExtensionFilter("iNES file (.nes)", "nes"));
+        if (romSelector.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            String filename = romSelector.getSelectedFile().getAbsolutePath();
+            try {
+                initEmulator(filename);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(null, e.getMessage());
+                System.exit(-1);
+            }
+        } else {
+            System.exit(-1);
+        }
         initGameWindow();
 
         //Launch the Info/Debug Window on a dedicated Thread
-        info_thread = new Thread(this::launchInfoWindow);
+        // ==================== Debug Variables ==================== //
+        Thread info_thread = new Thread(this::launchInfoWindow);
         info_thread.start();
 
         //Start the NES
@@ -113,21 +134,22 @@ public class NEmuS {
     /**
      * Create an instance of a NES and load the game
      */
-    private void initEmulator() {
+    private void initEmulator(String rom) throws IOException {
+        Cartridge cart = new Cartridge(rom);
+        game = rom;
         //Create the Bus
         nes = new Bus();
         //Load the game into the NES
-        Cartridge cart = new Cartridge(GAME);
         nes.insertCartridge(cart);
         //Decompile the entire addressable range, for debug purposes
         decompiled = nes.getCpu().disassemble(0x0000, 0xFFFF);
         //Reset the CPU to its default state
-        nes.getCpu().reset();
+        nes.reset();
     }
 
     /**
-    * Create and initialize the Game Window
-    */
+     * Create and initialize the Game Window
+     */
     private void initGameWindow() {
         //Initialize GLFW ont the current Thread
         GLFWErrorCallback.createPrint(System.err).set();
@@ -140,7 +162,7 @@ public class NEmuS {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
         //Create the window
-        game_window = glfwCreateWindow(game_width, game_height, "NES", NULL, NULL);
+        game_window = glfwCreateWindow(game_width, game_height + 50, "NES", NULL, NULL);
         if (game_window == NULL)
             throw new RuntimeException("Failed to create window");
         try (MemoryStack stack = stackPush()) {
@@ -148,16 +170,16 @@ public class NEmuS {
             IntBuffer pHeight = stack.mallocInt(1);
             glfwGetWindowSize(game_window, pWidth, pHeight);
             GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-            glfwSetWindowPos(game_window, (vidmode.width() - pWidth.get(0))/2, (vidmode.height() - pHeight.get(0))/2);
+            glfwSetWindowPos(game_window, (vidmode.width() - pWidth.get(0)) / 2, (vidmode.height() - pHeight.get(0)) / 2);
         }
 
         //Set the window's resize event
         glfwSetWindowSizeCallback(game_window, new GLFWWindowSizeCallback() {
             @Override
             public void invoke(long windows, int w, int h) {
-                game_aspect = (float)w/h;
+                game_aspect = (float) w / (h - 50);
                 game_width = w;
-                game_height = h;
+                game_height = h - 50;
             }
         });
         //Show the window
@@ -171,6 +193,54 @@ public class NEmuS {
         //Activate textures and create the Screen Texture target
         glEnable(GL_TEXTURE_2D);
         screen_texture = new Texture(256, 240, nes.getPpu().getScreenBuffer());
+        glfwSetKeyCallback(game_window, new GLFWKeyCallback() {
+            @Override
+            public void invoke(long window, int key, int scancode, int action, int mods) {
+                if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
+                    emulationRunning = false;
+                    JFileChooser romSelector = new JFileChooser("./");
+                    romSelector.setFileFilter(new FileNameExtensionFilter("iNES file (.nes)", "nes"));
+                    if (romSelector.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                        String filename = romSelector.getSelectedFile().getAbsolutePath();
+                        try {
+                            initEmulator(filename);
+                        } catch (IOException e) {
+                            JOptionPane.showMessageDialog(null, e.getMessage() + "\nGame not loaded");
+                        }
+                    }
+                    emulationRunning = true;
+                } else if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
+                    emulationRunning = false;
+                    nes.reset();
+                    emulationRunning = true;
+                } else if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
+                    emulationRunning = false;
+                    do {
+                        nes.clock();
+                    } while (!nes.getPpu().frameComplete);
+                    nes.clock();
+                    nes.getPpu().frameComplete = false;
+                    JFileChooser stateSelector = new JFileChooser("./");
+                    stateSelector.setFileFilter(new FileNameExtensionFilter("Savestate file (.state)", "state"));
+                    if (stateSelector.showSaveDialog(null) == JFileChooser.APPROVE_OPTION)
+                        new SaveState(nes).saveToFile(stateSelector.getSelectedFile().getAbsolutePath());
+
+                    emulationRunning = true;
+                } else if (key == GLFW_KEY_F4 && action == GLFW_PRESS) {
+                    emulationRunning = false;
+                    do {
+                        nes.clock();
+                    } while (!nes.getPpu().frameComplete);
+                    nes.clock();
+                    nes.getPpu().frameComplete = false;
+                    JFileChooser stateSelector = new JFileChooser("./");
+                    stateSelector.setFileFilter(new FileNameExtensionFilter("Savestate file (.state)", "state"));
+                    if (stateSelector.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
+                        new SaveState(stateSelector.getSelectedFile().getAbsolutePath()).restore(nes);
+                    emulationRunning = true;
+                }
+            }
+        });
     }
 
     /**
@@ -196,14 +266,14 @@ public class NEmuS {
             IntBuffer pHeight = stack.mallocInt(1);
             glfwGetWindowSize(info_window, pWidth, pHeight);
             GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-            glfwSetWindowPos(info_window, (vidmode.width() - pWidth.get(0))/2, (vidmode.height() - pHeight.get(0))/2);
+            glfwSetWindowPos(info_window, (vidmode.width() - pWidth.get(0)) / 2, (vidmode.height() - pHeight.get(0)) / 2);
         }
 
         //Set the window's resize event
         glfwSetWindowSizeCallback(info_window, new GLFWWindowSizeCallback() {
             @Override
             public void invoke(long windows, int w, int h) {
-                info_aspect = (float)w/h;
+                info_aspect = (float) w / h;
                 info_width = w;
                 info_height = h;
             }
@@ -222,68 +292,53 @@ public class NEmuS {
         patternTable2_texture = new Texture(128, 128, nes.getPpu().getPatternTable(1, selectedPalette));
         nametable1_texture = new Texture(256, 240, nes.getPpu().getNametable(0));
         nametable2_texture = new Texture(256, 240, nes.getPpu().getNametable(1));
-        cpu_texture = new Texture(new BufferedImage(258+258+3, 990-258-30, BufferedImage.TYPE_INT_RGB));
+        cpu_texture = new Texture(new BufferedImage(258 + 258 + 3, 990 - 258 - 30, BufferedImage.TYPE_INT_RGB));
         oam_texture = new Texture(new BufferedImage(305, 990, BufferedImage.TYPE_INT_RGB));
 
         //Set the input handler of the window
         glfwSetKeyCallback(info_window, new GLFWKeyCallback() {
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods) {
-                if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+                if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
                     emulationRunning = !emulationRunning;
-                else if (key == GLFW_KEY_P && action == GLFW_PRESS) {
+                else if (key == GLFW_KEY_F10 && action == GLFW_PRESS) {
                     selectedPalette = (selectedPalette + 1) & 0x07;
                     redraw_info = true;
-                } else if (key == GLFW_KEY_R && action == GLFW_PRESS) {
+                } else if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
+                    //before resetting from other Thread, we pause the emulation and wait a couple of frame to be sure that the Game Thread isn't messing with the system
+                    emulationRunning = false;
+                    try {
+                        Thread.sleep(10 * FRAME_DURATION);
+                    } catch (InterruptedException ignored) {
+                    }
                     nes.reset();
-                    redraw_info = true;
-                    redraw_game = true;
-                } else if (key == GLFW_KEY_3 && action == GLFW_PRESS) {
+                    emulationRunning = true;
+                } else if (key == GLFW_KEY_F8 && action == GLFW_PRESS) {
                     ram_page++;
                     redraw_info = true;
-                } else if (key == GLFW_KEY_2 && action == GLFW_PRESS) {
+                } else if (key == GLFW_KEY_F7 && action == GLFW_PRESS) {
                     ram_page--;
                     redraw_info = true;
-                } else if (key == GLFW_KEY_4 && action == GLFW_PRESS) {
-                    ram_page += 0x10;
-                    redraw_info = true;
-                } else if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
-                    ram_page -= 0x10;
-                    redraw_info = true;
-                } else if (key == GLFW_KEY_C && action == GLFW_PRESS) {
-                    do { nes.debugClock(); } while (!nes.getCpu().complete());
-                    do { nes.debugClock(); } while (nes.getCpu().complete());
+                } else if (key == GLFW_KEY_F6 && action == GLFW_PRESS && !emulationRunning) {
+                    do {
+                        nes.debugClock();
+                    } while (!nes.getCpu().complete());
+                    do {
+                        nes.debugClock();
+                    } while (nes.getCpu().complete());
                     if (nes.getPpu().frameComplete) {
                         frameCount++;
                         nes.getPpu().frameComplete = false;
                     }
                     redraw_info = true;
                     redraw_game = true;
-                } else if (key == GLFW_KEY_V && action == GLFW_PRESS) {
-                    for (int i = 0; i < 10; i++) {
-                        do { nes.debugClock(); } while (!nes.getCpu().complete());
-                        do { nes.debugClock(); } while (nes.getCpu().complete());
-                        if (nes.getPpu().frameComplete) {
-                            frameCount++;
-                            nes.getPpu().frameComplete = false;
-                        }
-                    }
-                    redraw_info = true;
-                    redraw_game = true;
-                } else if (key == GLFW_KEY_B && action == GLFW_PRESS) {
-                    for (int i = 0; i < 50; i++) {
-                        do { nes.debugClock(); } while (!nes.getCpu().complete());
-                        do { nes.debugClock(); } while (nes.getCpu().complete());
-                        if (nes.getPpu().frameComplete) {
-                            frameCount++;
-                            nes.getPpu().frameComplete = false;
-                        }
-                    }
-                    redraw_info = true;
-                    redraw_game = true;
-                } else if (key == GLFW_KEY_F && action == GLFW_PRESS) {
-                    do { nes.debugClock(); } while (!nes.getPpu().frameComplete);
-                    do { nes.debugClock(); } while (nes.getCpu().complete());
+                } else if (key == GLFW_KEY_F9 && action == GLFW_PRESS && !emulationRunning) {
+                    do {
+                        nes.debugClock();
+                    } while (!nes.getPpu().frameComplete);
+                    do {
+                        nes.debugClock();
+                    } while (nes.getCpu().complete());
                     nes.getPpu().frameComplete = false;
                     frameCount++;
                     redraw_info = true;
@@ -315,12 +370,14 @@ public class NEmuS {
                     if (emulationRunning) {
                         //We compute an entire frame in one go and wait for the next one
                         //this isn't hardware accurate, but is close enough to have most game run properly
-                        do { nes.clock(); } while (!nes.getPpu().frameComplete);
+                        do {
+                            nes.clock();
+                        } while (!nes.getPpu().frameComplete);
                         nes.getPpu().frameComplete = false;
                         frameCount++;
                     }
                     //Keep track of the FPS number
-                    glfwSetWindowTitle(game_window, GAME + " - " + 1000000000 / (System.nanoTime() - last_frame) + " fps");
+                    glfwSetWindowTitle(game_window, game + " - " + 1000000000 / (System.nanoTime() - last_frame) + " fps");
                     last_frame = System.nanoTime();
                 }
                 //We load the screen pixels into VRAM and display them
@@ -350,7 +407,7 @@ public class NEmuS {
             if (emulationRunning || redraw_info) {
                 //Set the current OpenGL context
                 glfwMakeContextCurrent(info_window);
-                glClearColor(.6f, .6f, .6f, 0f);
+                glClearColor(0, 0, 1, 0f);
                 //Wrap the ram page to avoid out of bounds
                 if (ram_page < 0x00) ram_page += 0x100;
                 if (ram_page > 0xFF) ram_page -= 0x100;
@@ -391,47 +448,95 @@ public class NEmuS {
         if (glfwJoystickPresent(GLFW_JOYSTICK_1)) {
             ByteBuffer buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_1);
             FloatBuffer axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1);
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_UP - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_UP - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_Y && axes.get(GLFW_GAMEPAD_AXIS_LEFT_Y) < -DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_UP) == GLFW_PRESS) nes.controller[0] |= 0x08;else nes.controller[0] &= ~0x08;       // Up
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_DOWN - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_DOWN - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_Y && axes.get(GLFW_GAMEPAD_AXIS_LEFT_Y) > DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_DOWN) == GLFW_PRESS) nes.controller[0] |= 0x04;else nes.controller[0] &= ~0x04;       // Down
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_LEFT - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_LEFT - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_X && axes.get(GLFW_GAMEPAD_AXIS_LEFT_X) < -DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_LEFT) == GLFW_PRESS) nes.controller[0] |= 0x02;else nes.controller[0] &= ~0x02;       // Left
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_RIGHT - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_RIGHT - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_X && axes.get(GLFW_GAMEPAD_AXIS_LEFT_X) > DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_RIGHT) == GLFW_PRESS) nes.controller[0] |= 0x01;else nes.controller[0] &= ~0x01;       // Right
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_X && buttons.get(GLFW_GAMEPAD_BUTTON_X) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_I) == GLFW_PRESS) nes.controller[0] |= 0x80;else nes.controller[0] &= ~0x80;       // A
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_A && buttons.get(GLFW_GAMEPAD_BUTTON_A) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_U) == GLFW_PRESS) nes.controller[0] |= 0x40;else nes.controller[0] &= ~0x40;       // B
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_BACK && buttons.get(GLFW_GAMEPAD_BUTTON_BACK) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_J) == GLFW_PRESS) nes.controller[0] |= 0x20;else nes.controller[0] &= ~0x20;       // Select
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_START && buttons.get(GLFW_GAMEPAD_BUTTON_START) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_K) == GLFW_PRESS) nes.controller[0] |= 0x10;else nes.controller[0] &= ~0x10;       // Start
-        //if not we ignore the Gamepad tests
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_UP - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_UP - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_Y && axes.get(GLFW_GAMEPAD_AXIS_LEFT_Y) < -DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_UP) == GLFW_PRESS)
+                nes.controller[0] |= 0x08;
+            else nes.controller[0] &= ~0x08;       // Up
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_DOWN - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_DOWN - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_Y && axes.get(GLFW_GAMEPAD_AXIS_LEFT_Y) > DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_DOWN) == GLFW_PRESS)
+                nes.controller[0] |= 0x04;
+            else nes.controller[0] &= ~0x04;       // Down
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_LEFT - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_LEFT - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_X && axes.get(GLFW_GAMEPAD_AXIS_LEFT_X) < -DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_LEFT) == GLFW_PRESS)
+                nes.controller[0] |= 0x02;
+            else nes.controller[0] &= ~0x02;       // Left
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_RIGHT - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_RIGHT - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_X && axes.get(GLFW_GAMEPAD_AXIS_LEFT_X) > DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+                nes.controller[0] |= 0x01;
+            else nes.controller[0] &= ~0x01;       // Right
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_X && buttons.get(GLFW_GAMEPAD_BUTTON_X) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_I) == GLFW_PRESS)
+                nes.controller[0] |= 0x80;
+            else nes.controller[0] &= ~0x80;       // A
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_A && buttons.get(GLFW_GAMEPAD_BUTTON_A) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_U) == GLFW_PRESS)
+                nes.controller[0] |= 0x40;
+            else nes.controller[0] &= ~0x40;       // B
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_BACK && buttons.get(GLFW_GAMEPAD_BUTTON_BACK) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_J) == GLFW_PRESS)
+                nes.controller[0] |= 0x20;
+            else nes.controller[0] &= ~0x20;       // Select
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_START && buttons.get(GLFW_GAMEPAD_BUTTON_START) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_K) == GLFW_PRESS)
+                nes.controller[0] |= 0x10;
+            else nes.controller[0] &= ~0x10;       // Start
+            //if not we ignore the Gamepad tests
         } else {
-            if (glfwGetKey(game_window, GLFW_KEY_UP) == GLFW_PRESS) nes.controller[0] |= 0x08; else nes.controller[0] &= ~0x08;       // Up
-            if (glfwGetKey(game_window, GLFW_KEY_DOWN) == GLFW_PRESS) nes.controller[0] |= 0x04; else nes.controller[0] &= ~0x04;       // Down
-            if (glfwGetKey(game_window, GLFW_KEY_LEFT) == GLFW_PRESS) nes.controller[0] |= 0x02; else nes.controller[0] &= ~0x02;       // Left
-            if (glfwGetKey(game_window, GLFW_KEY_RIGHT) == GLFW_PRESS) nes.controller[0] |= 0x01; else nes.controller[0] &= ~0x01;       // Right
-            if (glfwGetKey(game_window, GLFW_KEY_I) == GLFW_PRESS) nes.controller[0] |= 0x80; else nes.controller[0] &= ~0x80;       // A
-            if (glfwGetKey(game_window, GLFW_KEY_U) == GLFW_PRESS) nes.controller[0] |= 0x40; else nes.controller[0] &= ~0x40;       // B
-            if (glfwGetKey(game_window, GLFW_KEY_J) == GLFW_PRESS) nes.controller[0] |= 0x20; else nes.controller[0] &= ~0x20;       // Select
-            if (glfwGetKey(game_window, GLFW_KEY_K) == GLFW_PRESS) nes.controller[0] |= 0x10; else nes.controller[0] &= ~0x10;       // Start
+            if (glfwGetKey(game_window, GLFW_KEY_UP) == GLFW_PRESS) nes.controller[0] |= 0x08;
+            else nes.controller[0] &= ~0x08;       // Up
+            if (glfwGetKey(game_window, GLFW_KEY_DOWN) == GLFW_PRESS) nes.controller[0] |= 0x04;
+            else nes.controller[0] &= ~0x04;       // Down
+            if (glfwGetKey(game_window, GLFW_KEY_LEFT) == GLFW_PRESS) nes.controller[0] |= 0x02;
+            else nes.controller[0] &= ~0x02;       // Left
+            if (glfwGetKey(game_window, GLFW_KEY_RIGHT) == GLFW_PRESS) nes.controller[0] |= 0x01;
+            else nes.controller[0] &= ~0x01;       // Right
+            if (glfwGetKey(game_window, GLFW_KEY_I) == GLFW_PRESS) nes.controller[0] |= 0x80;
+            else nes.controller[0] &= ~0x80;       // A
+            if (glfwGetKey(game_window, GLFW_KEY_U) == GLFW_PRESS) nes.controller[0] |= 0x40;
+            else nes.controller[0] &= ~0x40;       // B
+            if (glfwGetKey(game_window, GLFW_KEY_J) == GLFW_PRESS) nes.controller[0] |= 0x20;
+            else nes.controller[0] &= ~0x20;       // Select
+            if (glfwGetKey(game_window, GLFW_KEY_K) == GLFW_PRESS) nes.controller[0] |= 0x10;
+            else nes.controller[0] &= ~0x10;       // Start
         }
         //If Gamepad 2 is connected
         if (glfwJoystickPresent(GLFW_JOYSTICK_2)) {
             ByteBuffer buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_2);
             FloatBuffer axes = glfwGetJoystickAxes(GLFW_JOYSTICK_2);
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_UP - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_UP - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_Y && axes.get(GLFW_GAMEPAD_AXIS_LEFT_Y) < -DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_W) == GLFW_PRESS) nes.controller[1] |= 0x08; else nes.controller[1] &= ~0x08;       // Up
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_DOWN - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_DOWN - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_Y && axes.get(GLFW_GAMEPAD_AXIS_LEFT_Y) > DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_S) == GLFW_PRESS) nes.controller[1] |= 0x04; else nes.controller[1] &= ~0x04;       // Down
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_LEFT - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_LEFT - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_X && axes.get(GLFW_GAMEPAD_AXIS_LEFT_X) < -DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_A) == GLFW_PRESS) nes.controller[1] |= 0x02; else nes.controller[1] &= ~0x02;       // Left
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_RIGHT - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_RIGHT - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_X && axes.get(GLFW_GAMEPAD_AXIS_LEFT_X) > DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_D) == GLFW_PRESS) nes.controller[1] |= 0x01; else nes.controller[1] &= ~0x01;       // Right
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_X && buttons.get(GLFW_GAMEPAD_BUTTON_X) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_Y) == GLFW_PRESS) nes.controller[1] |= 0x80; else nes.controller[1] &= ~0x80;       // A
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_A && buttons.get(GLFW_GAMEPAD_BUTTON_A) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_R) == GLFW_PRESS) nes.controller[1] |= 0x40; else nes.controller[1] &= ~0x40;       // B
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_BACK && buttons.get(GLFW_GAMEPAD_BUTTON_BACK) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_F) == GLFW_PRESS) nes.controller[1] |= 0x20; else nes.controller[1] &= ~0x20;       // Select
-            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_START && buttons.get(GLFW_GAMEPAD_BUTTON_START) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_H) == GLFW_PRESS) nes.controller[1] |= 0x10; else nes.controller[1] &= ~0x10;       // Start
-        //if not we ignore the Gamepad tests
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_UP - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_UP - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_Y && axes.get(GLFW_GAMEPAD_AXIS_LEFT_Y) < -DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_W) == GLFW_PRESS)
+                nes.controller[1] |= 0x08;
+            else nes.controller[1] &= ~0x08;       // Up
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_DOWN - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_DOWN - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_Y && axes.get(GLFW_GAMEPAD_AXIS_LEFT_Y) > DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_S) == GLFW_PRESS)
+                nes.controller[1] |= 0x04;
+            else nes.controller[1] &= ~0x04;       // Down
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_LEFT - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_LEFT - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_X && axes.get(GLFW_GAMEPAD_AXIS_LEFT_X) < -DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_A) == GLFW_PRESS)
+                nes.controller[1] |= 0x02;
+            else nes.controller[1] &= ~0x02;       // Left
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_DPAD_RIGHT - 1 && buttons.get(GLFW_GAMEPAD_BUTTON_DPAD_RIGHT - 1) == GLFW_PRESS) || (axes != null && axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_X && axes.get(GLFW_GAMEPAD_AXIS_LEFT_X) > DEAD_ZONE_RADIUS) || glfwGetKey(game_window, GLFW_KEY_D) == GLFW_PRESS)
+                nes.controller[1] |= 0x01;
+            else nes.controller[1] &= ~0x01;       // Right
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_X && buttons.get(GLFW_GAMEPAD_BUTTON_X) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_Y) == GLFW_PRESS)
+                nes.controller[1] |= 0x80;
+            else nes.controller[1] &= ~0x80;       // A
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_A && buttons.get(GLFW_GAMEPAD_BUTTON_A) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_R) == GLFW_PRESS)
+                nes.controller[1] |= 0x40;
+            else nes.controller[1] &= ~0x40;       // B
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_BACK && buttons.get(GLFW_GAMEPAD_BUTTON_BACK) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_F) == GLFW_PRESS)
+                nes.controller[1] |= 0x20;
+            else nes.controller[1] &= ~0x20;       // Select
+            if ((buttons != null && buttons.capacity() > GLFW_GAMEPAD_BUTTON_START && buttons.get(GLFW_GAMEPAD_BUTTON_START) == GLFW_PRESS) || glfwGetKey(game_window, GLFW_KEY_H) == GLFW_PRESS)
+                nes.controller[1] |= 0x10;
+            else nes.controller[1] &= ~0x10;       // Start
+            //if not we ignore the Gamepad tests
         } else {
-            if (glfwGetKey(game_window, GLFW_KEY_W) == GLFW_PRESS) nes.controller[1] |= 0x08; else nes.controller[1] &= ~0x08;       // Up
-            if (glfwGetKey(game_window, GLFW_KEY_S) == GLFW_PRESS) nes.controller[1] |= 0x04; else nes.controller[1] &= ~0x04;       // Down
-            if (glfwGetKey(game_window, GLFW_KEY_A) == GLFW_PRESS) nes.controller[1] |= 0x02; else nes.controller[1] &= ~0x02;       // Left
-            if (glfwGetKey(game_window, GLFW_KEY_D) == GLFW_PRESS) nes.controller[1] |= 0x01; else nes.controller[1] &= ~0x01;       // Right
-            if (glfwGetKey(game_window, GLFW_KEY_Y) == GLFW_PRESS) nes.controller[1] |= 0x80; else nes.controller[1] &= ~0x80;       // A
-            if (glfwGetKey(game_window, GLFW_KEY_T) == GLFW_PRESS) nes.controller[1] |= 0x40; else nes.controller[1] &= ~0x40;       // B
-            if (glfwGetKey(game_window, GLFW_KEY_G) == GLFW_PRESS) nes.controller[1] |= 0x20; else nes.controller[1] &= ~0x20;       // Select
-            if (glfwGetKey(game_window, GLFW_KEY_H) == GLFW_PRESS) nes.controller[1] |= 0x10; else nes.controller[1] &= ~0x10;       // Start
+            if (glfwGetKey(game_window, GLFW_KEY_W) == GLFW_PRESS) nes.controller[1] |= 0x08;
+            else nes.controller[1] &= ~0x08;       // Up
+            if (glfwGetKey(game_window, GLFW_KEY_S) == GLFW_PRESS) nes.controller[1] |= 0x04;
+            else nes.controller[1] &= ~0x04;       // Down
+            if (glfwGetKey(game_window, GLFW_KEY_A) == GLFW_PRESS) nes.controller[1] |= 0x02;
+            else nes.controller[1] &= ~0x02;       // Left
+            if (glfwGetKey(game_window, GLFW_KEY_D) == GLFW_PRESS) nes.controller[1] |= 0x01;
+            else nes.controller[1] &= ~0x01;       // Right
+            if (glfwGetKey(game_window, GLFW_KEY_Y) == GLFW_PRESS) nes.controller[1] |= 0x80;
+            else nes.controller[1] &= ~0x80;       // A
+            if (glfwGetKey(game_window, GLFW_KEY_T) == GLFW_PRESS) nes.controller[1] |= 0x40;
+            else nes.controller[1] &= ~0x40;       // B
+            if (glfwGetKey(game_window, GLFW_KEY_G) == GLFW_PRESS) nes.controller[1] |= 0x20;
+            else nes.controller[1] &= ~0x20;       // Select
+            if (glfwGetKey(game_window, GLFW_KEY_H) == GLFW_PRESS) nes.controller[1] |= 0x10;
+            else nes.controller[1] &= ~0x10;       // Start
         }
     }
 
@@ -449,50 +554,56 @@ public class NEmuS {
         // ================================= Status =================================
         Graphics g = cpu_texture.getImg().getGraphics();
         g.setColor(Color.BLUE);
-        g.fillRect(0,0, cpu_texture.getImg().getWidth(), cpu_texture.getImg().getHeight());
+        g.fillRect(0, 0, cpu_texture.getImg().getWidth(), cpu_texture.getImg().getHeight());
         g.setFont(new Font("monospaced", Font.BOLD, 35));
         g.setColor(Color.GREEN);
         g.drawString("CPU - RAM", 150, 40);
         g.setFont(new Font("monospaced", Font.BOLD, 16));
         g.setColor(Color.WHITE);
-        g.drawString("STATUS:", 10 , 70);
-        if (nes.getCpu().threadSafeGetState(Flags.N)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        g.drawString("STATUS:", 10, 70);
+        if (nes.getCpu().threadSafeGetState(Flags.N)) g.setColor(Color.GREEN);
+        else g.setColor(Color.RED);
         g.drawString("N", 80, 70);
-        if (nes.getCpu().threadSafeGetState(Flags.V)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (nes.getCpu().threadSafeGetState(Flags.V)) g.setColor(Color.GREEN);
+        else g.setColor(Color.RED);
         g.drawString("V", 96, 70);
-        if (nes.getCpu().threadSafeGetState(Flags.U)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (nes.getCpu().threadSafeGetState(Flags.U)) g.setColor(Color.GREEN);
+        else g.setColor(Color.RED);
         g.drawString("-", 112, 70);
-        if (nes.getCpu().threadSafeGetState(Flags.B)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (nes.getCpu().threadSafeGetState(Flags.B)) g.setColor(Color.GREEN);
+        else g.setColor(Color.RED);
         g.drawString("B", 128, 70);
-        if (nes.getCpu().threadSafeGetState(Flags.D)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (nes.getCpu().threadSafeGetState(Flags.D)) g.setColor(Color.GREEN);
+        else g.setColor(Color.RED);
         g.drawString("D", 144, 70);
-        if (nes.getCpu().threadSafeGetState(Flags.I)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (nes.getCpu().threadSafeGetState(Flags.I)) g.setColor(Color.GREEN);
+        else g.setColor(Color.RED);
         g.drawString("I", 160, 70);
-        if (nes.getCpu().threadSafeGetState(Flags.Z)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (nes.getCpu().threadSafeGetState(Flags.Z)) g.setColor(Color.GREEN);
+        else g.setColor(Color.RED);
         g.drawString("Z", 176, 70);
-        if (nes.getCpu().threadSafeGetState(Flags.C)) g.setColor(Color.GREEN); else g.setColor(Color.RED);
+        if (nes.getCpu().threadSafeGetState(Flags.C)) g.setColor(Color.GREEN);
+        else g.setColor(Color.RED);
         g.drawString("C", 194, 70);
         g.setColor(Color.WHITE);
-        g.drawString("Program C  : $" + String.format("%02X", nes.getCpu().threadSafeGetPc()), 10 , 125 + 60);
-        g.drawString("A Register : $" + String.format("%02X", nes.getCpu().threadSafeGetA()) + "[" + nes.getCpu().threadSafeGetA() + "]", 10 , 140 + 60);
-        g.drawString("X Register : $" + String.format("%02X", nes.getCpu().threadSafeGetX()) + "[" + nes.getCpu().threadSafeGetX() + "]", 10 , 155 + 60);
-        g.drawString("Y Register : $" + String.format("%02X", nes.getCpu().threadSafeGetY()) + "[" + nes.getCpu().threadSafeGetY() + "]", 10 , 170 + 60);
-        g.drawString("Stack Ptr  : $" + String.format("%04X", nes.getCpu().threadSafeGetStkp()), 10 , 185 + 60);
+        g.drawString("Program C  : $" + String.format("%02X", nes.getCpu().threadSafeGetPc()), 10, 125 + 60);
+        g.drawString("A Register : $" + String.format("%02X", nes.getCpu().threadSafeGetA()) + "[" + nes.getCpu().threadSafeGetA() + "]", 10, 140 + 60);
+        g.drawString("X Register : $" + String.format("%02X", nes.getCpu().threadSafeGetX()) + "[" + nes.getCpu().threadSafeGetX() + "]", 10, 155 + 60);
+        g.drawString("Y Register : $" + String.format("%02X", nes.getCpu().threadSafeGetY()) + "[" + nes.getCpu().threadSafeGetY() + "]", 10, 170 + 60);
+        g.drawString("Stack Ptr  : $" + String.format("%04X", nes.getCpu().threadSafeGetStkp()), 10, 185 + 60);
         g.drawString("Ticks  : " + nes.getCpu().threadSafeGetCpuClock(), 10, 340);
-        g.drawString("Frames : " + frameCount, 10 , 355);
+        g.drawString("Frames : " + frameCount, 10, 355);
 
         // ================================= RAM =================================
         int nRamX = 5, nRamY = 440;
         int nAddr = ram_page << 8;
-        for (int row = 0; row < 16; row++)
-        {
-            String sOffset = String.format("$%04X:", nAddr);
-            for (int col = 0; col < 16; col++)
-            {
-                sOffset += " " +  String.format("%02X", nes.threadSafeCpuRead(nAddr));
+        for (int row = 0; row < 16; row++) {
+            StringBuilder sOffset = new StringBuilder(String.format("$%04X:", nAddr));
+            for (int col = 0; col < 16; col++) {
+                sOffset.append(" ").append(String.format("%02X", nes.threadSafeCpuRead(nAddr)));
                 nAddr += 1;
             }
-            g.drawString(sOffset, nRamX, nRamY);
+            g.drawString(sOffset.toString(), nRamX, nRamY);
             nRamY += 17;
         }
 
@@ -536,7 +647,7 @@ public class NEmuS {
         // ================================= Object Attribute Memory =================================
         Graphics g2 = oam_texture.getImg().getGraphics();
         g2.setColor(Color.BLUE);
-        g2.fillRect(0,0, oam_texture.getImg().getWidth(), oam_texture.getImg().getHeight());
+        g2.fillRect(0, 0, oam_texture.getImg().getWidth(), oam_texture.getImg().getHeight());
         g2.setFont(new Font("monospaced", Font.BOLD, 35));
         g2.setColor(Color.GREEN);
         g2.drawString("OAM Memory", 30, 40);
@@ -562,13 +673,13 @@ public class NEmuS {
         glOrtho(-game_aspect, game_aspect, -1, 1, -1, 1);
         screen_texture.bind();
 
-        float view_aspect = (float)PPU_2C02.SCREEN_WIDTH/ PPU_2C02.SCREEN_HEIGHT, quad_end_x = game_aspect, quad_end_y = -1;
+        float view_aspect = (float) PPU_2C02.SCREEN_WIDTH / PPU_2C02.SCREEN_HEIGHT, quad_end_x = game_aspect, quad_end_y = -1;
         if (game_height / view_aspect > game_width)
             quad_end_y = NumberUtils.map(game_width * view_aspect, 0, game_height, 1, -1);
         else
             quad_end_x = NumberUtils.map(game_height * view_aspect, 0, game_width, -game_aspect, game_aspect);
-        float quad_width = (2*game_aspect - (quad_end_x + game_aspect))/2;
-        float quad_height = (2 - (1 - quad_end_y))/2;
+        float quad_width = (2 * game_aspect - (quad_end_x + game_aspect)) / 2;
+        float quad_height = (2 - (1 - quad_end_y)) / 2;
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
         glVertex2f(-game_aspect + quad_width, 1 - quad_height);
@@ -625,10 +736,10 @@ public class NEmuS {
         glBindTexture(GL_TEXTURE_2D, 0);
         int size = 14;
         glColor3f(1, 0, 0);
-        float y_offset_from_cpu = - Math.abs(1 - y_end_cpu) - .025f;
+        float y_offset_from_cpu = -Math.abs(1 - y_end_cpu) - .025f;
 
-        float x_start_select_ring = NumberUtils.map(selectedPalette * (size*4 + 9), 0, info_width, -info_aspect, info_aspect);
-        float x_end_select_ring = NumberUtils.map(8 + selectedPalette * (size*4 + 9) + 4*size, 0, info_width, -info_aspect, info_aspect);
+        float x_start_select_ring = NumberUtils.map(selectedPalette * (size * 4 + 9), 0, info_width, -info_aspect, info_aspect);
+        float x_end_select_ring = NumberUtils.map(8 + selectedPalette * (size * 4 + 9) + 4 * size, 0, info_width, -info_aspect, info_aspect);
         float y_start_select_ring = NumberUtils.map(size + 5, 0, info_height, 1, -1) + y_offset_from_cpu;
         glColor3f(1, 0, 0);
         glBegin(GL_QUADS);
@@ -640,9 +751,9 @@ public class NEmuS {
         for (int p = 0; p < 8; p++) {
             for (int s = 0; s < 4; s++) {
                 Color color = nes.getPpu().threadSafeGetColorFromPalette(p, s);
-                glColor3f(color.getRed()/255f, color.getGreen()/255f, color.getBlue()/255f);
-                float x_start_palette = NumberUtils.map(4 + p * (size*4 + 9) + s*size, 0, info_width, -info_aspect, info_aspect);
-                float x_end_palette = NumberUtils.map(4 + p * (size*4 + 9) + s*size + size, 0, info_width, -info_aspect, info_aspect);
+                glColor3f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f);
+                float x_start_palette = NumberUtils.map(4 + p * (size * 4 + 9) + s * size, 0, info_width, -info_aspect, info_aspect);
+                float x_end_palette = NumberUtils.map(4 + p * (size * 4 + 9) + s * size + size, 0, info_width, -info_aspect, info_aspect);
                 float y = NumberUtils.map(size, 0, info_height, 1, -1) + y_offset_from_cpu;
                 glBegin(GL_QUADS);
                 glVertex2f(x_start_palette, y);
@@ -655,7 +766,7 @@ public class NEmuS {
 
         // ============================================= Pattern Table 1 ============================================= //
         y_offset_from_cpu -= .055f;
-        glColor3f(1,1,1);
+        glColor3f(1, 1, 1);
         patternTable1_texture.bind();
         float x_end_pattern1 = NumberUtils.map(2 * patternTable1_texture.getWidth(), 0, info_width, -info_aspect, info_aspect);
         float y_end_pattern = NumberUtils.map(2 * patternTable1_texture.getHeight(), 0, info_height, 1, -1) + y_offset_from_cpu;
@@ -672,7 +783,7 @@ public class NEmuS {
 
         // ============================================= Pattern Table 2 ============================================= //
         patternTable2_texture.bind();
-        float x_offset_pattern2 = NumberUtils.map(8, 0, info_width, 0, 2*info_aspect);
+        float x_offset_pattern2 = NumberUtils.map(8, 0, info_width, 0, 2 * info_aspect);
         float x_end_pattern2 = NumberUtils.map(4 * patternTable2_texture.getWidth() + 8, 0, info_width, -info_aspect, info_aspect);
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
@@ -716,11 +827,5 @@ public class NEmuS {
         glTexCoord2f(0, 1);
         glVertex2f(x_start_nametable, y_end_nametable2);
         glEnd();
-    }
-
-
-
-    public static void main(String[] args) {
-        new NEmuS().run();
     }
 }

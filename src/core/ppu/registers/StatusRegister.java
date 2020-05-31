@@ -11,6 +11,7 @@ public class StatusRegister {
 
     /**
      * Load the Register with an 8bit value
+     *
      * @param val the value to set (only the 8lsb are considered)
      */
     public void set(int val) {
@@ -21,6 +22,7 @@ public class StatusRegister {
 
     /**
      * Return the value of the Register as an 8bit value
+     *
      * @return an int with the 8 lsb set accordingly
      */
     public int get() {
@@ -33,6 +35,7 @@ public class StatusRegister {
 
     /**
      * Return whether or not the sprite_overflow bit set
+     *
      * @return is the sprite_overflow bit set
      */
     public boolean isSpriteOverflowSet() {
@@ -41,6 +44,7 @@ public class StatusRegister {
 
     /**
      * Set the sprite_overflow bit high or low
+     *
      * @param sprite_overflow is the sprite_overflow bit high
      */
     public void setSpriteOverflow(boolean sprite_overflow) {
@@ -49,6 +53,7 @@ public class StatusRegister {
 
     /**
      * Return whether or not the sprite_zero_hit bit set
+     *
      * @return is the sprite_zero_hit bit set
      */
     public boolean isSpriteZeroHitSet() {
@@ -57,6 +62,7 @@ public class StatusRegister {
 
     /**
      * Set the sprite_zero_hit bit high or low
+     *
      * @param sprite_zero_hit is the sprite_zero_hit bit high
      */
     public void setSpriteZeroHit(boolean sprite_zero_hit) {
@@ -65,6 +71,7 @@ public class StatusRegister {
 
     /**
      * Return whether or not the vertical_blank bit set
+     *
      * @return is the vertical_blank bit set
      */
     public boolean isVerticalBlankSet() {
@@ -73,6 +80,7 @@ public class StatusRegister {
 
     /**
      * Set the vertical_blank bit high or low
+     *
      * @param vertical_blank is the vertical_blank bit high
      */
     public void setVerticalBlank(boolean vertical_blank) {

@@ -5,17 +5,17 @@ import utils.IntegerWrapper;
 /**
  * This class is an abstraction of the Mapper circuit present on the Cartridge
  */
-public abstract class Mapper {
+abstract class Mapper {
 
-    protected int nPRGBanks;
-    protected int nCHRBanks;
+    final int nPRGBanks;
+    private final int nCHRBanks;
 
     /**
      * Create a new instance of Mapper
      * @param nPRGBanks number of Program ROM Banks
      * @param nCHRBanks number of Character ROM Banks
      */
-    public Mapper(int nPRGBanks, int nCHRBanks) {
+    Mapper(int nPRGBanks, int nCHRBanks) {
         this.nPRGBanks = nPRGBanks;
         this.nCHRBanks = nCHRBanks;
     }

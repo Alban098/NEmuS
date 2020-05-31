@@ -12,16 +12,17 @@ import static org.lwjgl.opengl.GL11.*;
  */
 public class Texture {
 
-    private int id;
-    private int width;
-    private int height;
+    private final int id;
+    private final int width;
+    private final int height;
     private BufferedImage img;
 
     /**
      * Create a Texture of specified size and fill it using a ByteBuffer
-     * @param width the width of the Texture
+     *
+     * @param width  the width of the Texture
      * @param height the height of the Texture
-     * @param buf the buffer containing the pixel values
+     * @param buf    the buffer containing the pixel values
      */
     public Texture(int width, int height, ByteBuffer buf) {
         this.width = width;
@@ -39,6 +40,7 @@ public class Texture {
     /**
      * Create a new Texture from a BufferedImage
      * any modification to the source BufferedImage can be pushed to VRAM using texture.update()
+     *
      * @param image the image to convert into a texture
      */
     public Texture(BufferedImage image) {
@@ -46,17 +48,17 @@ public class Texture {
         this.width = image.getWidth();
         this.height = image.getHeight();
         //Get the pixels
-        int[] pixels = new int[width*height];
+        int[] pixels = new int[width * height];
         image.getRGB(0, 0, width, height, pixels, 0, width);
         //Fill in the Buffer
         ByteBuffer buf = BufferUtils.createByteBuffer(width * height * 4);
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                int pixel = pixels[y*width + x];
-                buf.put((byte)((pixel >> 16) & 0xFF));
-                buf.put((byte)((pixel >> 8) & 0xFF));
-                buf.put((byte)((pixel) & 0xFF));
-                buf.put((byte)((pixel >> 24) & 0xFF));
+                int pixel = pixels[y * width + x];
+                buf.put((byte) ((pixel >> 16) & 0xFF));
+                buf.put((byte) ((pixel >> 8) & 0xFF));
+                buf.put((byte) ((pixel) & 0xFF));
+                buf.put((byte) ((pixel >> 24) & 0xFF));
             }
         }
         buf.flip();
@@ -114,6 +116,7 @@ public class Texture {
     /**
      * Return the Texture as a BufferedImage
      * if it was created using one
+     *
      * @return The texture as a BufferedImage or null
      */
     public BufferedImage getImg() {
@@ -122,6 +125,7 @@ public class Texture {
 
     /**
      * Get the width of the texture
+     *
      * @return the texture's width
      */
     public int getWidth() {
@@ -130,6 +134,7 @@ public class Texture {
 
     /**
      * Get the height of the texture
+     *
      * @return the texture's height
      */
     public int getHeight() {
@@ -138,6 +143,7 @@ public class Texture {
 
     /**
      * Load a byte buffer in the texture
+     *
      * @param buf the buffer to load
      */
     public void load(ByteBuffer buf) {

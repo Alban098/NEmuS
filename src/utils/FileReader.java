@@ -24,19 +24,21 @@ public class FileReader {
 
     /**
      * Read the next byte of the file
+     *
      * @return the next byte of the file
      */
-    public int nextByte() {
-        return file[currentIndex++] & 0x00FF;
+    public byte nextByte() {
+        return file[currentIndex++];
     }
 
     /**
      * Read the X next bytes of the file
+     *
      * @param size the number of bytes to read
      * @return an array of int containing the bytes
      */
-    public int[] readBytes(int size) {
-        int[] buf = new int[size];
+    public byte[] readBytes(int size) {
+        byte[] buf = new byte[size];
         for (int i = 0; i < size; i++)
             buf[i] = nextByte();
         return buf;

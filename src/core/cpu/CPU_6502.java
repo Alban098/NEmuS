@@ -12,26 +12,21 @@ import java.util.TreeMap;
  */
 public class CPU_6502 {
 
+    private final List<Instruction> opcodes;
     private Bus bus;
-
-    private int a = 0x00;
-    private int x = 0x00;
-    private int y = 0x00;
-    private int stkp = 0x00;
-    private int status = 0x00;
+    private short a = 0x00;
+    private short x = 0x00;
+    private short y = 0x00;
+    private short stkp = 0x00;
+    private short status = 0x00;
     private int pc = 0x0000;
-    
-    private int tmp = 0x0000;
-
-    private int fetched = 0x00;
-    private int opcode = 0x00;
+    private short tmp = 0x0000;
+    private short fetched = 0x00;
+    private short opcode = 0x00;
     private int cycles = 0x00;
     private int addr_abs = 0x0000;
     private int addr_rel = 0x0000;
-
     private long cpu_clock = 0L;
-
-    private List<Instruction> opcodes;
 
     /**
      * Create a new CPU and populate the opcode list
@@ -299,6 +294,7 @@ public class CPU_6502 {
 
     /**
      * Connect the CPU to a Bus
+     *
      * @param bus the Bus to connect to
      */
     public void connectBus(Bus bus) {
@@ -307,23 +303,26 @@ public class CPU_6502 {
 
     /**
      * Write to an address in the addressable range
+     *
      * @param addr the address to write to
      */
-    private void write(int addr, int data) {
+    private void write(int addr, short data) {
         bus.cpuWrite(addr, data);
     }
 
     /**
      * Read from an address in the addressable range
+     *
      * @param addr the address to read from
      * @return the read data
      */
-    private int read(int addr) {
+    private short read(int addr) {
         return bus.cpuRead(addr, false);
     }
 
     /**
      * Get a Flag value
+     *
      * @param flag the Flag to get
      * @return is the Flag set to 1
      */
@@ -333,7 +332,8 @@ public class CPU_6502 {
 
     /**
      * Set a Flag to 0 or 1
-     * @param flag The Flag to set
+     *
+     * @param flag  The Flag to set
      * @param value should the Flag be set 1
      */
     private void setFlag(Flags flag, boolean value) {
@@ -348,10 +348,11 @@ public class CPU_6502 {
     /**
      * Implied Addressing
      * Their is not data to fetch, the instruction will use the Accumulator as input
+     *
      * @return 0 No extra cycle required
      */
     private int imp() {
-        fetched = a & 0x00FF;
+        fetched = (short) (a & 0x00FF);
         return 0;
     }
 
@@ -360,13 +361,14 @@ public class CPU_6502 {
      * The value following the OPCode is considered as an offset
      * this offset is used to index the 0th page
      * Example : Passed value      : 0x12
-     *           Effective address : 0x0012
+     * Effective address : 0x0012
+     *
      * @return 0 No extra cycle required
      */
     private int zp0() {
         addr_abs = read(pc);
         addr_abs &= 0x00FF;
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         return 0;
     }
 
@@ -376,28 +378,30 @@ public class CPU_6502 {
      * the content of the Y Register is added to that offset
      * this offset is used to index the 0th page
      * Example : Passed value      : 0x12
-     *           Y Register        : 0xD
-     *           Effective address : 0x00E2
+     * Y Register        : 0xD
+     * Effective address : 0x00E2
+     *
      * @return 0 No extra cycle required
      */
     private int zpy() {
         addr_abs = read(pc) + (y & 0x00FF);
         addr_abs &= 0x00FF;
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         return 0;
     }
 
     /**
      * Absolute Addressing
      * The address is read as the following 16bit
+     *
      * @return 0 No extra cycle required
      */
     private int abs() {
         int low = read(pc);
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         int high = read(pc);
-        pc = (pc+1) & 0xFFFF;
-        addr_abs =  (high << 8) | low;
+        pc = (pc + 1) & 0xFFFF;
+        addr_abs = (high << 8) | low;
         return 0;
     }
 
@@ -405,13 +409,14 @@ public class CPU_6502 {
      * Absolute Addressing with Y Offset
      * The Address is read as the following 16bit
      * the Y Register is then adder to that Address
+     *
      * @return 1 if a page Boundary is crossed when adding Y Register, 0 otherwise
      */
     private int aby() {
         int low = read(pc);
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         int high = read(pc);
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         addr_abs = (high << 8 | low) & 0xFFFF;
         addr_abs += y & 0x00FF;
         addr_abs &= 0xFFFF;
@@ -426,19 +431,20 @@ public class CPU_6502 {
      * The X Register is then added to that address
      * We then load a 16bit value from that offset address (8 LSB read followed by 8 MSB)
      * Example : Passed address      : 0xD8
-     *           value in X Register : 0x10
-     *           0th page address    : 0x00E8
-     *           value at 0x00E8     : 0x12
-     *           value at 0x00E9     : 0x23
-     *           effective address   : 0x2312
+     * value in X Register : 0x10
+     * 0th page address    : 0x00E8
+     * value at 0x00E8     : 0x12
+     * value at 0x00E9     : 0x23
+     * effective address   : 0x2312
+     *
      * @return 0 No extra cycle required
      */
     private int izx() {
         int ptr = read(pc);
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         int low = read((ptr + x) & 0x00FF);
         int high = read((ptr + x + 1) & 0x00FF);
-        addr_abs =  (high << 8) | low;
+        addr_abs = (high << 8) | low;
         return 0;
     }
 
@@ -446,11 +452,12 @@ public class CPU_6502 {
      * Immediate Addressing
      * The value following the OPCode is the value searched
      * the effective address is then the Program Counter
+     *
      * @return 0 No extra cycle required
      */
     private int imm() {
         addr_abs = pc;
-        pc =(pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         return 0;
     }
 
@@ -460,14 +467,15 @@ public class CPU_6502 {
      * the content of the X Register is added to that offset
      * this offset is used to index the 0th page
      * Example : Passed value      : 0x12
-     *           X Register        : 0xD
-     *           Effective address : 0x00E2
+     * X Register        : 0xD
+     * Effective address : 0x00E2
+     *
      * @return 0 No extra cycle required
      */
     private int zpx() {
-        addr_abs =  (read(pc) + (x & 0x00FF));
+        addr_abs = (read(pc) + (x & 0x00FF));
         addr_abs &= 0x00FF;
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         return 0;
     }
 
@@ -475,11 +483,12 @@ public class CPU_6502 {
      * Relative Addressing (Exclusive to Branching instruction)
      * The value following the OPCode is considered as a signed 8bit value
      * that value is then added (as signed) to the current address
+     *
      * @return 0 No extra cycle required
      */
     private int rel() {
         addr_rel = read(pc);
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         if ((addr_rel & 0x80) != 0x0000)
             addr_rel |= 0xFFFFFF00;
         return 0;
@@ -489,14 +498,15 @@ public class CPU_6502 {
      * Absolute Addressing with X Offset
      * The address is read as the following 16bit
      * the X Register is then adder to that Address
+     *
      * @return 1 if a page boundary is crossed when adding X Register, 0 otherwise
      */
     private int abx() {
         int low = read(pc);
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         int high = read(pc);
-        pc = (pc+1) & 0xFFFF;
-        addr_abs =  ((high << 8) | low) + (x & 0x00FF);
+        pc = (pc + 1) & 0xFFFF;
+        addr_abs = ((high << 8) | low) + (x & 0x00FF);
         if ((addr_abs & 0xFF00) != (high << 8))
             return 1;
         return 0;
@@ -506,29 +516,30 @@ public class CPU_6502 {
      * Indirect Addressing
      * an address is read from the 16bit following the OPCode (8 LSB then 8 MSB)
      * We then read the Address at that location (8 LSB followed by 8 MSB)
-     *
+     * <p>
      * This Addressing mode contains a bug in real hardware
      * If the address following the OPCode has the 8 LSB equals to 0xFF
      * then when reading the effective address the page boundary isn't crossed
      * it then read the first address of the same page
-     *
+     * <p>
      * Examples : Passed addresses  : 0x1FF3     0x1DFF
-     *            value at 0x1FF3   : 0x12
-     *            value at 0x1FF4   : 0x23
-     *            value at 0x1DFF   : 0x32
-     *            value at 0x1D00   : 0xA1
-     *            effective address : 0x2312     0xA132  *The 8 MSB are read from 0x1D00 instead of 1E00
+     * value at 0x1FF3   : 0x12
+     * value at 0x1FF4   : 0x23
+     * value at 0x1DFF   : 0x32
+     * value at 0x1D00   : 0xA1
+     * effective address : 0x2312     0xA132  *The 8 MSB are read from 0x1D00 instead of 1E00
+     *
      * @return 0 No extra cycle required (because no page boundary cross can occur)
      */
     private int ind() {
         int low = read(pc);
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         int high = read(pc);
-        pc = (pc+1) & 0xFFFF;
-        int ptr =  (high << 8) | low;
+        pc = (pc + 1) & 0xFFFF;
+        int ptr = (high << 8) | low;
 
         if (low == 0xFF) //Page Boundary bug
-            addr_abs =  (read((ptr & 0xFF00) << 8)) | read(ptr);
+            addr_abs = (read((ptr & 0xFF00) << 8)) | read(ptr);
         else
             addr_abs = (read(ptr + 1) << 8) | read(ptr);
         return 0;
@@ -540,21 +551,22 @@ public class CPU_6502 {
      * We then load a 16bit value from that address (8 LSB followed by 8 MSB)
      * The Y Register is then added to get the final address
      * Example : Passed address      : 0xF8
-     *           0th page address    : 0x00F8
-     *           value at 0x00F8     : 0x12
-     *           value at 0x00F9     : 0x23
-     *           value in Y Register : 0x10
-     *           read Address        : 0x2312
-     *           effective address   : 0x2322
+     * 0th page address    : 0x00F8
+     * value at 0x00F8     : 0x12
+     * value at 0x00F9     : 0x23
+     * value in Y Register : 0x10
+     * read Address        : 0x2312
+     * effective address   : 0x2322
+     *
      * @return 1 If when adding Y we cross a page boundary 0 otherwise
      */
     private int izy() {
         int ptr = read(pc);
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
 
         int low = read(ptr & 0x00FF) & 0x00FF;
-        int high = read((ptr  + 1) & 0x00FF) & 0x00FF;
-        addr_abs = ((high << 8) | low ) & 0xFFFF;
+        int high = read((ptr + 1) & 0x00FF) & 0x00FF;
+        addr_abs = ((high << 8) | low) & 0xFFFF;
         addr_abs += y & 0x00FF;
         addr_abs &= 0xFFFF;
         if ((addr_abs & 0xFF00) != (high << 8))
@@ -564,24 +576,26 @@ public class CPU_6502 {
 
 
     // ================================================ Opcodes ================================================
+
     /**
      * Add the fetched value to the Accumulator
      * C Flag set if Accumulator + Fetched > 0xFF
      * Z Flag set if the final Accumulator = 0
      * N Flag set if the final Accumulator has MSB set
      * V Flag set if (When considering data as signed) :
-     *      Positive + Positive = Negative (MSB set)
-     *      Negative + Negative = Positive (MSB not set)
+     * Positive + Positive = Negative (MSB set)
+     * Negative + Negative = Positive (MSB not set)
+     *
      * @return 1 An extra cycle can be required depending on the addressing mode
      */
     private int adc() {
         fetch();
-        tmp =  (a + fetched + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF;
+        tmp = (short) ((a + fetched + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF);
         setFlag(Flags.C, tmp > 0x00FF);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
         setFlag(Flags.V, ((~(a ^ fetched) & (a ^ tmp)) & 0x0080) == 0x0080);
-        a =  (tmp & 0x00FF);
+        a = (short) (tmp & 0x00FF);
         return 1;
     }
 
@@ -590,11 +604,12 @@ public class CPU_6502 {
      * stores it into the Accumulator
      * Z Flag set if Accumulator = 0
      * N Flag set if Accumulator has MSB set
+     *
      * @return 1 Extra cycle may be required
      */
     private int and() {
         fetch();
-        a =  (a & fetched) & 0x00FF;
+        a = (short) ((a & fetched) & 0x00FF);
         setFlag(Flags.Z, a == 0x00);
         setFlag(Flags.N, (a & 0x80) != 0x00);
         return 1;
@@ -605,24 +620,26 @@ public class CPU_6502 {
      * C Flag set if Fetched data has MSB set
      * Z Flag set if Computed data = 0
      * N Flag set if Computed data has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int asl() {
         fetch();
-        tmp =  (fetched << 1) & 0x01FF;
+        tmp = (short) ((fetched << 1) & 0x01FF);
         setFlag(Flags.C, (tmp & 0xFF00) > 0);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
         if (opcodes.get(opcode).addr_mode.equals("IMP"))
-            a =  (tmp & 0x00FF);
+            a = (short) (tmp & 0x00FF);
         else
-            write(addr_abs,  (tmp & 0x00FF));
+            write(addr_abs, (short) (tmp & 0xFF));
         return 0;
     }
 
     /**
      * Branch on Carry Clear
      * Jump to Fetched Address if C Flag isn't set
+     *
      * @return 0 No extra cycle required
      */
     private int bcc() {
@@ -639,6 +656,7 @@ public class CPU_6502 {
     /**
      * Branch on Carry Set
      * Jump to Fetched Address if C Flag is set
+     *
      * @return 0 No extra cycle required
      */
     private int bcs() {
@@ -655,6 +673,7 @@ public class CPU_6502 {
     /**
      * Branch on Equal
      * Jump to Fetched Address if Z Flag is set
+     *
      * @return 0 No extra cycle required
      */
     private int beq() {
@@ -669,15 +688,16 @@ public class CPU_6502 {
     }
 
     /**
-     * Do a Bit test between the Accumulator and the Fetched data
+     * Do a Bit test.state between the Accumulator and the Fetched data
      * Z Flag set if the Accumulator and the Fetched data have no common bits
      * N Flag set if Fetched data has 7th bit set
      * V Flag set if Fetched data has 6th bit set
+     *
      * @return 0 No extra cycle required
      */
     private int bit() {
         fetch();
-        tmp =  (a & fetched) & 0x00FF;
+        tmp = (short) ((a & fetched) & 0x00FF);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (fetched & (1 << 7)) == (1 << 7));
         setFlag(Flags.V, (fetched & (1 << 6)) == (1 << 6));
@@ -687,6 +707,7 @@ public class CPU_6502 {
     /**
      * Branch on Negative
      * Jump to Fetched Address if N Flag is set
+     *
      * @return 0 No extra cycle required
      */
     private int bmi() {
@@ -703,10 +724,11 @@ public class CPU_6502 {
     /**
      * Branch on Not Equal
      * Jump to Fetched Address if Z Flag isn't set
+     *
      * @return 0 No extra cycle required
      */
     private int bne() {
-         if (!getFlag(Flags.Z)) {
+        if (!getFlag(Flags.Z)) {
             cycles++;
             addr_abs = pc + addr_rel;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
@@ -719,6 +741,7 @@ public class CPU_6502 {
     /**
      * Branch on Positive
      * Jump to Fetched Address if N Flag isn't set
+     *
      * @return 0 No extra cycle required
      */
     private int bpl() {
@@ -736,26 +759,28 @@ public class CPU_6502 {
      * Fire an Interrupt
      * Push the Program Counter and Status Register (Set the B Flag before) to the Stack
      * Jump to the Address Specified at Location 0xFFFF and 0xFFFE
+     *
      * @return 0 No extra cycle required
      */
     private int brk() {
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         setFlag(Flags.I, true);
-        write(0x0100 + stkp,  ((pc >> 8) & 0x00FF));
-        stkp = (stkp-1) & 0x00FF;
-        write(0x0100 + stkp,  (pc & 0x00FF));
-        stkp = (stkp-1) & 0x00FF;
+        write(0x0100 + stkp, (short) ((pc >> 8) & 0xFF));
+        stkp = (short) ((stkp - 1) & 0x00FF);
+        write(0x0100 + stkp, (short) (pc & 0xFF));
+        stkp = (short) ((stkp - 1) & 0x00FF);
         setFlag(Flags.B, true);
         write(0x0100 + stkp, status);
-        stkp = (stkp-1) & 0x00FF;
+        stkp = (short) ((stkp - 1) & 0x00FF);
         setFlag(Flags.B, false);
-        pc = read(0xFFFE) | (read(0xFFFF)<< 8);
+        pc = read(0xFFFE) | (read(0xFFFF) << 8);
         return 0;
     }
 
     /**
      * Branch on Not Overflow
      * Jump to Fetched Address if V Flag isn't set
+     *
      * @return 0 No extra cycle required
      */
     private int bvc() {
@@ -772,6 +797,7 @@ public class CPU_6502 {
     /**
      * Branch on Overflow
      * Jump to Fetched Address if V Flag is set
+     *
      * @return 0 No extra cycle required
      */
     private int bvs() {
@@ -788,6 +814,7 @@ public class CPU_6502 {
     /**
      * Set the Carry Flag of the Status Register to 0
      * C Flag not set
+     *
      * @return 0 No extra cycle required
      */
     private int clc() {
@@ -798,6 +825,7 @@ public class CPU_6502 {
     /**
      * Set the Decimal Flag of the Status Register to 0
      * D Flag not set
+     *
      * @return 0 No extra cycle required
      */
     private int cld() {
@@ -808,6 +836,7 @@ public class CPU_6502 {
     /**
      * Set the Interrupt Flag of the Status Register to 0
      * I Flag not set
+     *
      * @return 0 No extra cycle required
      */
     private int cli() {
@@ -818,6 +847,7 @@ public class CPU_6502 {
     /**
      * Set the Overflow Flag of the Status Register to 0
      * V Flag not set
+     *
      * @return 0 No extra cycle required
      */
     private int clv() {
@@ -830,11 +860,12 @@ public class CPU_6502 {
      * C Flag set if Accumulator > Fetched data
      * Z Flag set if Accumulator = Fetched data
      * N Flag set if Accumulator < Fetched data
+     *
      * @return 0 No extra cycle required
      */
     private int cmp() {
         fetch();
-        tmp =  (a + (fetched ^ 0x00FF) + 1) & 0x00FF;
+        tmp = (short) ((a + (fetched ^ 0x00FF) + 1) & 0x00FF);
         setFlag(Flags.C, a >= fetched);
         setFlag(Flags.Z, (a & 0xFF) == (fetched & 0xFF));
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -846,11 +877,12 @@ public class CPU_6502 {
      * C Flag set if X Register > Fetched data
      * Z Flag set if X Register = Fetched data
      * N Flag set if X Register < Fetched data
+     *
      * @return 0 No extra cycle required
      */
     private int cpx() {
         fetch();
-        tmp =  (x + (fetched ^ 0x00FF) + 1) & 0x00FF;
+        tmp = (short) ((x + (fetched ^ 0x00FF) + 1) & 0x00FF);
         setFlag(Flags.C, x >= fetched);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -862,11 +894,12 @@ public class CPU_6502 {
      * C Flag set if Y Register > Fetched data
      * Z Flag set if Y Register = Fetched data
      * N Flag set if Y Register < Fetched data
+     *
      * @return 0 No extra cycle required
      */
     private int cpy() {
         fetch();
-        tmp =  (y + (fetched ^ 0x00FF) + 1) & 0x00FF;
+        tmp = (short) ((y + (fetched ^ 0x00FF) + 1) & 0x00FF);
         setFlag(Flags.C, y >= fetched);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
@@ -878,12 +911,13 @@ public class CPU_6502 {
      * If Accumulator = 0x00 => wrap to 0xFF
      * Z Flag set if Accumulator = 0
      * N Flag set if Accumulator has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int dec() {
         fetch();
-        tmp =  (fetched - 1) & 0x00FF;
-        write(addr_abs,  (tmp & 0x00FF));
+        tmp = (short) ((fetched - 1) & 0x00FF);
+        write(addr_abs, (short) (tmp & 0x00FF));
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
         return 0;
@@ -894,10 +928,11 @@ public class CPU_6502 {
      * If X Register = 0x00 => wrap to 0xFF
      * Z Flag set if X Register = 0
      * N Flag set if X Register has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int dex() {
-        x = (x-1) & 0x00FF;
+        x = (short) ((x - 1) & 0x00FF);
         setFlag(Flags.Z, (x & 0x00FF) == 0x0000);
         setFlag(Flags.N, (x & 0x0080) == 0x0080);
         return 0;
@@ -908,10 +943,11 @@ public class CPU_6502 {
      * If Y Register = 0x00 => wrap to 0xFF
      * Z Flag set if Y Register = 0
      * N Flag set if Y Register has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int dey() {
-        y = (y-1) & 0x00FF;
+        y = (short) ((y - 1) & 0x00FF);
         setFlag(Flags.Z, (y & 0x00FF) == 0x0000);
         setFlag(Flags.N, (y & 0x0080) == 0x0080);
         return 0;
@@ -922,11 +958,12 @@ public class CPU_6502 {
      * stores it into the Accumulator
      * Z Flag set if Accumulator = 0
      * N Flag set if Accumulator has MSB set
+     *
      * @return 1 Extra cycle may be required
      */
     private int eor() {
         fetch();
-        a =  (a ^ fetched) & 0x00FF;
+        a = (short) ((a ^ fetched) & 0x00FF);
         setFlag(Flags.Z, (a & 0x00FF) == 0x0000);
         setFlag(Flags.N, (a & 0x0080) == 0x0080);
         return 1;
@@ -937,12 +974,13 @@ public class CPU_6502 {
      * If Accumulator = 0xFF => wrap to 0x00
      * Z Flag set if Accumulator = 0
      * N Flag set if Accumulator has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int inc() {
         fetch();
-        tmp =  (fetched + 1) & 0x00FF;
-        write(addr_abs,  (tmp & 0x00FF));
+        tmp = (short) ((fetched + 1) & 0x00FF);
+        write(addr_abs, (short) (tmp & 0x00FF));
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
         return 0;
@@ -953,10 +991,11 @@ public class CPU_6502 {
      * If X Register = 0xFF => wrap to 0x00
      * Z Flag set if X Register = 0
      * N Flag set if X Register has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int inx() {
-        x = (x+1) & 0x00FF;
+        x = (short) ((x + 1) & 0x00FF);
         setFlag(Flags.Z, (x & 0x00FF) == 0x0000);
         setFlag(Flags.N, (x & 0x0080) == 0x0080);
         return 0;
@@ -967,10 +1006,11 @@ public class CPU_6502 {
      * If Y Register = 0xFF => wrap to 0x00
      * Z Flag set if Y Register = 0
      * N Flag set if Y Register has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int iny() {
-        y = (y+1) & 0x00FF;
+        y = (short) ((y + 1) & 0x00FF);
         setFlag(Flags.Z, (y & 0x00FF) == 0x0000);
         setFlag(Flags.N, (y & 0x0080) == 0x0080);
         return 0;
@@ -979,6 +1019,7 @@ public class CPU_6502 {
     /**
      * Jump to Fetched Address
      * No Flag Update
+     *
      * @return 0 No extra cycle required
      */
     private int jmp() {
@@ -990,14 +1031,15 @@ public class CPU_6502 {
      * Jump to Subroutine
      * Push Program Counter to the Stack and Jump to Fetched Address
      * No Flag Update
+     *
      * @return 0 No extra cycle required
      */
     private int jsr() {
-        pc = (pc-1) & 0xFFFF;
-        write(0x0100 + stkp,  ((pc >> 8) & 0x00FF));
-        stkp = (stkp-1) & 0x00FF;
-        write(0x0100 + stkp,  (pc & 0x00FF));
-        stkp = (stkp-1) & 0x00FF;
+        pc = (pc - 1) & 0xFFFF;
+        write(0x0100 + stkp, (short) ((pc >> 8) & 0x00FF));
+        stkp = (short) ((stkp - 1) & 0x00FF);
+        write(0x0100 + stkp, (short) (pc & 0x00FF));
+        stkp = (short) ((stkp - 1) & 0x00FF);
         pc = addr_abs & 0xFFFF;
         return 0;
     }
@@ -1006,11 +1048,12 @@ public class CPU_6502 {
      * Store the Fetched data into the Accumulator
      * Z Flag set if Accumulator = 0
      * N Flag set if Accumulator has MSB set
+     *
      * @return 1 Extra cycle may be required depending on the addressing mode
      */
     private int lda() {
         fetch();
-        a = fetched & 0x00FF;
+        a = (short) (fetched & 0x00FF);
         setFlag(Flags.Z, (a & 0x00FF) == 0x0000);
         setFlag(Flags.N, (a & 0x0080) == 0x0080);
         return 1;
@@ -1020,11 +1063,12 @@ public class CPU_6502 {
      * Store the Fetched data into the X Register
      * Z Flag set if X Register = 0
      * N Flag set if X Register has MSB set
+     *
      * @return 1 Extra cycle may be required depending on the addressing mode
      */
     private int ldx() {
         fetch();
-        x = fetched & 0x00FF;
+        x = (short) (fetched & 0x00FF);
         setFlag(Flags.Z, (x & 0x00FF) == 0x0000);
         setFlag(Flags.N, (x & 0x0080) == 0x0080);
         return 1;
@@ -1034,11 +1078,12 @@ public class CPU_6502 {
      * Store the Fetched data into the Y Register
      * Z Flag set if Y Register = 0
      * N Flag set if Y Register has MSB set
+     *
      * @return 1 Extra cycle may be required depending on the addressing mode
      */
     private int ldy() {
         fetch();
-        y = fetched & 0x00FF;
+        y = (short) (fetched & 0x00FF);
         setFlag(Flags.Z, (y & 0x00FF) == 0x0000);
         setFlag(Flags.N, (y & 0x0080) == 0x0080);
         return 1;
@@ -1048,27 +1093,29 @@ public class CPU_6502 {
      * Shift Right the Fetched data and store it depending on the addressing mode
      * Z Flag set if Computed data = 0
      * N Flag set if Computed data has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int lsr() {
         fetch();
         setFlag(Flags.C, (fetched & 0x0001) == 0x0001);
-        tmp =  (fetched >> 1);
+        tmp = (short) (fetched >> 1);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
         if (opcodes.get(opcode).addr_mode.equals("IMP"))
-            a =  (tmp & 0x00FF);
+            a = (short) (tmp & 0x00FF);
         else
-            write(addr_abs,  (tmp & 0x00FF));
+            write(addr_abs, (short) (tmp & 0x00FF));
         return 0;
     }
 
     /**
      * Do nothing
+     *
      * @return 1 if OPCode in { 0x1C; Ox3C; 0x5C, 0x7C, 0xDC, 0xFC} 0 otherwise
      */
     private int nop() {
-        switch(opcode) {
+        switch (opcode) {
             case 0x1C:
             case 0x3C:
             case 0x5C:
@@ -1085,11 +1132,12 @@ public class CPU_6502 {
      * stores it into the Accumulator
      * Z Flag set if Accumulator = 0
      * N Flag set if Accumulator has MSB set
+     *
      * @return 1 Extra cycle may be required
      */
     private int ora() {
         fetch();
-        a =  (a | fetched) & 0x00FF;
+        a = (short) ((a | fetched) & 0x00FF);
         setFlag(Flags.Z, a == 0x00);
         setFlag(Flags.N, (a & 0x0080) == 0x0080);
         return 1;
@@ -1098,11 +1146,12 @@ public class CPU_6502 {
     /**
      * Push the Accumulator to the Stack
      * No Flag Update
+     *
      * @return 0 No extra cycle required
      */
     private int pha() {
-        write(0x0100 + (stkp & 0x00FF), a & 0x00FF);
-        stkp = (stkp-1) & 0x00FF;
+        write(0x0100 + (stkp & 0x00FF), (short) (a & 0x00FF));
+        stkp = (short) ((stkp - 1) & 0x00FF);
         return 0;
     }
 
@@ -1110,13 +1159,14 @@ public class CPU_6502 {
      * Push the Status Register to the Stack
      * B Flag set
      * U Flag set
+     *
      * @return 0 No extra cycle required
      */
     private int php() {
-        write(0x0100 + (stkp & 0x00FF),  ((status | Flags.U.value | Flags.B.value) & 0x00FF));
+        write(0x0100 + (stkp & 0x00FF), (short) ((status | Flags.U.value | Flags.B.value) & 0x00FF));
         setFlag(Flags.B, false);
         setFlag(Flags.U, false);
-        stkp = (stkp-1) & 0x00FF;
+        stkp = (short) ((stkp - 1) & 0x00FF);
         return 0;
     }
 
@@ -1124,10 +1174,11 @@ public class CPU_6502 {
      * Pool the Accumulator from the Stack
      * Z Flag set if Accumulator = 0
      * N Flag set if Accumulator has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int pla() {
-        stkp = (stkp+1) & 0x00FF;
+        stkp = (short) ((stkp + 1) & 0x00FF);
         a = read(0x0100 + stkp);
         setFlag(Flags.Z, a == 0x00);
         setFlag(Flags.N, (a & 0x80) != 0x00);
@@ -1138,10 +1189,11 @@ public class CPU_6502 {
      * Pool the Status Register from the Stack
      * U Flag set
      * All Flags set to the pulled Status Register value
+     *
      * @return 0 No extra cycle required
      */
     private int plp() {
-        stkp = (stkp+1) & 0x00FF;
+        stkp = (short) ((stkp + 1) & 0x00FF);
         status = read(0x0100 + stkp);
         setFlag(Flags.U, true);
         return 0;
@@ -1153,18 +1205,19 @@ public class CPU_6502 {
      * C Flag set if Fetched has MSB set
      * Z Flag set if Accumulator = 0
      * N Flag set if Accumulator has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int rol() {
         fetch();
-        tmp =  ((getFlag(Flags.C) ? 1 : 0) | fetched << 1);
+        tmp = (short) ((getFlag(Flags.C) ? 1 : 0) | fetched << 1);
         setFlag(Flags.C, (tmp & 0xFF00) != 0x0000);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x00);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
         if (opcodes.get(opcode).addr_mode.equals("IMP"))
-            a =  (tmp & 0x00FF);
+            a = (short) (tmp & 0x00FF);
         else
-            write(addr_abs,  (tmp & 0x00FF));
+            write(addr_abs, (short) (tmp & 0x00FF));
         return 0;
     }
 
@@ -1174,18 +1227,19 @@ public class CPU_6502 {
      * C Flag set if Fetched has LSB set
      * Z Flag set if Accumulator = 0
      * N Flag set if Accumulator has MSB set (if C Flag was set)
+     *
      * @return 0 No extra cycle required
      */
     private int ror() {
         fetch();
-        tmp =  ((getFlag(Flags.C) ? 1 << 7 : 0) | fetched >> 1);
+        tmp = (short) ((getFlag(Flags.C) ? 1 << 7 : 0) | fetched >> 1);
         setFlag(Flags.C, (fetched & 0x01) == 0x01);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0x00);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
         if (opcodes.get(opcode).addr_mode.equals("IMP"))
-            a =  (tmp & 0x00FF);
+            a = (short) (tmp & 0x00FF);
         else
-            write(addr_abs,  (tmp & 0x00FF));
+            write(addr_abs, (short) (tmp & 0x00FF));
         return 0;
     }
 
@@ -1194,17 +1248,17 @@ public class CPU_6502 {
      * B Flag unset
      * U Flag unset
      * All Flags set to the pulled Status Register value
+     *
      * @return 0 No extra cycle required
      */
     private int rti() {
-        stkp = (stkp+1) & 0x00FF;
+        stkp = (short) ((stkp + 1) & 0x00FF);
         status = read(0x0100 + stkp);
         status &= ~Flags.B.value;
         status &= ~Flags.U.value;
-
-        stkp = (stkp+1) & 0x00FF;
+        stkp = (short) ((stkp + 1) & 0x00FF);
         pc = read(0x0100 + stkp);
-        stkp = (stkp+1) & 0x00FF;
+        stkp = (short) ((stkp + 1) & 0x00FF);
         pc |= read(0x0100 + stkp) << 8;
         return 0;
     }
@@ -1212,14 +1266,15 @@ public class CPU_6502 {
     /**
      * Return from Subroutine by pulling the Program Counter from the Stack
      * No Flag Update
+     *
      * @return 0 No extra cycle required
      */
     private int rts() {
-        stkp = (stkp+1) & 0x00FF;
+        stkp = (short) ((stkp + 1) & 0x00FF);
         pc = read(0x0100 + stkp);
-        stkp = (stkp+1) & 0x00FF;
+        stkp = (short) ((stkp + 1) & 0x00FF);
         pc |= read(0x0100 + stkp) << 8;
-        pc = (pc+1) & 0xFFFF;
+        pc = (pc + 1) & 0xFFFF;
         return 0;
     }
 
@@ -1229,24 +1284,26 @@ public class CPU_6502 {
      * Z Flag set if Accumulator = Fetched
      * N Flag set if the final Accumulator has MSB set
      * V Flag set the same way as ADC
+     *
      * @return 1 An extra cycle can be required depending on the addressing mode
      */
     private int sbc() {
         fetch();
-        int value =  (fetched ^ 0x00FF);
+        int value = (fetched ^ 0x00FF);
 
-        tmp =  (a + value + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF;
+        tmp = (short) ((a + value + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF);
         setFlag(Flags.C, tmp > 0x00FF);
         setFlag(Flags.Z, (tmp & 0x00FF) == 0);
         setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
         setFlag(Flags.V, ((tmp ^ a) & (tmp ^ value) & 0x0080) == 0x0080);
-        a =  (tmp & 0x00FF);
+        a = (short) (tmp & 0x00FF);
         return 1;
     }
 
     /**
      * Set the Carry Flag of the Status Register to 1
      * C Flag set
+     *
      * @return 0 No extra cycle required
      */
     private int sec() {
@@ -1257,6 +1314,7 @@ public class CPU_6502 {
     /**
      * Set the Decimal Flag of the Status Register to 1
      * D Flag set
+     *
      * @return 0 No extra cycle required
      */
     private int sed() {
@@ -1267,6 +1325,7 @@ public class CPU_6502 {
     /**
      * Set the Interrupt Flag of the Status Register to 1
      * I Flag set
+     *
      * @return 0 No extra cycle required
      */
     private int sei() {
@@ -1277,30 +1336,33 @@ public class CPU_6502 {
     /**
      * Store the Accumulator to the fetched Address
      * No Flag Update
+     *
      * @return 0 No extra cycle required
      */
     private int sta() {
-        write(addr_abs, a & 0x00FF);
+        write(addr_abs, (short) (a & 0x00FF));
         return 0;
     }
 
     /**
      * Store the X Register to the fetched Address
      * No Flag Update
+     *
      * @return 0 No extra cycle required
      */
     private int stx() {
-        write(addr_abs, x & 0x00FF);
+        write(addr_abs, (short) (x & 0x00FF));
         return 0;
     }
 
     /**
      * Store the Y Register to the fetched Address
      * No Flag Update
+     *
      * @return 0 No extra cycle required
      */
     private int sty() {
-        write(addr_abs, y & 0x00FF);
+        write(addr_abs, (short) (y & 0x00FF));
         return 0;
     }
 
@@ -1308,10 +1370,11 @@ public class CPU_6502 {
      * Copy the Accumulator to the X Register
      * Z Flag set if X Register = 0
      * N Flag set if X Register has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int tax() {
-        x = a & 0x00FF;
+        x = (short) (a & 0x00FF);
         setFlag(Flags.Z, x == 0x00);
         setFlag(Flags.N, (x & 0x80) != 0x00);
         return 0;
@@ -1321,10 +1384,11 @@ public class CPU_6502 {
      * Copy the Accumulator to the Y Register
      * Z Flag set if y Register = 0
      * N Flag set if Y Register has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int tay() {
-        y = a  & 0x00FF;
+        y = (short) (a & 0x00FF);
         setFlag(Flags.Z, y == 0x00);
         setFlag(Flags.N, (y & 0x80) != 0x00);
         return 0;
@@ -1334,10 +1398,11 @@ public class CPU_6502 {
      * Copy the Stack Pointer to the X Register
      * Z Flag set if X Register = 0
      * N Flag set if X Register has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int tsx() {
-        x = stkp & 0x00FF;
+        x = (short) (stkp & 0x00FF);
         setFlag(Flags.Z, x == 0x00);
         setFlag(Flags.N, (x & 0x80) != 0x00);
         return 0;
@@ -1347,10 +1412,11 @@ public class CPU_6502 {
      * Copy the X Register to the Accumulator
      * Z Flag set if Accumulator = 0
      * N Flag set if Accumulator has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int txa() {
-        a = x & 0x00FF;
+        a = (short) (x & 0x00FF);
         setFlag(Flags.Z, a == 0x00);
         setFlag(Flags.N, (a & 0x80) != 0x00);
         return 0;
@@ -1359,10 +1425,11 @@ public class CPU_6502 {
     /**
      * Copy the X Register to the Stack Pointer
      * No Flag Update
+     *
      * @return 0 No extra cycle required
      */
     private int txs() {
-        stkp = x & 0x00FF;
+        stkp = (short) (x & 0x00FF);
         return 0;
     }
 
@@ -1370,10 +1437,11 @@ public class CPU_6502 {
      * Copy the Y Register to the Accumulator
      * Z Flag set if Accumulator = 0
      * N Flag set if Accumulator has MSB set
+     *
      * @return 0 No extra cycle required
      */
     private int tya() {
-        a = y & 0x00FF;
+        a = (short) (y & 0x00FF);
         setFlag(Flags.Z, a == 0x00);
         setFlag(Flags.N, (a & 0x80) != 0x00);
         return 0;
@@ -1382,13 +1450,12 @@ public class CPU_6502 {
     /**
      * Every Illegal OPCodes
      * not implemented yet
+     *
      * @return always 0
      */
     private int xxx() {
         return 0;
     }
-
-
 
 
     // ========================================================= Utility Methods ========================================================= //
@@ -1403,7 +1470,7 @@ public class CPU_6502 {
             //Fetch the Operation Code
             opcode = read(pc);
             //Increment the Program Counter
-            pc = (pc+1) & 0xFFFF;
+            pc = (pc + 1) & 0xFFFF;
             //Get the Instruction
             Instruction instr = opcodes.get(opcode);
             //Set the required number of cycle for this instruction
@@ -1447,16 +1514,16 @@ public class CPU_6502 {
         //The Interrupt is trigger only if they aren't disable (I Flag of the Status Register)
         if (!getFlag(Flags.I)) {
             //Push the current Program Counter to the Stack LSB first
-            write(0x0100 + stkp,  ((pc >> 8) & 0x00FF));
-            stkp = (stkp-1) & 0x00FF;
-            write(0x0100 + stkp,  (pc & 0x00FF));
-            stkp = (stkp-1) & 0x00FF;
+            write(0x0100 + stkp, (short) ((pc >> 8) & 0x00FF));
+            stkp = (short) ((stkp - 1) & 0x00FF);
+            write(0x0100 + stkp, (short) (pc & 0x00FF));
+            stkp = (short) ((stkp - 1) & 0x00FF);
             //Push the current Status Register to the Stack
             setFlag(Flags.B, false);
             setFlag(Flags.U, true);
             setFlag(Flags.I, true);
             write(0x0100 + stkp, status);
-            stkp = (stkp-1) & 0x00FF;
+            stkp = (short) ((stkp - 1) & 0x00FF);
             //Jump to the NMI Routine specified at 0xFFFA
             addr_abs = 0xFFFE;
             int low = read(addr_abs);
@@ -1472,16 +1539,16 @@ public class CPU_6502 {
      */
     public void nmi() {
         //Push the current Program Counter to the Stack LSB first
-        write(0x0100 + stkp,  ((pc >> 8) & 0x00FF));
-        stkp = (stkp-1) & 0x00FF;
-        write(0x0100 + stkp,  (pc & 0x00FF));
-        stkp = (stkp-1) & 0x00FF;
+        write(0x0100 + stkp, (short) ((pc >> 8) & 0x00FF));
+        stkp = (short) ((stkp - 1) & 0x00FF);
+        write(0x0100 + stkp, (short) (pc & 0x00FF));
+        stkp = (short) ((stkp - 1) & 0x00FF);
         //Push the current Status Register to the Stack
         setFlag(Flags.B, false);
         setFlag(Flags.U, true);
         setFlag(Flags.I, true);
         write(0x0100 + stkp, status);
-        stkp = (stkp-1) & 0x00FF;
+        stkp = (short) ((stkp - 1) & 0x00FF);
         //Jump to the NMI Routine specified at 0xFFFA
         addr_abs = 0xFFFA;
         int low = read(addr_abs);
@@ -1496,18 +1563,17 @@ public class CPU_6502 {
      */
     private void fetch() {
         if (!opcodes.get(opcode).addr_mode.equals("IMP"))
-            fetched = read(addr_abs) & 0x00FF;
+            fetched = read(addr_abs);
     }
-
-
 
 
     // ========================================================== Debug Methods ========================================================== //
 
     /**
      * Disassemble an address range into readable 6502 assembly
+     *
      * @param start range start address
-     * @param end range end address
+     * @param end   range end address
      * @return a Map with addresses as Keys and Instructions as Values
      */
     public Map<Integer, String> disassemble(int start, int end) {
@@ -1521,7 +1587,7 @@ public class CPU_6502 {
             line_addr = addr;
             String line = String.format("$%04X: ", addr);
             int opcode = bus.cpuRead(addr, true);
-            addr = (addr+1) & 0x1FFFF;
+            addr = (addr + 1) & 0x1FFFF;
             Instruction instr = opcodes.get(opcode);
             line += instr.name + " ";
             switch (instr.addr_mode) {
@@ -1530,66 +1596,66 @@ public class CPU_6502 {
                     break;
                 case "IMM":
                     value = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     line += String.format("#$%02X {IMM}", value);
                     break;
                 case "ZP0":
                     low = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%02X {ZP0}", low);
                     break;
                 case "ZPX":
                     low = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%02X, X {ZPX}", low);
                     break;
                 case "ZPY":
                     low = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%02X, Y {ZPY}", low);
                     break;
                 case "IZX":
                     low = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     line += String.format("($%02X, X) {IZX}", low);
                     break;
                 case "IZY":
                     low = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
-                    line +=  String.format("($%02X), Y {IZY}", low);
+                    addr = (addr + 1) & 0x1FFFF;
+                    line += String.format("($%02X), Y {IZY}", low);
                     break;
                 case "ABS":
                     low = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     high = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%04X {ABS}", (high << 8) | low);
                     break;
                 case "ABX":
                     low = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     high = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%04X, X {ABX}", (high << 8) | low);
                     break;
                 case "ABY":
                     low = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     high = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%04X, Y {ABY}", (high << 8) | low);
                     break;
                 case "IND":
                     low = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     high = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
+                    addr = (addr + 1) & 0x1FFFF;
                     line += String.format("($%04X) {IND}", (high << 8) | low);
                     break;
                 case "REL":
                     value = bus.cpuRead(addr, true);
-                    addr = (addr+1) & 0x1FFFF;
-                    line += String.format("$%02X ", value) + String.format("[$%04X] {IND}", addr + (byte)(value));
+                    addr = (addr + 1) & 0x1FFFF;
+                    line += String.format("$%02X ", value) + String.format("[$%04X] {IND}", addr + (byte) (value));
             }
             code.put(line_addr, line);
         }
@@ -1599,6 +1665,7 @@ public class CPU_6502 {
     /**
      * Return whether or not the current instruction is complete
      * Thread safe
+     *
      * @return is the current instruction complete
      */
     public synchronized boolean complete() {
@@ -1608,6 +1675,7 @@ public class CPU_6502 {
     /**
      * Return the current Accumulator value as an 8bit unsigned value
      * Thread safe
+     *
      * @return the current Y Accumulator value as an 8bit unsigned value
      */
     public synchronized int threadSafeGetA() {
@@ -1617,6 +1685,7 @@ public class CPU_6502 {
     /**
      * Return the current X Register value as an 8bit unsigned value
      * Thread safe
+     *
      * @return the current X Register value as an 8bit unsigned value
      */
     public synchronized int threadSafeGetX() {
@@ -1626,6 +1695,7 @@ public class CPU_6502 {
     /**
      * Return the current Y Register value as an 8bit unsigned value
      * Thread safe
+     *
      * @return the current Y Register value as an 8bit unsigned value
      */
     public synchronized int threadSafeGetY() {
@@ -1635,6 +1705,7 @@ public class CPU_6502 {
     /**
      * Return the current Stack Pointer as an 8bit unsigned value
      * Thread safe
+     *
      * @return the current Stack Pointer as an 8bit unsigned value
      */
     public synchronized int threadSafeGetStkp() {
@@ -1644,6 +1715,7 @@ public class CPU_6502 {
     /**
      * Return the current state of a CPU Flag
      * Thread safe
+     *
      * @param flag the Flag to get the value of
      * @return a boolean representing the current value of the selected Flag
      */
@@ -1654,6 +1726,7 @@ public class CPU_6502 {
     /**
      * Return the current Program Counter
      * Thread safe
+     *
      * @return the current Program Counter
      */
     public synchronized int threadSafeGetStatus() {
@@ -1663,6 +1736,7 @@ public class CPU_6502 {
     /**
      * Return the current Program Counter as a 16bit unsigned value
      * Thread safe
+     *
      * @return the current Program Counter as a 16bit unsigned value
      */
     public synchronized int threadSafeGetPc() {
@@ -1672,10 +1746,26 @@ public class CPU_6502 {
     /**
      * Return the number of CPU cycles from system startup
      * Thread Safe
+     *
      * @return total number of CPU cycles
      */
     public synchronized long threadSafeGetCpuClock() {
         return cpu_clock;
+    }
+
+    // ======================================= Savestates Methods ======================================= //
+
+    public byte[] dumpStatus() {
+        return new byte[]{(byte) a, (byte) x, (byte) y, (byte) stkp, (byte) status, (byte) (pc >> 8), (byte) (pc & 0xFF)};
+    }
+
+    public void restoreStatusDump(byte[] dump) {
+        a = dump[0];
+        x = dump[1];
+        y = dump[2];
+        stkp = dump[3];
+        status = dump[4];
+        pc = ((dump[5] << 8) | dump[6]) & 0xFFFF;
     }
 }
 
@@ -1684,25 +1774,27 @@ public class CPU_6502 {
  */
 abstract class Instruction {
 
-    String name;
-    String addr_mode;
-    int cycles;
-
-    /**
-     * Execute the instruction
-     * @return 1 if the operation is susceptible of requiring an extra cycle 0 otherwise
-     */
-    public abstract int operate();
-
-    /**
-     * Fetch the appropriate data
-     * @return 1 if the data gathering require an extra cycle 0 otherwise
-     */
-    public abstract int addrmode();
+    final String name;
+    final String addr_mode;
+    final int cycles;
 
     Instruction(String name, String addr_mode, int cycles) {
         this.name = name;
         this.addr_mode = addr_mode;
         this.cycles = cycles;
     }
+
+    /**
+     * Execute the instruction
+     *
+     * @return 1 if the operation is susceptible of requiring an extra cycle 0 otherwise
+     */
+    public abstract int operate();
+
+    /**
+     * Fetch the appropriate data
+     *
+     * @return 1 if the data gathering require an extra cycle 0 otherwise
+     */
+    public abstract int addrmode();
 }

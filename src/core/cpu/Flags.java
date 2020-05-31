@@ -14,9 +14,9 @@ public enum Flags {
     V(1 << 6),  // Overflow
     N(1 << 7);  // Negative
 
-    int value;
+    final byte value;
 
     Flags(int value) {
-        this.value = value;
+        this.value = (byte) value;
     }
 }

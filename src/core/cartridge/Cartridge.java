@@ -1,16 +1,20 @@
 package core.cartridge;
 
 import core.ppu.Mirror;
+import utils.ByteWrapper;
 import utils.FileReader;
 import utils.IntegerWrapper;
+
+import javax.swing.*;
+import java.io.IOException;
 
 /**
  * This class represent a physical Cartridge
  */
 public class Cartridge {
 
-    private int[] sPRGMemory;
-    private int[] sCHRMemory;
+    private byte[] sPRGMemory;
+    private byte[] sCHRMemory;
 
     private Mapper mapper;
     private Mirror mirror;
@@ -19,7 +23,7 @@ public class Cartridge {
      * Create a Cartridge and load a ROM into the emulator
      * @param filename the path to the ROM
      */
-    public Cartridge(String filename)  {
+    public Cartridge(String filename) throws IOException {
         int fileType = 1;
 
         //Initialize the file reader
@@ -27,7 +31,7 @@ public class Cartridge {
         //Read the Header
         Header header = new Header(reader);
         //Extract the Mapper ID and Mirroring mode
-        int mapperId = ((header.mapper2 >> 4) << 4) | header.mapper1 >> 4;
+        byte mapperId = (byte) (((header.mapper2 >> 4) << 4) | header.mapper1 >> 4);
         mirror = (header.mapper1 & 0x01) == 0x01 ? Mirror.VERTICAL : Mirror.HORIZONTAL;
         //Discard padding if necessary
         if ((header.mapper1 & 0x04) == 0x04)
@@ -47,11 +51,13 @@ public class Cartridge {
                 case 0:
                     mapper = new Mapper000(nPRGBanks, nCHRBanks);
                     break;
+                case 1:
+                    JOptionPane.showMessageDialog(null, "Mapper not implemented yet");
+                    break;
                 default:
                     break;
             }
         }
-
     }
 
     /**
@@ -60,10 +66,10 @@ public class Cartridge {
      * @param data the Wrapper where to store the read data
      * @return was the data searched in the Cartridge
      */
-    public boolean cpuRead(int addr, IntegerWrapper data) {
+    public boolean cpuRead(int addr, ByteWrapper data) {
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.cpuMapRead(addr, mapped)) {
-            data.value = sPRGMemory[mapped.value] & 0x00FF;
+            data.value = (byte) (sPRGMemory[mapped.value] & 0xFF);
             return true;
         }
         return false;
@@ -79,7 +85,7 @@ public class Cartridge {
     public boolean cpuWrite(int addr, int data) {
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.cpuMapWrite(addr, mapped)) {
-             sPRGMemory[mapped.value] = data & 0x00FF;
+             sPRGMemory[mapped.value] = (byte) (data & 0xFF);
             return true;
         }
         return false;
@@ -91,10 +97,10 @@ public class Cartridge {
      * @param data the Wrapper where to store the read data
      * @return was the data searched in the Cartridge
      */
-    public boolean ppuRead(int addr, IntegerWrapper data) {
+    public boolean ppuRead(int addr, ByteWrapper data) {
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.ppuMapRead(addr, mapped)) {
-            data.value = sCHRMemory[mapped.value] & 0x00FF;
+            data.value = (byte) (sCHRMemory[mapped.value] & 0xFF);
             return true;
         }
         return false;
@@ -110,7 +116,7 @@ public class Cartridge {
     public boolean ppuWrite(int addr, int data) {
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.ppuMapWrite(addr, mapped)) {
-            sCHRMemory[mapped.value] = data & 0x00FF;
+            sCHRMemory[mapped.value] = (byte) (data & 0xFF);
             return true;
         }
         return false;
@@ -122,37 +128,5 @@ public class Cartridge {
      */
     public Mirror getMirror() {
         return mirror;
-    }
-}
-
-/**
- * This class represent the header of a iNES file
- */
-class Header {
-
-    char[] name;
-    int prg_rom_chunks;
-    int chr_rom_chunks;
-    int mapper1;
-    int mapper2;
-    int prg_ram_size;
-    int tv_system1;
-    int tv_system2;
-
-    /**
-     * Load the header from the FileReader
-     * after the FileReader is ready to read useful data
-     * @param reader the FileReader of the iNES file
-     */
-    public Header(FileReader reader) {
-        name = new char[] {(char)reader.nextByte(), (char)reader.nextByte(), (char)reader.nextByte(), (char)reader.nextByte()};
-        prg_rom_chunks = (reader.nextByte() & 0x00FF);
-        chr_rom_chunks = (reader.nextByte() & 0x00FF);
-        mapper1 = (reader.nextByte() & 0x00FF);
-        mapper2 = (reader.nextByte() & 0x00FF);
-        prg_ram_size = (reader.nextByte() & 0x00FF);
-        tv_system1 = (reader.nextByte() & 0x00FF);
-        tv_system2 = (reader.nextByte() & 0x00FF);
-        reader.readBytes(5);
     }
 }

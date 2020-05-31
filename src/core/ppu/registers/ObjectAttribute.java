@@ -6,16 +6,17 @@ package core.ppu.registers;
  */
 public class ObjectAttribute {
 
-    private int y = 0x00;
-    private int id = 0x00;
-    private int attribute = 0x00;
-    private int x = 0x00;
+    private short y = 0x00;
+    private short id = 0x00;
+    private short attribute = 0x00;
+    private short x = 0x00;
 
     /**
      * Set all field to a specified val
+     *
      * @param val the val to fill with
      */
-    public void clear(int val) {
+    public void clear(byte val) {
         y = val;
         id = val;
         attribute = val;
@@ -24,6 +25,7 @@ public class ObjectAttribute {
 
     /**
      * Copy the value of another ObjectAttribute
+     *
      * @param o the ObjectAttribute to copy
      */
     public void set(ObjectAttribute o) {
@@ -36,72 +38,85 @@ public class ObjectAttribute {
     /**
      * Return the y coordinate of the ObjectAttribute
      * which represent the y coordinate of the top-left corner of the sprite
+     *
      * @return the y coordinate of the ObjectAttribute
      */
-    public int getY() {
+    public short getY() {
         return y;
     }
 
     /**
      * Set the y coordinate of the ObjectAttribute
      * which represent the y coordinate of the top-left corner of the sprite
+     *
      * @param y the new y coordinate of the ObjectAttribute
      */
-    public void setY(int y) {
+    public void setY(short y) {
         this.y = y;
     }
 
     /**
      * Return the id the the ObjectAttribute
      * which is basically the Tile ID used to index the Tile in the Pattern Tables
+     *
      * @return the id of the ObjectAttribute
      */
-    public int getId() {
+    public short getId() {
         return id;
     }
 
     /**
      * Set the id the the ObjectAttribute
      * which is basically the Tile ID used to index the Tile in the Pattern Tables
+     *
      * @param id the new id of the ObjectAttribute
      */
-    public void setId(int id) {
+    public void setId(short id) {
         this.id = id;
     }
 
     /**
      * Return the attribute of the ObjectAttribute
      * which indicate the palette and priority of the sprite and whether or not the sprite is flipped horizontally or vertically
+     *
      * @return the attribute of the ObjectAttribute
      */
-    public int getAttribute() {
+    public short getAttribute() {
         return attribute;
     }
 
     /**
      * Return the attribute of the ObjectAttribute
      * which indicate the palette and priority of the sprite and whether or not the sprite is flipped horizontally or vertically
+     *
      * @param attribute the new attribute of the ObjectAttribute
      */
-    public void setAttribute(int attribute) {
+    public void setAttribute(short attribute) {
         this.attribute = attribute;
     }
 
     /**
      * Return the x coordinate of the ObjectAttribute
      * which represent the x coordinate of the top-left corner of the sprite
+     *
      * @return the x coordinate of the ObjectAttribute
      */
-    public int getX() {
+    public short getX() {
         return x;
     }
 
     /**
      * Set the x coordinate of the ObjectAttribute
      * which represent the x coordinate of the top-left corner of the sprite
+     *
      * @param x the new x coordinate of the ObjectAttribute
      */
-    public void setX(int x) {
+    public void setX(short x) {
         this.x = x;
+    }
+
+    // ======================================= Savestates Methods ======================================= //
+    public byte[] dump() {
+        return new byte[]{(byte) x, (byte) attribute, (byte) id, (byte) y};
     }
 }
