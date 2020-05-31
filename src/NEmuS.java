@@ -41,7 +41,6 @@ public class NEmuS {
     private static final int FRAME_DURATION = 1000000000 / 60;
     private static final float DEAD_ZONE_RADIUS = .4f;
 
-    private static String game_file_absolute;
     private static String game_name;
 
     private long game_window;
@@ -49,9 +48,9 @@ public class NEmuS {
     private long info_window;
     private GLFWKeyCallback infoKeyCallBack;
 
-    private int game_width = PPU_2C02.SCREEN_WIDTH * 4;
-    private int game_height = PPU_2C02.SCREEN_HEIGHT * 4;
-    private int info_width = 1365;
+    private int game_width = PPU_2C02.SCREEN_WIDTH * 2;
+    private int game_height = PPU_2C02.SCREEN_HEIGHT * 2;
+    private int info_width = 1920;
     private int info_height = 1020;
     private float game_aspect = (float) game_width / game_height;
     private float info_aspect = (float) info_width / info_height;
@@ -76,6 +75,8 @@ public class NEmuS {
     private Texture patternTable2_texture;
     private Texture nametable1_texture;
     private Texture nametable2_texture;
+    private Texture nametable3_texture;
+    private Texture nametable4_texture;
     private Texture cpu_texture;
     private Texture oam_texture;
     // ========================================================= //
@@ -195,7 +196,7 @@ public class NEmuS {
                         //before resetting from other Thread, we pause the emulation and wait a couple of frame to be sure that the Game Thread isn't messing with the system
                         emulationRunning = false;
                         try {
-                            Thread.sleep(10 * FRAME_DURATION);
+                            Thread.sleep(10 * FRAME_DURATION/1000000);
                         } catch (InterruptedException ignored) {
                         }
                         nes.reset();
@@ -279,7 +280,6 @@ public class NEmuS {
      */
     private void initEmulator(String rom) throws IOException {
         Cartridge cart = new Cartridge(rom);
-        game_file_absolute = rom;
         //Create the Bus
         nes = new Bus();
         //Load the game into the NES
@@ -352,6 +352,8 @@ public class NEmuS {
         patternTable2_texture = new Texture(128, 128, nes.getPpu().getPatternTable(1, selectedPalette));
         nametable1_texture = new Texture(256, 240, nes.getPpu().getNametable(0));
         nametable2_texture = new Texture(256, 240, nes.getPpu().getNametable(1));
+        nametable3_texture = new Texture(256, 240, nes.getPpu().getNametable(2));
+        nametable4_texture = new Texture(256, 240, nes.getPpu().getNametable(3));
         cpu_texture = new Texture(new BufferedImage(258 + 258 + 3, 990 - 258 - 30, BufferedImage.TYPE_INT_RGB));
         oam_texture = new Texture(new BufferedImage(305, 990, BufferedImage.TYPE_INT_RGB));
 
@@ -481,6 +483,10 @@ public class NEmuS {
         //Delete the texture from memory
         patternTable2_texture.delete();
         patternTable1_texture.delete();
+        nametable1_texture.delete();
+        nametable2_texture.delete();
+        nametable3_texture.delete();
+        nametable4_texture.delete();
         cpu_texture.delete();
         oam_texture.delete();
     }
@@ -595,6 +601,8 @@ public class NEmuS {
         patternTable2_texture.load(nes.getPpu().getPatternTable(1, selectedPalette));
         nametable1_texture.load(nes.getPpu().getNametable(0));
         nametable2_texture.load(nes.getPpu().getNametable(1));
+        nametable3_texture.load(nes.getPpu().getNametable(2));
+        nametable4_texture.load(nes.getPpu().getNametable(3));
 
         // ================================= Status =================================
         Graphics g = cpu_texture.getImg().getGraphics();
@@ -749,32 +757,34 @@ public class NEmuS {
 
         // ============================================= CPU / Code / RAM ============================================= //
         cpu_texture.bind();
-        float x_end_cpu = NumberUtils.map(cpu_texture.getWidth(), 0, info_width, -info_aspect, info_aspect);
+        float x_start_cpu = NumberUtils.map(10, 0, info_width, -info_aspect, info_aspect);
+        float x_end_cpu = NumberUtils.map(cpu_texture.getWidth() + 10, 0, info_width, -info_aspect, info_aspect);
         float y_end_cpu = NumberUtils.map(cpu_texture.getHeight(), 0, info_height, 1, -1);
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex2f(-info_aspect, 1);
+        glVertex2f(x_start_cpu, 1);
         glTexCoord2f(1, 0);
         glVertex2f(x_end_cpu, 1);
         glTexCoord2f(1, 1);
         glVertex2f(x_end_cpu, y_end_cpu);
         glTexCoord2f(0, 1);
-        glVertex2f(-info_aspect, y_end_cpu);
+        glVertex2f(x_start_cpu, y_end_cpu);
         glEnd();
 
         // ============================================= Object Attribute Memory ============================================= //
         oam_texture.bind();
-        float x_end_oam = NumberUtils.map(oam_texture.getWidth() + cpu_texture.getWidth(), 0, info_width, -info_aspect, info_aspect);
+        float x_start_oam = NumberUtils.map(cpu_texture.getWidth() + 35, 0, info_width, -info_aspect, info_aspect);
+        float x_end_oam = NumberUtils.map(oam_texture.getWidth() + cpu_texture.getWidth() + 35, 0, info_width, -info_aspect, info_aspect);
         float y_end_oam = NumberUtils.map(oam_texture.getHeight(), 0, info_height, 1, -1);
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex2f(x_end_cpu, 1);
+        glVertex2f(x_start_oam, 1);
         glTexCoord2f(1, 0);
         glVertex2f(x_end_oam, 1);
         glTexCoord2f(1, 1);
         glVertex2f(x_end_oam, y_end_oam);
         glTexCoord2f(0, 1);
-        glVertex2f(x_end_cpu, y_end_oam);
+        glVertex2f(x_start_oam, y_end_oam);
         glEnd();
 
         // ============================================= Palettes ============================================= //
@@ -783,8 +793,8 @@ public class NEmuS {
         glColor3f(1, 0, 0);
         float y_offset_from_cpu = -Math.abs(1 - y_end_cpu) - .025f;
 
-        float x_start_select_ring = NumberUtils.map(selectedPalette * (size * 4 + 9), 0, info_width, -info_aspect, info_aspect);
-        float x_end_select_ring = NumberUtils.map(8 + selectedPalette * (size * 4 + 9) + 4 * size, 0, info_width, -info_aspect, info_aspect);
+        float x_start_select_ring = NumberUtils.map(selectedPalette * (size * 4 + 9) + 10, 0, info_width, -info_aspect, info_aspect);
+        float x_end_select_ring = NumberUtils.map(8 + selectedPalette * (size * 4 + 9) + 4 * size + 10, 0, info_width, -info_aspect, info_aspect);
         float y_start_select_ring = NumberUtils.map(size + 5, 0, info_height, 1, -1) + y_offset_from_cpu;
         glColor3f(1, 0, 0);
         glBegin(GL_QUADS);
@@ -797,8 +807,8 @@ public class NEmuS {
             for (int s = 0; s < 4; s++) {
                 Color color = nes.getPpu().threadSafeGetColorFromPalette(p, s);
                 glColor3f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f);
-                float x_start_palette = NumberUtils.map(4 + p * (size * 4 + 9) + s * size, 0, info_width, -info_aspect, info_aspect);
-                float x_end_palette = NumberUtils.map(4 + p * (size * 4 + 9) + s * size + size, 0, info_width, -info_aspect, info_aspect);
+                float x_start_palette = NumberUtils.map(4 + p * (size * 4 + 9) + s * size + 10, 0, info_width, -info_aspect, info_aspect);
+                float x_end_palette = NumberUtils.map(4 + p * (size * 4 + 9) + s * size + size + 10, 0, info_width, -info_aspect, info_aspect);
                 float y = NumberUtils.map(size, 0, info_height, 1, -1) + y_offset_from_cpu;
                 glBegin(GL_QUADS);
                 glVertex2f(x_start_palette, y);
@@ -813,23 +823,23 @@ public class NEmuS {
         y_offset_from_cpu -= .055f;
         glColor3f(1, 1, 1);
         patternTable1_texture.bind();
-        float x_end_pattern1 = NumberUtils.map(2 * patternTable1_texture.getWidth(), 0, info_width, -info_aspect, info_aspect);
+        float x_end_pattern1 = NumberUtils.map(2 * patternTable1_texture.getWidth() + 10, 0, info_width, -info_aspect, info_aspect);
         float y_end_pattern = NumberUtils.map(2 * patternTable1_texture.getHeight(), 0, info_height, 1, -1) + y_offset_from_cpu;
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex2f(-info_aspect, 1 + y_offset_from_cpu);
+        glVertex2f(x_start_cpu, 1 + y_offset_from_cpu);
         glTexCoord2f(1, 0);
         glVertex2f(x_end_pattern1, 1 + y_offset_from_cpu);
         glTexCoord2f(1, 1);
         glVertex2f(x_end_pattern1, y_end_pattern);
         glTexCoord2f(0, 1);
-        glVertex2f(-info_aspect, y_end_pattern);
+        glVertex2f(x_start_cpu, y_end_pattern);
         glEnd();
 
         // ============================================= Pattern Table 2 ============================================= //
         patternTable2_texture.bind();
         float x_offset_pattern2 = NumberUtils.map(8, 0, info_width, 0, 2 * info_aspect);
-        float x_end_pattern2 = NumberUtils.map(4 * patternTable2_texture.getWidth() + 8, 0, info_width, -info_aspect, info_aspect);
+        float x_end_pattern2 = NumberUtils.map(4 * patternTable2_texture.getWidth() + 8 + 10, 0, info_width, -info_aspect, info_aspect);
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
         glVertex2f(x_end_pattern1 + x_offset_pattern2, 1 + y_offset_from_cpu);
@@ -843,34 +853,62 @@ public class NEmuS {
 
         // ============================================= Nametable 1 ============================================= //
         nametable1_texture.bind();
-        float x_start_nametable = NumberUtils.map(cpu_texture.getWidth() + oam_texture.getWidth() + 20, 0, info_width, -info_aspect, info_aspect);
-        float x_end_nametable = NumberUtils.map(2 * nametable1_texture.getWidth() + cpu_texture.getWidth() + oam_texture.getWidth() + 20, 0, info_width, -info_aspect, info_aspect);
+        float x_start_nametable1 = NumberUtils.map(cpu_texture.getWidth() + oam_texture.getWidth() + 50, 0, info_width, -info_aspect, info_aspect);
+        float x_end_nametable1 = NumberUtils.map(2 * nametable1_texture.getWidth() + cpu_texture.getWidth() + oam_texture.getWidth() + 50, 0, info_width, -info_aspect, info_aspect);
         float y_start_nametable1 = NumberUtils.map(10, 0, info_height, 1, -1);
         float y_end_nametable1 = NumberUtils.map(10 + 2 * nametable1_texture.getHeight(), 0, info_height, 1, -1);
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex2f(x_start_nametable, y_start_nametable1);
+        glVertex2f(x_start_nametable1, y_start_nametable1);
         glTexCoord2f(1, 0);
-        glVertex2f(x_end_nametable, y_start_nametable1);
+        glVertex2f(x_end_nametable1, y_start_nametable1);
         glTexCoord2f(1, 1);
-        glVertex2f(x_end_nametable, y_end_nametable1);
+        glVertex2f(x_end_nametable1, y_end_nametable1);
         glTexCoord2f(0, 1);
-        glVertex2f(x_start_nametable, y_end_nametable1);
+        glVertex2f(x_start_nametable1, y_end_nametable1);
         glEnd();
 
         // ============================================= Nametable 2 ============================================= //
         nametable2_texture.bind();
-        float y_start_nametable2 = NumberUtils.map(20 + 2 * nametable1_texture.getHeight(), 0, info_height, 1, -1);
-        float y_end_nametable2 = NumberUtils.map(20 + 2 * nametable1_texture.getHeight() + 20 + 2 * nametable1_texture.getHeight(), 0, info_height, 1, -1);
+        float x_start_nametable2 = NumberUtils.map(cpu_texture.getWidth() + oam_texture.getWidth() + 50 + 2 * nametable1_texture.getWidth() + 10, 0, info_width, -info_aspect, info_aspect);
+        float x_end_nametable2 = NumberUtils.map(cpu_texture.getWidth() + oam_texture.getWidth() + 50 + 4 * nametable1_texture.getWidth() + 10, 0, info_width, -info_aspect, info_aspect);
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex2f(x_start_nametable, y_start_nametable2);
+        glVertex2f(x_start_nametable2, y_start_nametable1);
         glTexCoord2f(1, 0);
-        glVertex2f(x_end_nametable, y_start_nametable2);
+        glVertex2f(x_end_nametable2, y_start_nametable1);
         glTexCoord2f(1, 1);
-        glVertex2f(x_end_nametable, y_end_nametable2);
+        glVertex2f(x_end_nametable2, y_end_nametable1);
         glTexCoord2f(0, 1);
-        glVertex2f(x_start_nametable, y_end_nametable2);
+        glVertex2f(x_start_nametable2, y_end_nametable1);
+        glEnd();
+
+        // ============================================= Nametable 3 ============================================= //
+        nametable3_texture.bind();
+        float y_start_nametable3 = NumberUtils.map(20 + 2 * nametable1_texture.getHeight(), 0, info_height, 1, -1);
+        float y_end_nametable3 = NumberUtils.map(20 + 2 * nametable1_texture.getHeight() + 20 + 2 * nametable1_texture.getHeight(), 0, info_height, 1, -1);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(x_start_nametable1, y_start_nametable3);
+        glTexCoord2f(1, 0);
+        glVertex2f(x_end_nametable1, y_start_nametable3);
+        glTexCoord2f(1, 1);
+        glVertex2f(x_end_nametable1, y_end_nametable3);
+        glTexCoord2f(0, 1);
+        glVertex2f(x_start_nametable1, y_end_nametable3);
+        glEnd();
+
+        // ============================================= Nametable 4 ============================================= //
+        nametable4_texture.bind();
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(x_start_nametable2, y_start_nametable3);
+        glTexCoord2f(1, 0);
+        glVertex2f(x_end_nametable2, y_start_nametable3);
+        glTexCoord2f(1, 1);
+        glVertex2f(x_end_nametable2, y_end_nametable3);
+        glTexCoord2f(0, 1);
+        glVertex2f(x_start_nametable2, y_end_nametable3);
         glEnd();
     }
 }

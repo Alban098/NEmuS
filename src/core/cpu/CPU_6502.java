@@ -26,7 +26,7 @@ public class CPU_6502 {
     private short opcode = 0x00;
     private int cycles = 0x00;
     private int addr_abs = 0x0000;
-    private int addr_rel = 0x0000;
+    private int addr_rel = 0x00;
     private long cpu_clock = 0L;
 
     /**
@@ -507,7 +507,7 @@ public class CPU_6502 {
         pc = (pc + 1) & 0xFFFF;
         int high = read(pc);
         pc = (pc + 1) & 0xFFFF;
-        addr_abs = ((high << 8) | low) + (x & 0x00FF);
+        addr_abs = (((high << 8) | low) + (x & 0x00FF)& 0xFFFF);
         if ((addr_abs & 0xFF00) != (high << 8))
             return 1;
         return 0;
@@ -689,7 +689,7 @@ public class CPU_6502 {
     }
 
     /**
-     * Do a Bit test.state between the Accumulator and the Fetched data
+     * Do a Bit test between the Accumulator and the Fetched data
      * Z Flag set if the Accumulator and the Fetched data have no common bits
      * N Flag set if Fetched data has 7th bit set
      * V Flag set if Fetched data has 6th bit set
@@ -714,7 +714,7 @@ public class CPU_6502 {
     private int bmi() {
         if (getFlag(Flags.N)) {
             cycles++;
-            addr_abs = pc + addr_rel;
+            addr_abs = (pc + addr_rel) & 0xFFFF;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
             pc = addr_abs & 0xFFFF;
@@ -748,7 +748,7 @@ public class CPU_6502 {
     private int bpl() {
         if (!getFlag(Flags.N)) {
             cycles++;
-            addr_abs = pc + addr_rel;
+            addr_abs = (pc + addr_rel) & 0xFFFF;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
             pc = addr_abs & 0xFFFF;
@@ -766,15 +766,15 @@ public class CPU_6502 {
     private int brk() {
         pc = (pc + 1) & 0xFFFF;
         setFlag(Flags.I, true);
-        write(0x0100 + stkp, (short) ((pc >> 8) & 0xFF));
+        write(0x0100 + stkp, (short) ((pc >> 8) & 0x00FF));
         stkp = (short) ((stkp - 1) & 0x00FF);
-        write(0x0100 + stkp, (short) (pc & 0xFF));
+        write(0x0100 + stkp, (short) (pc & 0x00FF));
         stkp = (short) ((stkp - 1) & 0x00FF);
         setFlag(Flags.B, true);
-        write(0x0100 + stkp, status);
+        write(0x0100 + stkp, (short) (status & 0x00FF));
         stkp = (short) ((stkp - 1) & 0x00FF);
         setFlag(Flags.B, false);
-        pc = read(0xFFFE) | (read(0xFFFF) << 8);
+        pc = read(0xFFFE) | (read(0xFFFF) << 8) & 0xFFFF;
         return 0;
     }
 
@@ -1195,7 +1195,7 @@ public class CPU_6502 {
      */
     private int plp() {
         stkp = (short) ((stkp + 1) & 0x00FF);
-        status = read(0x0100 + stkp);
+        status = (short) (read(0x0100 + stkp) & 0x00FF);
         setFlag(Flags.U, true);
         return 0;
     }
@@ -1254,7 +1254,7 @@ public class CPU_6502 {
      */
     private int rti() {
         stkp = (short) ((stkp + 1) & 0x00FF);
-        status = read(0x0100 + stkp);
+        status = (short) (read(0x0100 + stkp) & 0xFF);
         status &= ~Flags.B.value;
         status &= ~Flags.U.value;
         stkp = (short) ((stkp + 1) & 0x00FF);

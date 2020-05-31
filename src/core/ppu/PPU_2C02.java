@@ -69,7 +69,7 @@ public class PPU_2C02 {
         palScreen = new Color[0x40];
         screen_buffer = BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4);
         patterntables = new ByteBuffer[]{BufferUtils.createByteBuffer(128 * 128 * 4), BufferUtils.createByteBuffer(128 * 128 * 4)};
-        nametables = new ByteBuffer[]{BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4), BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4)};
+        nametables = new ByteBuffer[]{BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4), BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4), BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4), BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4)};
         frameComplete = false;
         scanline = 0;
         cycle = 0;
@@ -923,9 +923,11 @@ public class PPU_2C02 {
                 //For each column of the tile
                 for (byte row = 0; row < 8; row++) {
                     //We read the tile ID by selecting the correct nametable using the mirroring mode
-                    short tile_id = ppuRead(0x2000 | (i == 1 ? 0x1 << (cartridge.getMirror() == Mirror.VERTICAL ? 10 : 11) : 0x0) | y << 5 | x);
+                    //short tile_id = ppuRead(0x2000 | (i == 1 ? 0x1 << (cartridge.getMirror() == Mirror.VERTICAL ? 10 : 11) : 0x0) | y << 5 | x);
+                    short offset = (short) (0x0400 * (i & 0x3));
+                    short tile_id = ppuRead(0x2000 | offset | y << 5 | x);
                     //We read the tile attribute starting at offset 0x03C0 of the selected nametable, the attribute offset is calculated using the tile pos divided by 4
-                    short tile_attrib = ppuRead(0x23C0 | (i == 1 ? 0x1 << (cartridge.getMirror() == Mirror.VERTICAL ? 10 : 11) : 0x0) | ((y >> 2) << 3) | (x) >> 2);
+                    short tile_attrib = ppuRead(0x23C0 | offset | ((y >> 2) << 3) | (x) >> 2);
                     //We select the right attribute depending on the tile pos inside the current 4x4 tile grid
                     if ((y & 0x02) == 0x02)
                         tile_attrib = (short) ((tile_attrib >> 4) & 0x00FF);
