@@ -3,6 +3,7 @@ package core;
 import core.cartridge.Cartridge;
 import core.cpu.CPU_6502;
 import core.ppu.PPU_2C02;
+import exceptions.DumpException;
 import utils.ByteWrapper;
 
 /**
@@ -211,32 +212,76 @@ public class Bus {
 
     // ======================================= Savestates Methods ======================================= //
 
+    /**
+     * Return a dump of the CPU Status
+     * that can be restored later
+     *
+     * @return a byte[7] containing the PPU Status
+     */
     public byte[] dumpCPU() {
         return cpu.dumpStatus();
     }
 
-    public void restoreCPUDump(byte[] dump) {
+    /**
+     * Restore the CPU Status to a dumped state
+     *
+     * @param dump the dumped memory (Must be 7 bytes)
+     * @throws DumpException when the dump size isn't 7 bytes
+     */
+    public void restoreCPUDump(byte[] dump) throws DumpException {
         cpu.restoreStatusDump(dump);
     }
 
+    /**
+     * Return a dump of the PPU Status
+     * that can be restored later
+     *
+     * @return a byte[11] containing the PPU Status
+     */
     public byte[] dumpPPU() {
         return ppu.dumpStatus();
     }
 
-    public void restorePPUDump(byte[] dump) {
+    /**
+     * Restore the PPU Status to a dumped state
+     *
+     * @param dump the dumped memory (Must be 11 bytes)
+     * @throws DumpException when the dump size isn't 11 bytes
+     */
+    public void restorePPUDump(byte[] dump) throws DumpException {
         ppu.restoreStatusDump(dump);
     }
 
+    /**
+     * Return a dump of the RAM
+     * that can be restored later
+     *
+     * @return a byte[2048] containing the RAM
+     */
     public byte[] dumpRAM() {
         byte[] dump = new byte[2048];
         System.arraycopy(ram, 0, dump, 0, 2048);
         return dump;
     }
 
-    public void restoreRAMDump(byte[] dump) {
+    /**
+     * Restore the RAM to a dumped state
+     *
+     * @param dump the dumped memory (Must be 2048 bytes)
+     * @throws DumpException when the dump size isn't 2048 bytes
+     */
+    public void restoreRAMDump(byte[] dump) throws DumpException {
+        if (dump.length != 2048)
+            throw new DumpException("RAM size (" + dump.length + ") must be 2048 bytes");
         System.arraycopy(dump, 0, ram, 0, 2048);
     }
 
+    /**
+     * Return a dump of the RAM
+     * that can be restored later
+     *
+     * @return a byte[10528] containing the VRAM
+     */
     public byte[] dumpVRAM() {
         byte[] dump = new byte[10528];
         int index = 0;
@@ -250,7 +295,15 @@ public class Bus {
         return dump;
     }
 
-    public void restoreVRAMDump(byte[] dump) {
+    /**
+     * Restore the RAM to a dumped state
+     *
+     * @param dump the dumped memory (Must be 10528 bytes)
+     * @throws DumpException when the dump size isn't 10528 bytes
+     */
+    public void restoreVRAMDump(byte[] dump) throws DumpException {
+        if (dump.length != 10528)
+            throw new DumpException("VRAM size (" + dump.length + ") must be 10528 bytes");
         int index = 0;
         byte[] patterntables = new byte[8192];
         byte[] nametables = new byte[2048];

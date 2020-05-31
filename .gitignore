@@ -8,3 +8,5 @@ out/
 *.nes
 
 *.log
+
+*.state

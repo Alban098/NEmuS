@@ -3,6 +3,7 @@ import core.SaveState;
 import core.cartridge.Cartridge;
 import core.cpu.Flags;
 import core.ppu.PPU_2C02;
+import exceptions.InvalidFileException;
 import openGL.Texture;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
@@ -23,6 +24,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
@@ -39,10 +41,13 @@ public class NEmuS {
     private static final int FRAME_DURATION = 1000000000 / 60;
     private static final float DEAD_ZONE_RADIUS = .4f;
 
-    private static String game = "smb.nes";
+    private static String game_file_absolute;
+    private static String game_name;
 
     private long game_window;
+    private GLFWKeyCallback gameKeyCallBack;
     private long info_window;
+    private GLFWKeyCallback infoKeyCallBack;
 
     private int game_width = PPU_2C02.SCREEN_WIDTH * 4;
     private int game_height = PPU_2C02.SCREEN_HEIGHT * 4;
@@ -55,6 +60,7 @@ public class NEmuS {
 
     private Texture screen_texture;
 
+    // ==================== Debug Variables ==================== //
     private boolean emulationRunning = true;
     private boolean redraw_game = false;
     private boolean redraw_info = false;
@@ -82,24 +88,161 @@ public class NEmuS {
      * Launch the Emulator and the Debug Window
      */
     private void run() {
-        //Initialize the NES and the Game Window
+        //Load a Game ROM
         JFileChooser romSelector = new JFileChooser("./");
         romSelector.setFileFilter(new FileNameExtensionFilter("iNES file (.nes)", "nes"));
         if (romSelector.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             String filename = romSelector.getSelectedFile().getAbsolutePath();
+            game_name = romSelector.getSelectedFile().getName();
             try {
                 initEmulator(filename);
             } catch (IOException e) {
-                JOptionPane.showMessageDialog(null, e.getMessage());
+                JOptionPane.showMessageDialog(null, e.getMessage(), "ROM Loading Error", JOptionPane.ERROR_MESSAGE);
                 System.exit(-1);
             }
         } else {
             System.exit(-1);
         }
+
+        //Create KeyHandler
+        gameKeyCallBack = new GLFWKeyCallback() {
+            @Override
+            public void invoke(long window, int key, int scancode, int action, int mods) {
+                if (window == game_window) {
+                    if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
+                        emulationRunning = false;
+                        JFileChooser romSelector = new JFileChooser("./");
+                        romSelector.setFileFilter(new FileNameExtensionFilter("iNES file (.nes)", "nes"));
+                        if (romSelector.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                            String filename = romSelector.getSelectedFile().getAbsolutePath();
+                            game_name = romSelector.getSelectedFile().getName();
+                            try {
+                                initEmulator(filename);
+                            } catch (IOException e) {
+                                JOptionPane.showMessageDialog(null, e.getMessage() + "\nGame not loaded", "ROM Loading Error", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                        emulationRunning = true;
+                    } else if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
+                        emulationRunning = false;
+                        nes.reset();
+                        emulationRunning = true;
+                    } else if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
+                        //Before a savestate the emulation is paused
+                        emulationRunning = false;
+                        //We finish the rendering of the current frame (a savestate cannot occur during a frame)
+                        do {
+                            nes.clock();
+                        } while (!nes.getPpu().frameComplete);
+                        //We ensure the PPU is at the top left corner
+                        nes.clock();
+                        nes.getPpu().frameComplete = false;
+                        //We select the file
+                        JFileChooser stateSelector = new JFileChooser("./");
+                        stateSelector.setFileFilter(new FileNameExtensionFilter("Savestate file (.state)", "state"));
+                        if (stateSelector.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+                            //We append the name of the game in front of the file name and force the extension
+                            String filename = stateSelector.getSelectedFile().getName();
+                            String filePath = stateSelector.getSelectedFile().getAbsolutePath();
+                            if (!filename.endsWith(".state")) {
+                                filename += ".state";
+                                filePath += ".state";
+                            }
+                            filePath = filePath.substring(0, filePath.length() - filename.length()) + "[" + game_name + "]" + filename;
+                            //We create a savestate from the current Emulator state and save it to the file
+                            new SaveState(nes).saveToFile(filePath);
+                        }
+                        emulationRunning = true;
+                    } else if (key == GLFW_KEY_F4 && action == GLFW_PRESS) {
+                        //Before a savestate loading the emulation is paused
+                        emulationRunning = false;
+                        //We finish the rendering of the current frame (a savestate cannot occur during a frame)
+                        do {
+                            nes.clock();
+                        } while (!nes.getPpu().frameComplete);
+                        //We ensure the PPU is at the top left corner
+                        nes.clock();
+                        nes.getPpu().frameComplete = false;
+                        //We select the file
+                        JFileChooser stateSelector = new JFileChooser("./");
+                        stateSelector.setFileFilter(new FileNameExtensionFilter("Savestate file (.state)", "state"));
+                        if (stateSelector.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
+                            try {
+                                //We attempt to load the file and restore the savestate
+                                new SaveState(stateSelector.getSelectedFile().getAbsolutePath()).restore(nes);
+                            } catch (InvalidFileException e) {
+                                JOptionPane.showMessageDialog(null, e.getMessage(), "Error loading Savestate", JOptionPane.ERROR_MESSAGE);
+                            }
+                        emulationRunning = true;
+                    } else if (key == GLFW_KEY_F12 && action == GLFW_PRESS) {
+                        emulationRunning = false;
+                        JOptionPane.showMessageDialog(null, "F1 : Load ROM\nF2 : Reset NES\nF3 : Save Savestate\nF4 : Load Savestate", "Keyboard Shortcut Help", JOptionPane.INFORMATION_MESSAGE);
+                        emulationRunning = true;
+                    }
+                }
+            }
+        };
+        infoKeyCallBack = new GLFWKeyCallback() {
+            @Override
+            public void invoke(long window, int key, int scancode, int action, int mods) {
+                if (window == info_window) {
+                    if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
+                        emulationRunning = !emulationRunning;
+                    else if (key == GLFW_KEY_F10 && action == GLFW_PRESS) {
+                        selectedPalette = (selectedPalette + 1) & 0x07;
+                        redraw_info = true;
+                    } else if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
+                        //before resetting from other Thread, we pause the emulation and wait a couple of frame to be sure that the Game Thread isn't messing with the system
+                        emulationRunning = false;
+                        try {
+                            Thread.sleep(10 * FRAME_DURATION);
+                        } catch (InterruptedException ignored) {
+                        }
+                        nes.reset();
+                        emulationRunning = true;
+                    } else if (key == GLFW_KEY_F8 && action == GLFW_PRESS) {
+                        ram_page++;
+                        redraw_info = true;
+                    } else if (key == GLFW_KEY_F7 && action == GLFW_PRESS) {
+                        ram_page--;
+                        redraw_info = true;
+                    } else if (key == GLFW_KEY_F6 && action == GLFW_PRESS && !emulationRunning) {
+                        do {
+                            nes.debugClock();
+                        } while (!nes.getCpu().complete());
+                        do {
+                            nes.debugClock();
+                        } while (nes.getCpu().complete());
+                        if (nes.getPpu().frameComplete) {
+                            frameCount++;
+                            nes.getPpu().frameComplete = false;
+                        }
+                        redraw_info = true;
+                        redraw_game = true;
+                    } else if (key == GLFW_KEY_F9 && action == GLFW_PRESS && !emulationRunning) {
+                        do {
+                            nes.debugClock();
+                        } while (!nes.getPpu().frameComplete);
+                        do {
+                            nes.debugClock();
+                        } while (nes.getCpu().complete());
+                        nes.getPpu().frameComplete = false;
+                        frameCount++;
+                        redraw_info = true;
+                        redraw_game = true;
+                    } else if (key == GLFW_KEY_F12 && action == GLFW_PRESS) {
+                        emulationRunning = false;
+                        JOptionPane.showMessageDialog(null, "F5 : Pause/Resume emulation\n\n===== CPU controls =====\nF6 : Assembly step\nF7 : Show previous RAM Page\nF8 : Show next RAM Page\n\n===== PPU controls =====\nF9 : Compute next Frame\nF10 : Switch Palette preview", "Debug Window Help", JOptionPane.INFORMATION_MESSAGE);
+                        emulationRunning = true;
+                    }
+                }
+            }
+        };
+
+        //Initialize the Game Window
         initGameWindow();
 
         //Launch the Info/Debug Window on a dedicated Thread
-        // ==================== Debug Variables ==================== //
         Thread info_thread = new Thread(this::launchInfoWindow);
         info_thread.start();
 
@@ -127,7 +270,7 @@ public class NEmuS {
 
         //Terminate the application
         glfwTerminate();
-        glfwSetErrorCallback(null).free();
+        Objects.requireNonNull(glfwSetErrorCallback(null)).free();
 
     }
 
@@ -136,7 +279,7 @@ public class NEmuS {
      */
     private void initEmulator(String rom) throws IOException {
         Cartridge cart = new Cartridge(rom);
-        game = rom;
+        game_file_absolute = rom;
         //Create the Bus
         nes = new Bus();
         //Load the game into the NES
@@ -151,35 +294,16 @@ public class NEmuS {
      * Create and initialize the Game Window
      */
     private void initGameWindow() {
-        //Initialize GLFW ont the current Thread
-        GLFWErrorCallback.createPrint(System.err).set();
-        if (!glfwInit())
-            throw new IllegalStateException("GLFW Init failed");
-
-        //Set the window's properties
-        glfwDefaultWindowHints();
-        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-        //Create the window
-        game_window = glfwCreateWindow(game_width, game_height + 50, "NES", NULL, NULL);
-        if (game_window == NULL)
-            throw new RuntimeException("Failed to create window");
-        try (MemoryStack stack = stackPush()) {
-            IntBuffer pWidth = stack.mallocInt(1);
-            IntBuffer pHeight = stack.mallocInt(1);
-            glfwGetWindowSize(game_window, pWidth, pHeight);
-            GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-            glfwSetWindowPos(game_window, (vidmode.width() - pWidth.get(0)) / 2, (vidmode.height() - pHeight.get(0)) / 2);
-        }
+        //Initialize GLFW on the current Thread
+        game_window = createContextSepraratedWindow(game_width, game_height, "Game Window");
 
         //Set the window's resize event
         glfwSetWindowSizeCallback(game_window, new GLFWWindowSizeCallback() {
             @Override
             public void invoke(long windows, int w, int h) {
-                game_aspect = (float) w / (h - 50);
+                game_aspect = (float) w / h;
                 game_width = w;
-                game_height = h - 50;
+                game_height = h;
             }
         });
         //Show the window
@@ -193,81 +317,17 @@ public class NEmuS {
         //Activate textures and create the Screen Texture target
         glEnable(GL_TEXTURE_2D);
         screen_texture = new Texture(256, 240, nes.getPpu().getScreenBuffer());
-        glfwSetKeyCallback(game_window, new GLFWKeyCallback() {
-            @Override
-            public void invoke(long window, int key, int scancode, int action, int mods) {
-                if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
-                    emulationRunning = false;
-                    JFileChooser romSelector = new JFileChooser("./");
-                    romSelector.setFileFilter(new FileNameExtensionFilter("iNES file (.nes)", "nes"));
-                    if (romSelector.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                        String filename = romSelector.getSelectedFile().getAbsolutePath();
-                        try {
-                            initEmulator(filename);
-                        } catch (IOException e) {
-                            JOptionPane.showMessageDialog(null, e.getMessage() + "\nGame not loaded");
-                        }
-                    }
-                    emulationRunning = true;
-                } else if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
-                    emulationRunning = false;
-                    nes.reset();
-                    emulationRunning = true;
-                } else if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
-                    emulationRunning = false;
-                    do {
-                        nes.clock();
-                    } while (!nes.getPpu().frameComplete);
-                    nes.clock();
-                    nes.getPpu().frameComplete = false;
-                    JFileChooser stateSelector = new JFileChooser("./");
-                    stateSelector.setFileFilter(new FileNameExtensionFilter("Savestate file (.state)", "state"));
-                    if (stateSelector.showSaveDialog(null) == JFileChooser.APPROVE_OPTION)
-                        new SaveState(nes).saveToFile(stateSelector.getSelectedFile().getAbsolutePath());
 
-                    emulationRunning = true;
-                } else if (key == GLFW_KEY_F4 && action == GLFW_PRESS) {
-                    emulationRunning = false;
-                    do {
-                        nes.clock();
-                    } while (!nes.getPpu().frameComplete);
-                    nes.clock();
-                    nes.getPpu().frameComplete = false;
-                    JFileChooser stateSelector = new JFileChooser("./");
-                    stateSelector.setFileFilter(new FileNameExtensionFilter("Savestate file (.state)", "state"));
-                    if (stateSelector.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
-                        new SaveState(stateSelector.getSelectedFile().getAbsolutePath()).restore(nes);
-                    emulationRunning = true;
-                }
-            }
-        });
+        //Set the KeyCallBack
+        glfwSetKeyCallback(game_window, gameKeyCallBack);
     }
 
     /**
      * Create and initialize the Info/Debug Window
      */
     private void initInfoWindow() {
-        //Initialize GLFW ont the current Thread
-        GLFWErrorCallback.createPrint(System.err).set();
-        if (!glfwInit())
-            throw new IllegalStateException("GLFW Init failed");
-
-        //Set the window's properties
-        glfwDefaultWindowHints();
-        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-        //Create the window
-        info_window = glfwCreateWindow(info_width, info_height, "NES", NULL, NULL);
-        if (info_window == NULL)
-            throw new RuntimeException("Failed to create window");
-        try (MemoryStack stack = stackPush()) {
-            IntBuffer pWidth = stack.mallocInt(1);
-            IntBuffer pHeight = stack.mallocInt(1);
-            glfwGetWindowSize(info_window, pWidth, pHeight);
-            GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-            glfwSetWindowPos(info_window, (vidmode.width() - pWidth.get(0)) / 2, (vidmode.height() - pHeight.get(0)) / 2);
-        }
+        //Initialize GLFW on the current Thread
+        info_window = createContextSepraratedWindow(info_width, info_height, "Debug Window");
 
         //Set the window's resize event
         glfwSetWindowSizeCallback(info_window, new GLFWWindowSizeCallback() {
@@ -295,57 +355,42 @@ public class NEmuS {
         cpu_texture = new Texture(new BufferedImage(258 + 258 + 3, 990 - 258 - 30, BufferedImage.TYPE_INT_RGB));
         oam_texture = new Texture(new BufferedImage(305, 990, BufferedImage.TYPE_INT_RGB));
 
-        //Set the input handler of the window
-        glfwSetKeyCallback(info_window, new GLFWKeyCallback() {
-            @Override
-            public void invoke(long window, int key, int scancode, int action, int mods) {
-                if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
-                    emulationRunning = !emulationRunning;
-                else if (key == GLFW_KEY_F10 && action == GLFW_PRESS) {
-                    selectedPalette = (selectedPalette + 1) & 0x07;
-                    redraw_info = true;
-                } else if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
-                    //before resetting from other Thread, we pause the emulation and wait a couple of frame to be sure that the Game Thread isn't messing with the system
-                    emulationRunning = false;
-                    try {
-                        Thread.sleep(10 * FRAME_DURATION);
-                    } catch (InterruptedException ignored) {
-                    }
-                    nes.reset();
-                    emulationRunning = true;
-                } else if (key == GLFW_KEY_F8 && action == GLFW_PRESS) {
-                    ram_page++;
-                    redraw_info = true;
-                } else if (key == GLFW_KEY_F7 && action == GLFW_PRESS) {
-                    ram_page--;
-                    redraw_info = true;
-                } else if (key == GLFW_KEY_F6 && action == GLFW_PRESS && !emulationRunning) {
-                    do {
-                        nes.debugClock();
-                    } while (!nes.getCpu().complete());
-                    do {
-                        nes.debugClock();
-                    } while (nes.getCpu().complete());
-                    if (nes.getPpu().frameComplete) {
-                        frameCount++;
-                        nes.getPpu().frameComplete = false;
-                    }
-                    redraw_info = true;
-                    redraw_game = true;
-                } else if (key == GLFW_KEY_F9 && action == GLFW_PRESS && !emulationRunning) {
-                    do {
-                        nes.debugClock();
-                    } while (!nes.getPpu().frameComplete);
-                    do {
-                        nes.debugClock();
-                    } while (nes.getCpu().complete());
-                    nes.getPpu().frameComplete = false;
-                    frameCount++;
-                    redraw_info = true;
-                    redraw_game = true;
-                }
-            }
-        });
+        //Set the KeyCallBack
+        glfwSetKeyCallback(info_window, infoKeyCallBack);
+    }
+
+    /**
+     * Create a new GLFW Window with its own context
+     * Used to create windows on multiple Threads
+     *
+     * @param width  the window hwidth
+     * @param height the window height
+     * @param title  the window title
+     * @return the id of the windows as returned by GLFW
+     */
+    private long createContextSepraratedWindow(int width, int height, String title) {
+        GLFWErrorCallback.createPrint(System.err).set();
+        if (!glfwInit())
+            throw new IllegalStateException("GLFW Init failed");
+
+        //Set the window's properties
+        glfwDefaultWindowHints();
+        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+
+        //Create the window
+        long window = glfwCreateWindow(width, height, title, NULL, NULL);
+        if (window == NULL)
+            throw new RuntimeException("Failed to create window");
+        try (MemoryStack stack = stackPush()) {
+            IntBuffer pWidth = stack.mallocInt(1);
+            IntBuffer pHeight = stack.mallocInt(1);
+            glfwGetWindowSize(window, pWidth, pHeight);
+            GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+            if (vidmode != null)
+                glfwSetWindowPos(window, (vidmode.width() - pWidth.get(0)) / 2, (vidmode.height() - pHeight.get(0)) / 2);
+        }
+        return window;
     }
 
     /**
@@ -377,7 +422,7 @@ public class NEmuS {
                         frameCount++;
                     }
                     //Keep track of the FPS number
-                    glfwSetWindowTitle(game_window, game + " - " + 1000000000 / (System.nanoTime() - last_frame) + " fps");
+                    glfwSetWindowTitle(game_window, game_name + " - " + 1000000000 / (System.nanoTime() - last_frame) + " fps");
                     last_frame = System.nanoTime();
                 }
                 //We load the screen pixels into VRAM and display them

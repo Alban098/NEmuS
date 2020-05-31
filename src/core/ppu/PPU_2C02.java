@@ -2,6 +2,7 @@ package core.ppu;
 
 import core.cartridge.Cartridge;
 import core.ppu.registers.*;
+import exceptions.DumpException;
 import org.lwjgl.BufferUtils;
 import utils.ByteWrapper;
 import utils.NumberUtils;
@@ -17,32 +18,28 @@ public class PPU_2C02 {
 
     public static final int SCREEN_WIDTH = 256;
     public static final int SCREEN_HEIGHT = 240;
-    public boolean frameComplete;
     private final Color[] palScreen;
     private final ByteBuffer screen_buffer;
     private final ByteBuffer[] patterntables;
     private final ByteBuffer[] nametables;
-    private Cartridge cartridge;
     private final byte[][] tblName;
     private final byte[] tblPalette;
     private final byte[][] tblPattern;
-
     private final MaskRegister maskRegister;
     private final ControlRegister controlRegister;
     private final StatusRegister statusRegister;
-
     private final ObjectAttribute[] oams;
     private final ObjectAttribute[] visible_oams;
-    private byte sprite_count;
     private final short[] sprite_shift_pattern_low;
     private final short[] sprite_shift_pattern_high;
-
+    private final LoopyRegister vram_addr;
+    private final LoopyRegister tram_addr;
+    public boolean frameComplete;
+    private Cartridge cartridge;
+    private byte sprite_count;
     private byte address_latch = 0x00;
     private byte ppu_data_buffer = 0x00;
     private byte oam_addr = 0x00;
-
-    private final LoopyRegister vram_addr;
-    private final LoopyRegister tram_addr;
     private byte fine_x = 0x00;
 
     private short bg_next_tile_id = 0x00;
@@ -887,19 +884,25 @@ public class PPU_2C02 {
             }
         }
         //We populate the pixels buffer in the right order
-        fillBuffer(tmp, i, patterntables);
+        fillBuffer(tmp, patterntables[i]);
         return patterntables[i];
     }
 
-    private void fillBuffer(int[] tmp, int i, ByteBuffer[] patterntables) {
+    /**
+     * Fill a pixel ByteBuffer with an indexed array op RGBA values
+     *
+     * @param tmp    the RGBA array
+     * @param buffer the buffer to fill
+     */
+    private void fillBuffer(int[] tmp, ByteBuffer buffer) {
         for (int rgba : tmp) {
-            patterntables[i].put((byte) ((rgba >> 16) & 0xFF));
-            patterntables[i].put((byte) ((rgba >> 8) & 0xFF));
-            patterntables[i].put((byte) ((rgba) & 0xFF));
-            patterntables[i].put((byte) ((rgba >> 24) & 0xFF));
+            buffer.put((byte) ((rgba >> 16) & 0xFF)); //Red
+            buffer.put((byte) ((rgba >> 8) & 0xFF)); //Green
+            buffer.put((byte) ((rgba) & 0xFF)); //Blue
+            buffer.put((byte) ((rgba >> 24) & 0xFF)); //Alpha
         }
         //The buffer is then flipped to be read by OpenGL
-        patterntables[i].flip();
+        buffer.flip();
     }
 
     /**
@@ -956,7 +959,7 @@ public class PPU_2C02 {
             }
         }
         //We populate the pixels buffer in the right order
-        fillBuffer(tmp, i, nametables);
+        fillBuffer(tmp, nametables[i]);
         return nametables[i];
     }
 
@@ -973,6 +976,13 @@ public class PPU_2C02 {
     }
 
     // ======================================= Savestates Methods ======================================= //
+
+    /**
+     * Return a dump of the PPU Status
+     * that can be restored later
+     *
+     * @return a byte[11] containing the PPU Status
+     */
     public byte[] dumpStatus() {
         return new byte[]{
                 (byte) maskRegister.get(),
@@ -989,7 +999,15 @@ public class PPU_2C02 {
         };
     }
 
-    public void restoreStatusDump(byte[] dump) {
+    /**
+     * Restore the PPU Status to a dumped state
+     *
+     * @param dump the dumped memory (Must be 11 bytes)
+     * @throws DumpException when the dump size isn't 11 bytes
+     */
+    public void restoreStatusDump(byte[] dump) throws DumpException {
+        if (dump.length != 11)
+            throw new DumpException("Invalid PPU Status size (" + dump.length + ") must be 11 bytes");
         maskRegister.set(dump[0] & 0xFF);
         controlRegister.set(dump[1] & 0xFF);
         statusRegister.set(dump[2] & 0xFF);
@@ -1001,6 +1019,12 @@ public class PPU_2C02 {
         fine_x = dump[10];
     }
 
+    /**
+     * Return a dump of the Object Attribute Memory
+     * that can be restored later
+     *
+     * @return a byte[256] containing the Object Attribute Memory
+     */
     public byte[] dumpOAM() {
         byte[] oam = new byte[256];
         for (int i = 0; i < 64; i++) {
@@ -1013,7 +1037,15 @@ public class PPU_2C02 {
         return oam;
     }
 
-    public void restoreOAMDump(byte[] dump) {
+    /**
+     * Restore the Object Attribute Memory to a dumped state
+     *
+     * @param dump the dumped memory (Must be 256 bytes)
+     * @throws DumpException when the dump size isn't 256 bytes
+     */
+    public void restoreOAMDump(byte[] dump) throws DumpException {
+        if (dump.length != 256)
+            throw new DumpException("Invalid Object Attribute Memory size (" + dump.length + ") must be 256 bytes");
         for (int i = 0; i < 64; i++) {
             oams[i].setX(dump[4 * i]);
             oams[i].setAttribute(dump[4 * i + 1]);
@@ -1022,6 +1054,12 @@ public class PPU_2C02 {
         }
     }
 
+    /**
+     * Return a dump of the Nametable Memory
+     * that can be restored later
+     *
+     * @return a byte[2048] containing the Nametable Memory
+     */
     public byte[] dumpNametables() {
         byte[] dump = new byte[2048];
         for (int i = 0; i < 2; i++) {
@@ -1030,22 +1068,50 @@ public class PPU_2C02 {
         return dump;
     }
 
-    public void restoreNametablesDump(byte[] dump) {
+    /**
+     * Restore the Nametable Memory to a dumped state
+     *
+     * @param dump the dumped memory (Must be 2048 bytes)
+     * @throws DumpException when the dump size isn't 2048 bytes
+     */
+    public void restoreNametablesDump(byte[] dump) throws DumpException {
+        if (dump.length != 2048)
+            throw new DumpException("Invalid Nametable Memory size (" + dump.length + ") must be 2048 bytes");
         for (int i = 0; i < 2; i++) {
             System.arraycopy(dump, i * 1024, tblName[i], 0, 1024);
         }
     }
 
+    /**
+     * Return a dump of the Palette Memory
+     * that can be restored later
+     *
+     * @return a byte[32] containing the Palette Memory
+     */
     public byte[] dumpPalette() {
         byte[] dump = new byte[32];
         System.arraycopy(tblPalette, 0, dump, 0, 32);
         return dump;
     }
 
-    public void restorePaletteDump(byte[] dump) {
+    /**
+     * Restore the Palette Memory to a dumped state
+     *
+     * @param dump the dumped memory (Must be 32 bytes)
+     * @throws DumpException when the dump size isn't 32 bytes
+     */
+    public void restorePaletteDump(byte[] dump) throws DumpException {
+        if (dump.length != 32)
+            throw new DumpException("Invalid Palette Memory size (" + dump.length + ") must be 32 bytes");
         System.arraycopy(dump, 0, tblPalette, 0, 32);
     }
 
+    /**
+     * Return a dump of the Pattern Table Memory
+     * that can be restored later
+     *
+     * @return a byte[8192] containing the Pattern Table Memory
+     */
     public byte[] dumpPatternTables() {
         byte[] dump = new byte[8192];
         for (int i = 0; i < 2; i++) {
@@ -1054,7 +1120,15 @@ public class PPU_2C02 {
         return dump;
     }
 
-    public void restorePatternTablesDump(byte[] dump) {
+    /**
+     * Restore the Pattern Table Memory to a dumped state
+     *
+     * @param dump the dumped memory (Must be 8192 bytes)
+     * @throws DumpException when the dump size isn't 8192 bytes
+     */
+    public void restorePatternTablesDump(byte[] dump) throws DumpException {
+        if (dump.length != 8192)
+            throw new DumpException("Invalid Pattern Table Memory size (" + dump.length + ") must be 8192 bytes");
         for (int i = 0; i < 2; i++) {
             System.arraycopy(dump, i * 4096, tblPattern[i], 0, 4096);
         }

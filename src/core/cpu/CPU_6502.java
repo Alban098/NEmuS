@@ -1,6 +1,7 @@
 package core.cpu;
 
 import core.Bus;
+import exceptions.DumpException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -1755,11 +1756,25 @@ public class CPU_6502 {
 
     // ======================================= Savestates Methods ======================================= //
 
+    /**
+     * Return a dump of the CPU Status
+     * that can be restored later
+     *
+     * @return a byte[7] containing the PPU Status
+     */
     public byte[] dumpStatus() {
         return new byte[]{(byte) a, (byte) x, (byte) y, (byte) stkp, (byte) status, (byte) (pc >> 8), (byte) (pc & 0xFF)};
     }
 
-    public void restoreStatusDump(byte[] dump) {
+    /**
+     * Restore the CPU Status to a dumped state
+     *
+     * @param dump the dumped memory (Must be 7 bytes)
+     * @throws DumpException when the dump size isn't 7 bytes
+     */
+    public void restoreStatusDump(byte[] dump) throws DumpException {
+        if (dump.length != 7)
+            throw new DumpException("Invalid CPU Status size (" + dump.length + ") must be 7 bytes");
         a = dump[0];
         x = dump[1];
         y = dump[2];
@@ -1789,12 +1804,12 @@ abstract class Instruction {
      *
      * @return 1 if the operation is susceptible of requiring an extra cycle 0 otherwise
      */
-    public abstract int operate();
+    abstract int operate();
 
     /**
      * Fetch the appropriate data
      *
      * @return 1 if the data gathering require an extra cycle 0 otherwise
      */
-    public abstract int addrmode();
+    abstract int addrmode();
 }

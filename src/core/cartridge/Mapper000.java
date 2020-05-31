@@ -9,6 +9,7 @@ public class Mapper000 extends Mapper {
 
     /**
      * Create a new instance of Mapper000
+     *
      * @param nPRGBanks number of Program ROM Banks
      * @param nCHRBanks number of Character ROM Banks
      */
@@ -19,7 +20,8 @@ public class Mapper000 extends Mapper {
     /**
      * Map an Address the CPU want to read from to a Program Memory Address
      * if the Cartridge need to map it
-     * @param addr the CPU Address to map
+     *
+     * @param addr   the CPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
      * @return Whether or not the Address was mapped
      */
@@ -35,7 +37,8 @@ public class Mapper000 extends Mapper {
     /**
      * Map an Address the CPU want to write to to a Program Memory Address
      * if the Cartridge need to map it
-     * @param addr the CPU Address to map
+     *
+     * @param addr   the CPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
      * @return Whether or not the Address was mapped
      */
@@ -51,7 +54,8 @@ public class Mapper000 extends Mapper {
     /**
      * Map an Address the PPU want to read from to a Character Memory Address
      * if the Cartridge need to map it
-     * @param addr the PPU Address to map
+     *
+     * @param addr   the PPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
      * @return Whether or not the Address was mapped
      */
@@ -66,7 +70,8 @@ public class Mapper000 extends Mapper {
 
     /**
      * The PPU never write, for Mapper 000 the Character Memory is ROM
-     * @param addr the PPU Address to map
+     *
+     * @param addr   the PPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
      * @return Whether or not the Address was mapped
      */

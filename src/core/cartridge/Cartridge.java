@@ -21,6 +21,7 @@ public class Cartridge {
 
     /**
      * Create a Cartridge and load a ROM into the emulator
+     *
      * @param filename the path to the ROM
      */
     public Cartridge(String filename) throws IOException {
@@ -52,7 +53,7 @@ public class Cartridge {
                     mapper = new Mapper000(nPRGBanks, nCHRBanks);
                     break;
                 case 1:
-                    JOptionPane.showMessageDialog(null, "Mapper not implemented yet");
+                    JOptionPane.showMessageDialog(null, "Mapper " + mapperId + " not implemented yet", "ROM Loading Error", JOptionPane.ERROR_MESSAGE);
                     break;
                 default:
                     break;
@@ -62,6 +63,7 @@ public class Cartridge {
 
     /**
      * Will read a value from Program Memory if the Mapper allow it
+     *
      * @param addr the address to read from
      * @param data the Wrapper where to store the read data
      * @return was the data searched in the Cartridge
@@ -78,6 +80,7 @@ public class Cartridge {
     /**
      * Will write the data into Program Memory if the Mapper allows it
      * and return whether or not the data was for the Cartridge
+     *
      * @param addr the address to write
      * @param data the data to write
      * @return was the data for the Cartridge
@@ -85,7 +88,7 @@ public class Cartridge {
     public boolean cpuWrite(int addr, int data) {
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.cpuMapWrite(addr, mapped)) {
-             sPRGMemory[mapped.value] = (byte) (data & 0xFF);
+            sPRGMemory[mapped.value] = (byte) (data & 0xFF);
             return true;
         }
         return false;
@@ -93,6 +96,7 @@ public class Cartridge {
 
     /**
      * Will read a value from Character Memory if the Mapper allow it
+     *
      * @param addr the address to read from
      * @param data the Wrapper where to store the read data
      * @return was the data searched in the Cartridge
@@ -109,6 +113,7 @@ public class Cartridge {
     /**
      * Will write the data into Character Memory if the Mapper allows it
      * and return whether or not the data was for the Cartridge
+     *
      * @param addr the address to write
      * @param data the data to write
      * @return was the data for the Cartridge
@@ -124,6 +129,7 @@ public class Cartridge {
 
     /**
      * Return the mirroring mode of the Game
+     *
      * @return the game's mirroring mode
      */
     public Mirror getMirror() {

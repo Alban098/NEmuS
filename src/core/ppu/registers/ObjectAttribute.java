@@ -116,6 +116,13 @@ public class ObjectAttribute {
     }
 
     // ======================================= Savestates Methods ======================================= //
+
+    /**
+     * Return a dump of the Object Attribute
+     * that can be restored later
+     *
+     * @return a byte[4] containing the Object Attribute
+     */
     public byte[] dump() {
         return new byte[]{(byte) x, (byte) attribute, (byte) id, (byte) y};
     }
