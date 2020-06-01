@@ -650,6 +650,7 @@ public class NEmuS {
 
         // ================================= RAM =================================
         int nRamX = 5, nRamY = 440;
+        g.setFont(new Font("monospaced", Font.BOLD, 15));
         int nAddr = ram_page << 8;
         for (int row = 0; row < 16; row++) {
             StringBuilder sOffset = new StringBuilder(String.format("$%04X:", nAddr));

@@ -80,7 +80,7 @@ public class Cartridge {
      */
     public boolean cpuRead(int addr, ByteWrapper data) {
         IntegerWrapper mapped = new IntegerWrapper();
-        if (mapper.cpuMapRead(addr, mapped, data)) {
+        if (mapper.cpuMapRead(addr & 0xFFFF, mapped, data)) {
             if (mapped.value == -1) return true;
             data.value = (byte) (sPRGMemory[mapped.value] & 0xFF);
             return true;

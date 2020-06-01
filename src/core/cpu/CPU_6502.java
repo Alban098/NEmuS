@@ -443,8 +443,8 @@ public class CPU_6502 {
     private int izx() {
         int ptr = read(pc);
         pc = (pc + 1) & 0xFFFF;
-        int low = read((ptr + x) & 0x00FF);
-        int high = read((ptr + x + 1) & 0x00FF);
+        int low = read((ptr + (x & 0xFF) & 0xFFFF) & 0x00FF);
+        int high = read(((ptr + (x & 0xFF) + 1) & 0xFFFF) & 0x00FF);
         addr_abs = (high << 8) | low;
         return 0;
     }
@@ -540,7 +540,7 @@ public class CPU_6502 {
         int ptr = (high << 8) | low;
 
         if (low == 0xFF) //Page Boundary bug
-            addr_abs = (read((ptr & 0xFF00) << 8)) | read(ptr);
+            addr_abs = (read((ptr & 0xFF00)) << 8) | read(ptr);
         else
             addr_abs = (read(ptr + 1) << 8) | read(ptr);
         return 0;
@@ -714,7 +714,7 @@ public class CPU_6502 {
     private int bmi() {
         if (getFlag(Flags.N)) {
             cycles++;
-            addr_abs = (pc + addr_rel) & 0xFFFF;
+            addr_abs = pc + addr_rel;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
             pc = addr_abs & 0xFFFF;
@@ -748,7 +748,7 @@ public class CPU_6502 {
     private int bpl() {
         if (!getFlag(Flags.N)) {
             cycles++;
-            addr_abs = (pc + addr_rel) & 0xFFFF;
+            addr_abs = pc + addr_rel;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
             pc = addr_abs & 0xFFFF;
@@ -766,15 +766,15 @@ public class CPU_6502 {
     private int brk() {
         pc = (pc + 1) & 0xFFFF;
         setFlag(Flags.I, true);
-        write(0x0100 + stkp, (short) ((pc >> 8) & 0x00FF));
+        write(0x0100 + (stkp & 0xFF), (short) ((pc >> 8) & 0x00FF));
         stkp = (short) ((stkp - 1) & 0x00FF);
-        write(0x0100 + stkp, (short) (pc & 0x00FF));
+        write(0x0100 + (stkp & 0xFF), (short) (pc & 0x00FF));
         stkp = (short) ((stkp - 1) & 0x00FF);
         setFlag(Flags.B, true);
-        write(0x0100 + stkp, (short) (status & 0x00FF));
+        write(0x0100 + (stkp & 0xFF), (short) ((status) & 0x00FF));
         stkp = (short) ((stkp - 1) & 0x00FF);
         setFlag(Flags.B, false);
-        pc = read(0xFFFE) | (read(0xFFFF) << 8) & 0xFFFF;
+        pc = (read(0xFFFE) | (read(0xFFFF) << 8)) & 0xFFFF;
         return 0;
     }
 
@@ -1037,10 +1037,10 @@ public class CPU_6502 {
      */
     private int jsr() {
         pc = (pc - 1) & 0xFFFF;
-        write(0x0100 + stkp, (short) ((pc >> 8) & 0x00FF));
-        stkp = (short) ((stkp - 1) & 0x00FF);
-        write(0x0100 + stkp, (short) (pc & 0x00FF));
-        stkp = (short) ((stkp - 1) & 0x00FF);
+        write(0x0100 + (stkp & 0xFF), (short) ((pc >> 8) & 0x00FF));
+        stkp = (short) ((stkp - 1) & 0xFFFF);
+        write(0x0100 + (stkp & 0xFF), (short) (pc & 0x00FF));
+        stkp = (short) ((stkp - 1) & 0xFFFF);
         pc = addr_abs & 0xFFFF;
         return 0;
     }
@@ -1180,7 +1180,7 @@ public class CPU_6502 {
      */
     private int pla() {
         stkp = (short) ((stkp + 1) & 0x00FF);
-        a = read(0x0100 + stkp);
+        a = read(0x0100 + (stkp & 0xFF));
         setFlag(Flags.Z, a == 0x00);
         setFlag(Flags.N, (a & 0x80) != 0x00);
         return 0;
@@ -1195,7 +1195,7 @@ public class CPU_6502 {
      */
     private int plp() {
         stkp = (short) ((stkp + 1) & 0x00FF);
-        status = (short) (read(0x0100 + stkp) & 0x00FF);
+        status = (short) (read(0x0100 + (stkp & 0xFF)) & 0x00FF);
         setFlag(Flags.U, true);
         return 0;
     }
@@ -1254,13 +1254,14 @@ public class CPU_6502 {
      */
     private int rti() {
         stkp = (short) ((stkp + 1) & 0x00FF);
-        status = (short) (read(0x0100 + stkp) & 0xFF);
+        status = (short) (read(0x0100 + (stkp & 0xFF)) & 0xFF);
         status &= ~Flags.B.value;
         status &= ~Flags.U.value;
         stkp = (short) ((stkp + 1) & 0x00FF);
-        pc = read(0x0100 + stkp);
+        pc = read(0x0100 + (stkp & 0xFF));
         stkp = (short) ((stkp + 1) & 0x00FF);
-        pc |= read(0x0100 + stkp) << 8;
+        pc |= read(0x0100 + (stkp & 0xFF)) << 8;
+        pc &= 0xFFFF;
         return 0;
     }
 
@@ -1271,10 +1272,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int rts() {
-        stkp = (short) ((stkp + 1) & 0x00FF);
-        pc = read(0x0100 + stkp);
-        stkp = (short) ((stkp + 1) & 0x00FF);
-        pc |= read(0x0100 + stkp) << 8;
+        stkp = (short) ((stkp + 1) & 0x0FFF);
+        pc = read(0x0100 + (stkp & 0xFF));
+        stkp = (short) ((stkp + 1) & 0x0FFF);
+        pc |= (read(0x0100 + (stkp & 0xFF)) << 8);
+        pc &= 0xFFFF;
         pc = (pc + 1) & 0xFFFF;
         return 0;
     }
@@ -1515,15 +1517,15 @@ public class CPU_6502 {
         //The Interrupt is trigger only if they aren't disable (I Flag of the Status Register)
         if (!getFlag(Flags.I)) {
             //Push the current Program Counter to the Stack LSB first
-            write(0x0100 + stkp, (short) ((pc >> 8) & 0x00FF));
+            write(0x0100 + (stkp & 0xFF), (short) ((pc >> 8) & 0x00FF));
             stkp = (short) ((stkp - 1) & 0x00FF);
-            write(0x0100 + stkp, (short) (pc & 0x00FF));
+            write(0x0100 + (stkp & 0xFF), (short) (pc & 0x00FF));
             stkp = (short) ((stkp - 1) & 0x00FF);
             //Push the current Status Register to the Stack
             setFlag(Flags.B, false);
             setFlag(Flags.U, true);
             setFlag(Flags.I, true);
-            write(0x0100 + stkp, status);
+            write(0x0100 + (stkp & 0xFF), status);
             stkp = (short) ((stkp - 1) & 0x00FF);
             //Jump to the NMI Routine specified at 0xFFFA
             addr_abs = 0xFFFE;
@@ -1540,15 +1542,15 @@ public class CPU_6502 {
      */
     public void nmi() {
         //Push the current Program Counter to the Stack LSB first
-        write(0x0100 + stkp, (short) ((pc >> 8) & 0x00FF));
+        write(0x0100 + (stkp & 0xFF), (short) ((pc >> 8) & 0x00FF));
         stkp = (short) ((stkp - 1) & 0x00FF);
-        write(0x0100 + stkp, (short) (pc & 0x00FF));
+        write(0x0100 + (stkp & 0xFF), (short) (pc & 0x00FF));
         stkp = (short) ((stkp - 1) & 0x00FF);
         //Push the current Status Register to the Stack
         setFlag(Flags.B, false);
         setFlag(Flags.U, true);
         setFlag(Flags.I, true);
-        write(0x0100 + stkp, status);
+        write(0x0100 + (stkp & 0xFF), status);
         stkp = (short) ((stkp - 1) & 0x00FF);
         //Jump to the NMI Routine specified at 0xFFFA
         addr_abs = 0xFFFA;

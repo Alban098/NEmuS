@@ -72,12 +72,12 @@ public class Bus {
             if (addr >= 0x0000 && addr <= 0x1FFF) {
                 ram[addr & 0x07FF] = (byte) data;
             //Write PPU Register (8 values mirrored over the range)
-            } else if (addr >= 0x2000 && addr <= 0x3FFF)
+            } else if (addr >= 0x2000 && addr <= 0x3FFF) {
                 ppu.cpuWrite(addr & 0x0007, data);
-            //Write to DMA Register
-            else if (addr == 0x4014) {
+                //Write to DMA Register
+            } else if (addr == 0x4014) {
                 dma_page = data;
-                dma_addr = 0x00;
+                dma_addr = 0;
                 dma_transfer = true;
                 //When trying to write to controller register, we snapshot the current controller state
             } else if (addr >= 0x4016 && addr <= 0x4017)

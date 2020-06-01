@@ -36,11 +36,11 @@ public class PPU_2C02 {
     private final LoopyRegister tram_addr;
     public boolean frameComplete;
     private Cartridge cartridge;
-    private byte sprite_count;
-    private byte address_latch = 0x00;
-    private byte ppu_data_buffer = 0x00;
-    private byte oam_addr = 0x00;
-    private byte fine_x = 0x00;
+    private short sprite_count;
+    private short address_latch = 0x00;
+    private short ppu_data_buffer = 0x00;
+    private short oam_addr = 0x00;
+    private short fine_x = 0x00;
 
     private short bg_next_tile_id = 0x00;
     private short bg_next_tile_attrib = 0x00;
@@ -235,9 +235,9 @@ public class PPU_2C02 {
                 //Nametable reads are delayed by one cycle
                 //When reading the last fetched data is returned and the next is fetched
                 data = ppu_data_buffer;
-                ppu_data_buffer = (byte) ppuRead(vram_addr.get());
+                ppu_data_buffer = ppuRead(vram_addr.get());
                 //Except palette, here their is no delay
-                if (vram_addr.get() > 0x3F00) data = ppu_data_buffer;
+                if (vram_addr.get() >= 0x3F00) data = ppu_data_buffer;
                 int vram = vram_addr.get() & 0xFFFF;
                 //The vram address is incremented (horizontally or vertically depending on the Control Register)
                 vram_addr.set(vram + (controlRegister.isIncrementModeSet() ? 32 : 1));
@@ -267,7 +267,7 @@ public class PPU_2C02 {
             case 0x0002: // Status
                 break;
             case 0x0003: // OAM Address
-                oam_addr = (byte) data;
+                oam_addr = data;
                 break;
             case 0x0004: // OAM Data
                 switch (oam_addr & 0x03) {
@@ -280,12 +280,13 @@ public class PPU_2C02 {
                     case 0x3:
                         oams[oam_addr >> 2].setX(data);
                 }
+                oam_addr = (short) ((oam_addr + 1) & 0xFF);
                 break;
             case 0x0005: // Scroll
                 //When writing to the Scroll Register, we first write the X offset
                 if (address_latch == 0) {
                     //The offset is spliced into coarseX and fineX
-                    fine_x = (byte) (data & 0x07);
+                    fine_x = (short) (data & 0x07);
                     tram_addr.setCoarseX((byte) (data >> 3));
                     address_latch = 1;
                     //The second write is the Y offset
@@ -660,13 +661,14 @@ public class PPU_2C02 {
                             }
                             //Instead of instantiating new OAM, we fill it with the data of the other one
                             visible_oams[sprite_count].set(oams[oam_entry]);
-                            sprite_count++;
                         }
+                        sprite_count++;
                     }
                     oam_entry++;
                 }
                 //If we hit a 9th sprite on the scanline, we set the sprite overflow flag to 1
                 statusRegister.setSpriteOverflow(sprite_count > 8);
+                if (sprite_count > 8) sprite_count = 8;
             }
             //At the end of the horizontal blank, we fetch all the relevant sprite data for the next scanline
             //This is really done one multiple cycles, but it's easier to do it all in one go and doesn't change the overall behaviour of the rendering process
@@ -990,14 +992,14 @@ public class PPU_2C02 {
                 (byte) maskRegister.get(),
                 (byte) controlRegister.get(),
                 (byte) statusRegister.get(),
-                address_latch,
-                ppu_data_buffer,
-                oam_addr,
+                (byte) address_latch,
+                (byte) ppu_data_buffer,
+                (byte) oam_addr,
                 (byte) ((vram_addr.get() >> 8) & 0xFF),
                 (byte) (vram_addr.get() & 0xFF),
                 (byte) ((tram_addr.get() >> 8) & 0xFF),
                 (byte) (tram_addr.get() & 0xFF),
-                fine_x
+                (byte) fine_x
         };
     }
 
