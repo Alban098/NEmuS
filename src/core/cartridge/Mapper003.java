@@ -1,12 +1,11 @@
 package core.cartridge;
 
 import core.ppu.Mirror;
-import utils.ByteWrapper;
 import utils.IntegerWrapper;
 
 public class Mapper003 extends Mapper{
 
-    private short selectedCHRBank = 0x00;
+    private int selectedCHRBank = 0x00;
 
     /**
      * Create a new instance of Mapper003
@@ -28,7 +27,7 @@ public class Mapper003 extends Mapper{
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean cpuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data) {
+    public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         if (addr >= 0x8000 && addr <= 0xFFFF) {
             mapped.value = addr & (nPRGBanks > 1 ? 0x7FFF : 0x3FFF);
             return true;
@@ -47,9 +46,9 @@ public class Mapper003 extends Mapper{
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean cpuMapWrite(int addr, IntegerWrapper mapped, short data) {
+    public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
         if (addr >= 0x8000 && addr <= 0xFFFF) {
-            selectedCHRBank = (short) (data & 0x03);
+            selectedCHRBank = data & 0x03;
             mapped.value = addr;
         }
         return false;
@@ -65,7 +64,7 @@ public class Mapper003 extends Mapper{
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean ppuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data) {
+    public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         if (addr >= 0x0000 && addr <= 0x1FFF) {
             mapped.value = selectedCHRBank * 0x2000 + addr;
             return true;
@@ -82,7 +81,7 @@ public class Mapper003 extends Mapper{
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean ppuMapWrite(int addr, IntegerWrapper mapped, short data) {
+    public boolean ppuMapWrite(int addr, IntegerWrapper mapped, int data) {
         return false;
     }
 
@@ -94,6 +93,21 @@ public class Mapper003 extends Mapper{
     @Override
     public Mirror mirror() {
         return Mirror.VERTICAL;
+    }
+
+    @Override
+    public boolean irqState() {
+        return false;
+    }
+
+    @Override
+    public void irqClear() {
+
+    }
+
+    @Override
+    public void scanline() {
+
     }
 
     /**

@@ -6,11 +6,11 @@ package core.ppu.registers;
  */
 public class LoopyRegister {
 
-    private byte coarse_x = 0x00;
-    private byte coarse_y = 0x00;
+    private int coarse_x = 0x00;
+    private int coarse_y = 0x00;
     private boolean nametable_x = false;
     private boolean nametable_y = false;
-    private byte fine_y = 0x00;
+    private int fine_y = 0x00;
 
     /**
      * Load the Register with an 16bit value
@@ -18,11 +18,11 @@ public class LoopyRegister {
      * @param val the value to set (only the 16lsb are considered)
      */
     public void set(int val) {
-        coarse_x = (byte) (val & 0b0000000000011111);
-        coarse_y = (byte) (((val & 0b0000001111100000) >> 5) & 0x1F);
+        coarse_x = val & 0b0000000000011111;
+        coarse_y = ((val & 0b0000001111100000) >> 5) & 0x1F;
         nametable_x = (val & 0b0000010000000000) == 0b0000010000000000;
         nametable_y = (val & 0b0000100000000000) == 0b0000100000000000;
-        fine_y = (byte) (((val & 0b0111000000000000) >> 12) & 0x07);
+        fine_y = ((val & 0b0111000000000000) >> 12) & 0x07;
 
     }
 
@@ -55,8 +55,8 @@ public class LoopyRegister {
      *
      * @param coarse_x the coarse_x value (only the 5 lsb are considered)
      */
-    public void setCoarseX(byte coarse_x) {
-        this.coarse_x = (byte) (coarse_x & 0xFF);
+    public void setCoarseX(int coarse_x) {
+        this.coarse_x = coarse_x & 0xFF;
     }
 
     /**
@@ -64,7 +64,7 @@ public class LoopyRegister {
      *
      * @return the coarse_y value (5 lsb)
      */
-    public byte getCoarseY() {
+    public int getCoarseY() {
         return coarse_y;
     }
 
@@ -73,8 +73,8 @@ public class LoopyRegister {
      *
      * @param coarse_y the coarse_y value (only the 5 lsb are considered)
      */
-    public void setCoarseY(byte coarse_y) {
-        this.coarse_y = (byte) (coarse_y & 0xFF);
+    public void setCoarseY(int coarse_y) {
+        this.coarse_y = coarse_y & 0xFF;
     }
 
     /**
@@ -127,8 +127,8 @@ public class LoopyRegister {
      *
      * @param fine_y the fine_y value
      */
-    public void setFineY(byte fine_y) {
-        this.fine_y = (byte) (fine_y & 0x0F);
+    public void setFineY(int fine_y) {
+        this.fine_y = fine_y & 0x0F;
     }
 
     @Override

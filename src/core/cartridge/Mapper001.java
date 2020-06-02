@@ -1,28 +1,26 @@
 package core.cartridge;
 
 import core.ppu.Mirror;
-import utils.ByteWrapper;
 import utils.IntegerWrapper;
 
-import java.nio.ByteBuffer;
 
 public class Mapper001 extends Mapper {
 
-    private short selectedCHRBank4Low = 0x00;
-    private short selectedCHRBank4High = 0x00;
-    private short selectedCHRBank8 = 0x00;
+    private int selectedCHRBank4Low = 0x00;
+    private int selectedCHRBank4High = 0x00;
+    private int selectedCHRBank8 = 0x00;
 
-    private short selectedPRGBank16Low = 0x00;
-    private short selectedPRGBank16High = 0x00;
-    private short selectedPRGBank32 = 0x00;
+    private int selectedPRGBank16Low = 0x00;
+    private int selectedPRGBank16High = 0x00;
+    private int selectedPRGBank32 = 0x00;
 
-    private short loadRegister = 0x00;
-    private short loadRegisterCount = 0x00;
-    private short controlRegister = 0X00;
+    private int loadRegister = 0x00;
+    private int loadRegisterCount = 0x00;
+    private int controlRegister = 0X00;
 
     private Mirror mirroring_mode = Mirror.HORIZONTAL;
 
-    private byte[] staticVRAM;
+    private int[] staticVRAM;
 
     /**
      * Create a new instance of Mapper
@@ -32,11 +30,11 @@ public class Mapper001 extends Mapper {
      */
     Mapper001(int nPRGBanks, int nCHRBanks) {
         super(nPRGBanks, nCHRBanks);
-        staticVRAM = new byte[32 * 1024];
+        staticVRAM = new int[32 * 1024];
     }
 
     @Override
-    public boolean cpuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data) {
+    public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
             data.value = staticVRAM[addr & 0x1FFF];
@@ -62,10 +60,10 @@ public class Mapper001 extends Mapper {
     }
 
     @Override
-    public boolean cpuMapWrite(int addr, IntegerWrapper mapped, short data) {
+    public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = 0xFFFFFFFF;
-            staticVRAM[addr & 0x1FFF] = (byte) data;
+            staticVRAM[addr & 0x1FFF] = data & 0xFF;
             return true;
         }
 
@@ -73,7 +71,7 @@ public class Mapper001 extends Mapper {
             if ((data & 0x80) == 0x80) {
                 loadRegister = 0x00;
                 loadRegisterCount = 0x00;
-                controlRegister = (short) (controlRegister | 0x0C);
+                controlRegister = controlRegister | 0x0C;
             } else {
                 loadRegister >>= 1;
                 loadRegister |= (data & 0x01 << 4);
@@ -118,7 +116,7 @@ public class Mapper001 extends Mapper {
     }
 
     @Override
-    public boolean ppuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data) {
+    public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         if (addr >= 0x0000 && addr <= 0x1FFF) {
             if (nCHRBanks == 0) {
                 mapped.value = addr;
@@ -141,7 +139,7 @@ public class Mapper001 extends Mapper {
     }
 
     @Override
-    public boolean ppuMapWrite(int addr, IntegerWrapper mapped, short data) {
+    public boolean ppuMapWrite(int addr, IntegerWrapper mapped, int data) {
         if (addr <= 0x1FFF) {
             if (nCHRBanks == 0) {
                 mapped.value = addr;
@@ -158,6 +156,21 @@ public class Mapper001 extends Mapper {
     }
 
     @Override
+    public boolean irqState() {
+        return false;
+    }
+
+    @Override
+    public void irqClear() {
+
+    }
+
+    @Override
+    public void scanline() {
+
+    }
+
+    @Override
     public void reset() {
         controlRegister = 0x1C;
         loadRegister = 0x00;
@@ -168,7 +181,7 @@ public class Mapper001 extends Mapper {
         selectedCHRBank8 = 0x00;
 
         selectedPRGBank16Low = 0x00;
-        selectedPRGBank16High = (short) (nPRGBanks - 1);
+        selectedPRGBank16High = nPRGBanks - 1;
         selectedPRGBank32 = 0x00;
     }
 }

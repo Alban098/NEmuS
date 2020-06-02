@@ -7,7 +7,7 @@ import utils.IntegerWrapper;
 /**
  * This class is an abstraction of the Mapper circuit present on the Cartridge
  */
-abstract class Mapper {
+public abstract class Mapper {
 
     final int nPRGBanks;
     final int nCHRBanks;
@@ -31,7 +31,7 @@ abstract class Mapper {
      * @param mapped the Wrapper where to store the Mapped Address
      * @return Whether or not the Address was mapped
      */
-    public abstract boolean cpuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data);
+    public abstract boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data);
 
     /**
      * Map an Address the CPU want to write to to a Program Memory Address
@@ -42,7 +42,7 @@ abstract class Mapper {
      * @param data   the data to write
      * @return Whether or not the Address was mapped
      */
-    public abstract boolean cpuMapWrite(int addr, IntegerWrapper mapped, short data);
+    public abstract boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data);
 
     /**
      * Map an Address the PPU want to read from to a Character Memory Address
@@ -52,7 +52,7 @@ abstract class Mapper {
      * @param mapped the Wrapper where to store the Mapped Address
      * @return Whether or not the Address was mapped
      */
-    public abstract boolean ppuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data);
+    public abstract boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data);
 
     /**
      * Map an Address the PPU want to write to to a Character Memory Address
@@ -63,13 +63,19 @@ abstract class Mapper {
      * @param data   the data to write
      * @return Whether or not the Address was mapped
      */
-    public abstract boolean ppuMapWrite(int addr, IntegerWrapper mapped, short data);
+    public abstract boolean ppuMapWrite(int addr, IntegerWrapper mapped, int data);
 
     /**
      * Interrogate the Mapper circuit for the mirroring mode
      * @return the current mirroring mode
      */
     public abstract Mirror mirror();
+
+    public abstract boolean irqState();
+
+    public abstract void irqClear();
+
+    public abstract void scanline();
 
     /**
      * Reset the Mapper if it has processing capabilities

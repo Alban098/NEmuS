@@ -288,7 +288,7 @@ public class NEmuS {
         //Decompile the entire addressable range, for debug purposes
         decompiled = nes.getCpu().disassemble(0x0000, 0xFFFF);
         //Reset the CPU to its default state
-        nes.reset();
+        nes.startup();
     }
 
     /**
@@ -409,9 +409,9 @@ public class NEmuS {
                 glfwMakeContextCurrent(game_window);
                 glClearColor(.6f, .6f, .6f, 0f);
                 GL11.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                //We load the screen pixels into VRAM and display them
                 //We update the controller registers
                 InputHandling();
-                //If it's time to draw the next frame
                 if (System.nanoTime() >= next_frame) {
                     //Set when the next frame should occur
                     next_frame = System.nanoTime() + FRAME_DURATION;
@@ -425,10 +425,9 @@ public class NEmuS {
                         frameCount++;
                     }
                     //Keep track of the FPS number
-                    glfwSetWindowTitle(game_window, game_name + " - " + 1000000000 / (System.nanoTime() - last_frame) + " fps");
+                    glfwSetWindowTitle(game_window, game_name + " / " + (1000000000/(System.nanoTime() - last_frame)) + " FPS");
                     last_frame = System.nanoTime();
                 }
-                //We load the screen pixels into VRAM and display them
                 screen_texture.load(nes.getPpu().getScreenBuffer());
                 renderGameScreen();
                 glfwSwapBuffers(game_window);
@@ -491,6 +490,7 @@ public class NEmuS {
         cpu_texture.delete();
         oam_texture.delete();
     }
+
 
     /**
      * Get the current user inputs (Keyboard and Gamepad 1 and 2) and write it to NES

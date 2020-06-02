@@ -6,17 +6,17 @@ package core.ppu.registers;
  */
 public class ObjectAttribute {
 
-    private short y = 0x00;
-    private short id = 0x00;
-    private short attribute = 0x00;
-    private short x = 0x00;
+    private int y = 0x00;
+    private int id = 0x00;
+    private int attribute = 0x00;
+    private int x = 0x00;
 
     /**
      * Set all field to a specified val
      *
      * @param val the val to fill with
      */
-    public void clear(byte val) {
+    public void clear(int val) {
         y = val;
         id = val;
         attribute = val;
@@ -41,7 +41,7 @@ public class ObjectAttribute {
      *
      * @return the y coordinate of the ObjectAttribute
      */
-    public short getY() {
+    public int getY() {
         return y;
     }
 
@@ -51,8 +51,8 @@ public class ObjectAttribute {
      *
      * @param y the new y coordinate of the ObjectAttribute
      */
-    public void setY(short y) {
-        this.y = y;
+    public void setY(int y) {
+        this.y = y & 0xFF;
     }
 
     /**
@@ -61,7 +61,7 @@ public class ObjectAttribute {
      *
      * @return the id of the ObjectAttribute
      */
-    public short getId() {
+    public int getId() {
         return id;
     }
 
@@ -71,8 +71,8 @@ public class ObjectAttribute {
      *
      * @param id the new id of the ObjectAttribute
      */
-    public void setId(short id) {
-        this.id = id;
+    public void setId(int id) {
+        this.id = id & 0xFF;
     }
 
     /**
@@ -81,7 +81,7 @@ public class ObjectAttribute {
      *
      * @return the attribute of the ObjectAttribute
      */
-    public short getAttribute() {
+    public int getAttribute() {
         return attribute;
     }
 
@@ -91,8 +91,8 @@ public class ObjectAttribute {
      *
      * @param attribute the new attribute of the ObjectAttribute
      */
-    public void setAttribute(short attribute) {
-        this.attribute = attribute;
+    public void setAttribute(int attribute) {
+        this.attribute = attribute & 0xFF;
     }
 
     /**
@@ -101,7 +101,7 @@ public class ObjectAttribute {
      *
      * @return the x coordinate of the ObjectAttribute
      */
-    public short getX() {
+    public int getX() {
         return x;
     }
 
@@ -111,8 +111,8 @@ public class ObjectAttribute {
      *
      * @param x the new x coordinate of the ObjectAttribute
      */
-    public void setX(short x) {
-        this.x = x;
+    public void setX(int x) {
+        this.x = x & 0xFF;
     }
 
     // ======================================= Savestates Methods ======================================= //

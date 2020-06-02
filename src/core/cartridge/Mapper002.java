@@ -6,8 +6,8 @@ import utils.IntegerWrapper;
 
 public class Mapper002 extends Mapper {
 
-    private short selectedPRGBankLow = 0x00;
-    private short selectedPRGBankHigh = 0x00;
+    private int selectedPRGBankLow = 0x00;
+    private int selectedPRGBankHigh = 0x00;
 
     /**
      * Create a new instance of Mapper 002
@@ -29,7 +29,7 @@ public class Mapper002 extends Mapper {
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean cpuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data) {
+    public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         if (addr >= 0x8000 && addr <= 0xBFFF) {
             mapped.value = selectedPRGBankLow * 0x4000 + (addr & 0x3FFF);
             return true;
@@ -50,9 +50,9 @@ public class Mapper002 extends Mapper {
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean cpuMapWrite(int addr, IntegerWrapper mapped, short data) {
+    public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
         if (addr >= 0x8000 && addr <= 0xFFFF) {
-            selectedPRGBankLow = (short) (data & 0x0F);
+            selectedPRGBankLow = data & 0x0F;
         }
         return false;
     }
@@ -66,7 +66,7 @@ public class Mapper002 extends Mapper {
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean ppuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data) {
+    public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         if (addr <= 0x1FFF) {
             mapped.value = addr;
             return true;
@@ -83,7 +83,7 @@ public class Mapper002 extends Mapper {
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean ppuMapWrite(int addr, IntegerWrapper mapped, short data) {
+    public boolean ppuMapWrite(int addr, IntegerWrapper mapped, int data) {
         if (addr <= 0x1FFF) {
             if (nCHRBanks == 0) {
                 mapped.value = addr;
@@ -99,8 +99,23 @@ public class Mapper002 extends Mapper {
     }
 
     @Override
+    public boolean irqState() {
+        return false;
+    }
+
+    @Override
+    public void irqClear() {
+
+    }
+
+    @Override
+    public void scanline() {
+
+    }
+
+    @Override
     public void reset() {
         selectedPRGBankLow = 0;
-        selectedPRGBankHigh = (short) (nPRGBanks - 1);
+        selectedPRGBankHigh = nPRGBanks - 1;
     }
 }

@@ -3,6 +3,10 @@ package core.cpu;
 import core.Bus;
 import exceptions.DumpException;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,17 +17,18 @@ import java.util.TreeMap;
  */
 public class CPU_6502 {
 
+    private static final boolean LOGMODE = false;
     private final List<Instruction> opcodes;
     private Bus bus;
-    private short a = 0x00;
-    private short x = 0x00;
-    private short y = 0x00;
-    private short stkp = 0x00;
-    private short status = 0x00;
+    private int a = 0x00;
+    private int x = 0x00;
+    private int y = 0x00;
+    private int stkp = 0x00;
+    private int status = 0x00;
     private int pc = 0x0000;
-    private short tmp = 0x0000;
-    private short fetched = 0x00;
-    private short opcode = 0x00;
+    private int tmp = 0x0000;
+    private int fetched = 0x00;
+    private int opcode = 0x00;
     private int cycles = 0x00;
     private int addr_abs = 0x0000;
     private int addr_rel = 0x00;
@@ -307,8 +312,8 @@ public class CPU_6502 {
      *
      * @param addr the address to write to
      */
-    private void write(int addr, short data) {
-        bus.cpuWrite(addr, data);
+    private void write(int addr, int data) {
+        bus.cpuWrite(addr & 0xFFFF, data & 0xFF);
     }
 
     /**
@@ -317,8 +322,8 @@ public class CPU_6502 {
      * @param addr the address to read from
      * @return the read data
      */
-    private short read(int addr) {
-        return bus.cpuRead(addr, false);
+    private int read(int addr) {
+        return bus.cpuRead(addr & 0xFFFF, false) & 0xFF;
     }
 
     /**
@@ -353,7 +358,8 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int imp() {
-        fetched = (short) (a & 0x00FF);
+        fetched = a & 0xFF;
+
         return 0;
     }
 
@@ -367,9 +373,10 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int zp0() {
-        addr_abs = read(pc);
+        addr_abs = read(pc++);
         addr_abs &= 0x00FF;
-        pc = (pc + 1) & 0xFFFF;
+        pc &= 0xFFFF;
+
         return 0;
     }
 
@@ -385,9 +392,10 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int zpy() {
-        addr_abs = read(pc) + (y & 0x00FF);
+        addr_abs = read(pc++) + (y & 0xFF);
         addr_abs &= 0x00FF;
-        pc = (pc + 1) & 0xFFFF;
+        pc &= 0xFFFF;
+
         return 0;
     }
 
@@ -398,11 +406,14 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int abs() {
-        int low = read(pc);
-        pc = (pc + 1) & 0xFFFF;
-        int high = read(pc);
-        pc = (pc + 1) & 0xFFFF;
+        int low = read(pc++);
+        pc &= 0xFFFF;
+        int high = read(pc++);
+        pc &= 0xFFFF;
+
         addr_abs = (high << 8) | low;
+        addr_abs &= 0xFFFF;
+
         return 0;
     }
 
@@ -414,15 +425,15 @@ public class CPU_6502 {
      * @return 1 if a page Boundary is crossed when adding Y Register, 0 otherwise
      */
     private int aby() {
-        int low = read(pc);
-        pc = (pc + 1) & 0xFFFF;
-        int high = read(pc);
-        pc = (pc + 1) & 0xFFFF;
-        addr_abs = (high << 8 | low) & 0xFFFF;
-        addr_abs += y & 0x00FF;
+        int low = read(pc++);
+        pc &= 0xFFFF;
+        int high = read(pc++);
+        pc &= 0xFFFF;
+
+        addr_abs = (high << 8 | low) + (y & 0xFF);
         addr_abs &= 0xFFFF;
-        if ((addr_abs & 0xFF00) != (high << 8))
-            return 1;
+
+        if ((addr_abs & 0xFF00) != (high << 8)) return 1;
         return 0;
     }
 
@@ -441,11 +452,15 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int izx() {
-        int ptr = read(pc);
-        pc = (pc + 1) & 0xFFFF;
+        int ptr = read(pc++);
+        pc &= 0xFFFF;
+
         int low = read((ptr + (x & 0xFF) & 0xFFFF) & 0x00FF);
         int high = read(((ptr + (x & 0xFF) + 1) & 0xFFFF) & 0x00FF);
+
         addr_abs = (high << 8) | low;
+        addr_abs &= 0xFFFF;
+
         return 0;
     }
 
@@ -457,8 +472,9 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int imm() {
-        addr_abs = pc;
-        pc = (pc + 1) & 0xFFFF;
+        addr_abs = pc++;
+        pc &= 0xFFFF;
+
         return 0;
     }
 
@@ -474,9 +490,10 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int zpx() {
-        addr_abs = (read(pc) + (x & 0x00FF));
+        addr_abs = read(pc++) + (x & 0xFF);
         addr_abs &= 0x00FF;
-        pc = (pc + 1) & 0xFFFF;
+        pc &= 0xFFFF;
+
         return 0;
     }
 
@@ -488,10 +505,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int rel() {
-        addr_rel = read(pc);
-        pc = (pc + 1) & 0xFFFF;
-        if ((addr_rel & 0x80) != 0x0000)
-            addr_rel |= 0xFFFFFF00;
+        addr_rel = read(pc++);
+        pc &= 0xFFFF;
+
+        if ((addr_rel & 0x80) == 0x80) addr_rel |= 0xFFFFFF00;
+
         return 0;
     }
 
@@ -503,13 +521,18 @@ public class CPU_6502 {
      * @return 1 if a page boundary is crossed when adding X Register, 0 otherwise
      */
     private int abx() {
-        int low = read(pc);
-        pc = (pc + 1) & 0xFFFF;
-        int high = read(pc);
-        pc = (pc + 1) & 0xFFFF;
-        addr_abs = (((high << 8) | low) + (x & 0x00FF)& 0xFFFF);
-        if ((addr_abs & 0xFF00) != (high << 8))
-            return 1;
+        int low = read(pc++);
+        pc &= 0xFFFF;
+        int high = read(pc++);
+        pc &= 0xFFFF;
+
+        addr_abs = ((high << 8) | low) + (x & 0xFF);
+        addr_abs &= 0xFFFF;
+
+        //Dummy read
+        if ((low & 0xFF) + (x & 0xFF) > 0xFF || opcodes.get(opcode).name.equals("ROL"))
+            read(((high << 8) & 0xFF00) | (addr_abs & 0xFF));
+        if ((addr_abs & 0xFF00) != (high << 8)) return 1;
         return 0;
     }
 
@@ -533,16 +556,17 @@ public class CPU_6502 {
      * @return 0 No extra cycle required (because no page boundary cross can occur)
      */
     private int ind() {
-        int low = read(pc);
-        pc = (pc + 1) & 0xFFFF;
-        int high = read(pc);
-        pc = (pc + 1) & 0xFFFF;
-        int ptr = (high << 8) | low;
+        int low = read(pc++);
+        pc &= 0xFFFF;
+        int high = read(pc++);
+        pc &= 0xFFFF;
 
-        if (low == 0xFF) //Page Boundary bug
-            addr_abs = (read((ptr & 0xFF00)) << 8) | read(ptr);
-        else
-            addr_abs = (read(ptr + 1) << 8) | read(ptr);
+        int ptr = (high << 8) | low;
+        ptr &= 0xFFFF;
+
+        if (low == 0xFF) addr_abs = (read(ptr & 0xFF00) << 8) | read(ptr); //Page boundary bug
+        else addr_abs = (read(ptr + 1) << 8) | read(ptr);
+
         return 0;
     }
 
@@ -562,16 +586,21 @@ public class CPU_6502 {
      * @return 1 If when adding Y we cross a page boundary 0 otherwise
      */
     private int izy() {
-        int ptr = read(pc);
-        pc = (pc + 1) & 0xFFFF;
+        int ptr = read(pc++);
+        pc &= 0xFFFF;
 
         int low = read(ptr & 0x00FF) & 0x00FF;
         int high = read((ptr + 1) & 0x00FF) & 0x00FF;
-        addr_abs = ((high << 8) | low) & 0xFFFF;
-        addr_abs += y & 0x00FF;
+
+        addr_abs = (high << 8) | low;
+        addr_abs += y & 0xFF;
         addr_abs &= 0xFFFF;
-        if ((addr_abs & 0xFF00) != (high << 8))
-            return 1;
+
+        //Dummy read
+        if ((low & 0xFF) + (y & 0xFF) > 0xFF)
+            read(((high << 8) & 0xFF00) | (addr_abs & 0xFF));
+
+        if ((addr_abs & 0xFF00) != (high << 8)) return 1;
         return 0;
     }
 
@@ -591,12 +620,15 @@ public class CPU_6502 {
      */
     private int adc() {
         fetch();
-        tmp = (short) ((a + fetched + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF);
-        setFlag(Flags.C, tmp > 0x00FF);
-        setFlag(Flags.Z, (tmp & 0x00FF) == 0);
-        setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
-        setFlag(Flags.V, ((~(a ^ fetched) & (a ^ tmp)) & 0x0080) == 0x0080);
-        a = (short) (tmp & 0x00FF);
+        tmp = (a + fetched + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF;
+
+        setFlag(Flags.V, ((tmp ^ a) & (tmp ^ fetched) & 0x80) == 0x80);
+        setFlag(Flags.C, tmp > 0xFF);
+        setFlag(Flags.Z, (tmp & 0xFF) == 0);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
+        a = tmp & 0x00FF;
+
         return 1;
     }
 
@@ -610,9 +642,12 @@ public class CPU_6502 {
      */
     private int and() {
         fetch();
-        a = (short) ((a & fetched) & 0x00FF);
+        a = a & fetched;
+        a &= 0xFF;
+
         setFlag(Flags.Z, a == 0x00);
         setFlag(Flags.N, (a & 0x80) != 0x00);
+
         return 1;
     }
 
@@ -626,14 +661,15 @@ public class CPU_6502 {
      */
     private int asl() {
         fetch();
-        tmp = (short) ((fetched << 1) & 0x01FF);
+        tmp = fetched << 1;
+
         setFlag(Flags.C, (tmp & 0xFF00) > 0);
-        setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
-        if (opcodes.get(opcode).addr_mode.equals("IMP"))
-            a = (short) (tmp & 0x00FF);
-        else
-            write(addr_abs, (short) (tmp & 0xFF));
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
+        if (opcodes.get(opcode).addr_mode.equals("IMP")) a = tmp & 0xFF;
+        else write(addr_abs, tmp & 0xFF);
+
         return 0;
     }
 
@@ -647,9 +683,10 @@ public class CPU_6502 {
         if (!getFlag(Flags.C)) {
             cycles++;
             addr_abs = pc + addr_rel;
+            addr_abs &= 0xFFFF;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs & 0xFFFF;
+            pc = addr_abs;
         }
         return 0;
     }
@@ -664,9 +701,10 @@ public class CPU_6502 {
         if (getFlag(Flags.C)) {
             cycles++;
             addr_abs = pc + addr_rel;
+            addr_abs &= 0xFFFF;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs & 0xFFFF;
+            pc = addr_abs;
         }
         return 0;
     }
@@ -681,9 +719,10 @@ public class CPU_6502 {
         if (getFlag(Flags.Z)) {
             cycles++;
             addr_abs = pc + addr_rel;
+            addr_abs &= 0xFFFF;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs & 0xFFFF;
+            pc = addr_abs;
         }
         return 0;
     }
@@ -698,10 +737,12 @@ public class CPU_6502 {
      */
     private int bit() {
         fetch();
-        tmp = (short) ((a & fetched) & 0x00FF);
-        setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (fetched & (1 << 7)) == (1 << 7));
-        setFlag(Flags.V, (fetched & (1 << 6)) == (1 << 6));
+        tmp = (a & fetched) & 0x00FF;
+
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x0000);
+        setFlag(Flags.N, (fetched & 0x80) == 0x80);
+        setFlag(Flags.V, (fetched & 0x40) == 0x40);
+
         return 0;
     }
 
@@ -715,9 +756,10 @@ public class CPU_6502 {
         if (getFlag(Flags.N)) {
             cycles++;
             addr_abs = pc + addr_rel;
+            addr_abs &= 0xFFFF;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs & 0xFFFF;
+            pc = addr_abs;
         }
         return 0;
     }
@@ -732,9 +774,10 @@ public class CPU_6502 {
         if (!getFlag(Flags.Z)) {
             cycles++;
             addr_abs = pc + addr_rel;
+            addr_abs &= 0xFFFF;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs & 0xFFFF;
+            pc = addr_abs;
         }
         return 0;
     }
@@ -749,9 +792,10 @@ public class CPU_6502 {
         if (!getFlag(Flags.N)) {
             cycles++;
             addr_abs = pc + addr_rel;
+            addr_abs &= 0xFFFF;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs & 0xFFFF;
+            pc = addr_abs;
         }
         return 0;
     }
@@ -764,17 +808,16 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int brk() {
-        pc = (pc + 1) & 0xFFFF;
+        //Dummy Read
+        read((pc - 1) & 0xFFFF);
+        pushStack((pc >> 8) & 0xFF);
+        pushStack(pc & 0xFF);
+        pushStack((status | Flags.B.value) & 0xFF);
+        pc = irqVector();
+
+        //TODO Test setting before push
         setFlag(Flags.I, true);
-        write(0x0100 + (stkp & 0xFF), (short) ((pc >> 8) & 0x00FF));
-        stkp = (short) ((stkp - 1) & 0x00FF);
-        write(0x0100 + (stkp & 0xFF), (short) (pc & 0x00FF));
-        stkp = (short) ((stkp - 1) & 0x00FF);
-        setFlag(Flags.B, true);
-        write(0x0100 + (stkp & 0xFF), (short) ((status) & 0x00FF));
-        stkp = (short) ((stkp - 1) & 0x00FF);
-        setFlag(Flags.B, false);
-        pc = (read(0xFFFE) | (read(0xFFFF) << 8)) & 0xFFFF;
+
         return 0;
     }
 
@@ -788,9 +831,10 @@ public class CPU_6502 {
         if (!getFlag(Flags.V)) {
             cycles++;
             addr_abs = pc + addr_rel;
+            addr_abs &= 0xFFFF;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs & 0xFFFF;
+            pc = addr_abs;
         }
         return 0;
     }
@@ -805,9 +849,10 @@ public class CPU_6502 {
         if (getFlag(Flags.V)) {
             cycles++;
             addr_abs = pc + addr_rel;
+            addr_abs &= 0xFFFF;
             if ((addr_abs & 0xFF00) != (pc & 0xFF00))
                 cycles++;
-            pc = addr_abs & 0xFFFF;
+            pc = addr_abs;
         }
         return 0;
     }
@@ -866,10 +911,13 @@ public class CPU_6502 {
      */
     private int cmp() {
         fetch();
-        tmp = (short) ((a + (fetched ^ 0x00FF) + 1) & 0x00FF);
+        //tmp =  ((a + (fetched ^ 0x00FF) + 1) & 0x00FF);
+        tmp = a - fetched;
+
         setFlag(Flags.C, a >= fetched);
-        setFlag(Flags.Z, (a & 0xFF) == (fetched & 0xFF));
-        setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
         return 1;
     }
 
@@ -883,10 +931,12 @@ public class CPU_6502 {
      */
     private int cpx() {
         fetch();
-        tmp = (short) ((x + (fetched ^ 0x00FF) + 1) & 0x00FF);
+        tmp = x - fetched;
+
         setFlag(Flags.C, x >= fetched);
-        setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -900,10 +950,12 @@ public class CPU_6502 {
      */
     private int cpy() {
         fetch();
-        tmp = (short) ((y + (fetched ^ 0x00FF) + 1) & 0x00FF);
+        tmp = y - fetched;
+
         setFlag(Flags.C, y >= fetched);
-        setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -917,10 +969,12 @@ public class CPU_6502 {
      */
     private int dec() {
         fetch();
-        tmp = (short) ((fetched - 1) & 0x00FF);
-        write(addr_abs, (short) (tmp & 0x00FF));
-        setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
+        tmp = (fetched - 1) & 0xFF;
+        write(addr_abs, tmp);
+
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -933,9 +987,12 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int dex() {
-        x = (short) ((x - 1) & 0x00FF);
-        setFlag(Flags.Z, (x & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (x & 0x0080) == 0x0080);
+        x--;
+        x &= 0xFF;
+
+        setFlag(Flags.Z, (x & 0xFF) == 0x00);
+        setFlag(Flags.N, (x & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -948,9 +1005,12 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int dey() {
-        y = (short) ((y - 1) & 0x00FF);
-        setFlag(Flags.Z, (y & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (y & 0x0080) == 0x0080);
+        y--;
+        y &= 0xFF;
+
+        setFlag(Flags.Z, (y & 0xFF) == 0x00);
+        setFlag(Flags.N, (y & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -964,9 +1024,11 @@ public class CPU_6502 {
      */
     private int eor() {
         fetch();
-        a = (short) ((a ^ fetched) & 0x00FF);
-        setFlag(Flags.Z, (a & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (a & 0x0080) == 0x0080);
+        a = (a ^ fetched) & 0x00FF;
+
+        setFlag(Flags.Z, (a & 0xFF) == 0x00);
+        setFlag(Flags.N, (a & 0x80) == 0x80);
+
         return 1;
     }
 
@@ -980,10 +1042,12 @@ public class CPU_6502 {
      */
     private int inc() {
         fetch();
-        tmp = (short) ((fetched + 1) & 0x00FF);
-        write(addr_abs, (short) (tmp & 0x00FF));
-        setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
+        tmp = (fetched + 1) & 0xFF;
+        write(addr_abs, tmp);
+
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -996,9 +1060,12 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int inx() {
-        x = (short) ((x + 1) & 0x00FF);
-        setFlag(Flags.Z, (x & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (x & 0x0080) == 0x0080);
+        x++;
+        x &= 0xFF;
+
+        setFlag(Flags.Z, (x & 0xFF) == 0x00);
+        setFlag(Flags.N, (x & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -1011,9 +1078,12 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int iny() {
-        y = (short) ((y + 1) & 0x00FF);
-        setFlag(Flags.Z, (y & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (y & 0x0080) == 0x0080);
+        y++;
+        y &= 0xFF;
+
+        setFlag(Flags.Z, (y & 0xFF) == 0x00);
+        setFlag(Flags.N, (y & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -1036,12 +1106,13 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int jsr() {
-        pc = (pc - 1) & 0xFFFF;
-        write(0x0100 + (stkp & 0xFF), (short) ((pc >> 8) & 0x00FF));
-        stkp = (short) ((stkp - 1) & 0xFFFF);
-        write(0x0100 + (stkp & 0xFF), (short) (pc & 0x00FF));
-        stkp = (short) ((stkp - 1) & 0xFFFF);
+        pc--;
+        pc &= 0xFFFF;
+
+        pushStack((pc >> 8) & 0xFF);
+        pushStack(pc & 0xFF);
         pc = addr_abs & 0xFFFF;
+
         return 0;
     }
 
@@ -1054,9 +1125,11 @@ public class CPU_6502 {
      */
     private int lda() {
         fetch();
-        a = (short) (fetched & 0x00FF);
-        setFlag(Flags.Z, (a & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (a & 0x0080) == 0x0080);
+        a = fetched & 0xFF;
+
+        setFlag(Flags.Z, (a & 0xFF) == 0x00);
+        setFlag(Flags.N, (a & 0x80) == 0x80);
+
         return 1;
     }
 
@@ -1069,9 +1142,11 @@ public class CPU_6502 {
      */
     private int ldx() {
         fetch();
-        x = (short) (fetched & 0x00FF);
-        setFlag(Flags.Z, (x & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (x & 0x0080) == 0x0080);
+        x = fetched & 0xFF;
+
+        setFlag(Flags.Z, (x & 0xFF) == 0x00);
+        setFlag(Flags.N, (x & 0x80) == 0x80);
+
         return 1;
     }
 
@@ -1084,9 +1159,11 @@ public class CPU_6502 {
      */
     private int ldy() {
         fetch();
-        y = (short) (fetched & 0x00FF);
-        setFlag(Flags.Z, (y & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (y & 0x0080) == 0x0080);
+        y = fetched & 0xFF;
+
+        setFlag(Flags.Z, (y & 0xFF) == 0x00);
+        setFlag(Flags.N, (y & 0x80) == 0x80);
+
         return 1;
     }
 
@@ -1099,14 +1176,15 @@ public class CPU_6502 {
      */
     private int lsr() {
         fetch();
-        setFlag(Flags.C, (fetched & 0x0001) == 0x0001);
-        tmp = (short) (fetched >> 1);
-        setFlag(Flags.Z, (tmp & 0x00FF) == 0x0000);
-        setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
-        if (opcodes.get(opcode).addr_mode.equals("IMP"))
-            a = (short) (tmp & 0x00FF);
-        else
-            write(addr_abs, (short) (tmp & 0x00FF));
+        setFlag(Flags.C, (fetched & 0x01) == 0x01);
+        tmp = (fetched >> 1);
+
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
+        if (opcodes.get(opcode).addr_mode.equals("IMP")) a = tmp & 0xFF;
+        else write(addr_abs, tmp & 0xFF);
+
         return 0;
     }
 
@@ -1138,9 +1216,11 @@ public class CPU_6502 {
      */
     private int ora() {
         fetch();
-        a = (short) ((a | fetched) & 0x00FF);
+        a = (a | fetched) & 0xFF;
+
         setFlag(Flags.Z, a == 0x00);
-        setFlag(Flags.N, (a & 0x0080) == 0x0080);
+        setFlag(Flags.N, (a & 0x80) == 0x80);
+
         return 1;
     }
 
@@ -1151,8 +1231,7 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int pha() {
-        write(0x0100 + (stkp & 0x00FF), (short) (a & 0x00FF));
-        stkp = (short) ((stkp - 1) & 0x00FF);
+        pushStack(a);
         return 0;
     }
 
@@ -1164,10 +1243,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int php() {
-        write(0x0100 + (stkp & 0x00FF), (short) ((status | Flags.U.value | Flags.B.value) & 0x00FF));
+        pushStack((status | Flags.U.value | Flags.B.value) & 0xFF);
+
         setFlag(Flags.B, false);
         setFlag(Flags.U, false);
-        stkp = (short) ((stkp - 1) & 0x00FF);
+
         return 0;
     }
 
@@ -1179,10 +1259,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int pla() {
-        stkp = (short) ((stkp + 1) & 0x00FF);
-        a = read(0x0100 + (stkp & 0xFF));
+        a = popStack();
+
         setFlag(Flags.Z, a == 0x00);
-        setFlag(Flags.N, (a & 0x80) != 0x00);
+        setFlag(Flags.N, (a & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -1194,9 +1275,10 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int plp() {
-        stkp = (short) ((stkp + 1) & 0x00FF);
-        status = (short) (read(0x0100 + (stkp & 0xFF)) & 0x00FF);
+        status = popStack();
+
         setFlag(Flags.U, true);
+
         return 0;
     }
 
@@ -1211,14 +1293,15 @@ public class CPU_6502 {
      */
     private int rol() {
         fetch();
-        tmp = (short) ((getFlag(Flags.C) ? 1 : 0) | fetched << 1);
+        tmp = (getFlag(Flags.C) ? 1 : 0) | (fetched << 1);
+
         setFlag(Flags.C, (tmp & 0xFF00) != 0x0000);
-        setFlag(Flags.Z, (tmp & 0x00FF) == 0x00);
-        setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
-        if (opcodes.get(opcode).addr_mode.equals("IMP"))
-            a = (short) (tmp & 0x00FF);
-        else
-            write(addr_abs, (short) (tmp & 0x00FF));
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
+        if (opcodes.get(opcode).addr_mode.equals("IMP")) a = tmp & 0xFF;
+        else write(addr_abs, tmp & 0xFF);
+
         return 0;
     }
 
@@ -1233,14 +1316,15 @@ public class CPU_6502 {
      */
     private int ror() {
         fetch();
-        tmp = (short) ((getFlag(Flags.C) ? 1 << 7 : 0) | fetched >> 1);
+        tmp = ((getFlag(Flags.C) ? 1 << 7 : 0) | fetched >> 1);
+
         setFlag(Flags.C, (fetched & 0x01) == 0x01);
-        setFlag(Flags.Z, (tmp & 0x00FF) == 0x00);
-        setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
-        if (opcodes.get(opcode).addr_mode.equals("IMP"))
-            a = (short) (tmp & 0x00FF);
-        else
-            write(addr_abs, (short) (tmp & 0x00FF));
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
+        if (opcodes.get(opcode).addr_mode.equals("IMP")) a = tmp & 0xFF;
+        else write(addr_abs, tmp & 0xFF);
+
         return 0;
     }
 
@@ -1253,15 +1337,16 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int rti() {
-        stkp = (short) ((stkp + 1) & 0x00FF);
-        status = (short) (read(0x0100 + (stkp & 0xFF)) & 0xFF);
-        status &= ~Flags.B.value;
-        status &= ~Flags.U.value;
-        stkp = (short) ((stkp + 1) & 0x00FF);
-        pc = read(0x0100 + (stkp & 0xFF));
-        stkp = (short) ((stkp + 1) & 0x00FF);
-        pc |= read(0x0100 + (stkp & 0xFF)) << 8;
+        //Dummy read
+        read(pc);
+        status = popStack();
+        pc = popStack();
+        pc |= popStack() << 8;
         pc &= 0xFFFF;
+
+        status &= ~Flags.B.value & 0x00FF;
+        status &= ~Flags.U.value & 0x00FF;
+
         return 0;
     }
 
@@ -1272,12 +1357,13 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int rts() {
-        stkp = (short) ((stkp + 1) & 0x0FFF);
-        pc = read(0x0100 + (stkp & 0xFF));
-        stkp = (short) ((stkp + 1) & 0x0FFF);
-        pc |= (read(0x0100 + (stkp & 0xFF)) << 8);
+        //Dummy read
+        read(pc);
+        pc = popStack();
+        pc |= popStack() << 8;
+        pc++;
         pc &= 0xFFFF;
-        pc = (pc + 1) & 0xFFFF;
+
         return 0;
     }
 
@@ -1292,14 +1378,16 @@ public class CPU_6502 {
      */
     private int sbc() {
         fetch();
-        int value = (fetched ^ 0x00FF);
+        int complement = (fetched ^ 0xFF);
+        tmp = ((a + complement + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF);
 
-        tmp = (short) ((a + value + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF);
-        setFlag(Flags.C, tmp > 0x00FF);
-        setFlag(Flags.Z, (tmp & 0x00FF) == 0);
-        setFlag(Flags.N, (tmp & 0x0080) == 0x0080);
-        setFlag(Flags.V, ((tmp ^ a) & (tmp ^ value) & 0x0080) == 0x0080);
-        a = (short) (tmp & 0x00FF);
+        setFlag(Flags.C, tmp > 0xFF);
+        setFlag(Flags.Z, (tmp & 0xFF) == 0);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+        setFlag(Flags.V, ((tmp ^ a) & (tmp ^ complement) & 0x80) == 0x80);
+
+        a = (tmp & 0xFF);
+
         return 1;
     }
 
@@ -1343,7 +1431,7 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int sta() {
-        write(addr_abs, (short) (a & 0x00FF));
+        write(addr_abs, a);
         return 0;
     }
 
@@ -1354,7 +1442,7 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int stx() {
-        write(addr_abs, (short) (x & 0x00FF));
+        write(addr_abs, x);
         return 0;
     }
 
@@ -1365,7 +1453,7 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int sty() {
-        write(addr_abs, (short) (y & 0x00FF));
+        write(addr_abs, y);
         return 0;
     }
 
@@ -1377,9 +1465,12 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int tax() {
-        x = (short) (a & 0x00FF);
+        x = a;
+        x &= 0xFF;
+
         setFlag(Flags.Z, x == 0x00);
-        setFlag(Flags.N, (x & 0x80) != 0x00);
+        setFlag(Flags.N, (x & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -1391,9 +1482,12 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int tay() {
-        y = (short) (a & 0x00FF);
+        y = a;
+        y &= 0xFF;
+
         setFlag(Flags.Z, y == 0x00);
-        setFlag(Flags.N, (y & 0x80) != 0x00);
+        setFlag(Flags.N, (y & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -1405,9 +1499,12 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int tsx() {
-        x = (short) (stkp & 0x00FF);
+        x = stkp;
+        x &= 0xFF;
+
         setFlag(Flags.Z, x == 0x00);
-        setFlag(Flags.N, (x & 0x80) != 0x00);
+        setFlag(Flags.N, (x & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -1419,9 +1516,12 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int txa() {
-        a = (short) (x & 0x00FF);
+        a = x;
+        a &= 0xFF;
+
         setFlag(Flags.Z, a == 0x00);
-        setFlag(Flags.N, (a & 0x80) != 0x00);
+        setFlag(Flags.N, (a & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -1432,7 +1532,9 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int txs() {
-        stkp = (short) (x & 0x00FF);
+        stkp = x;
+        stkp &= 0xFF;
+
         return 0;
     }
 
@@ -1444,9 +1546,12 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int tya() {
-        a = (short) (y & 0x00FF);
+        a = y;
+        a &= 0xFF;
+
         setFlag(Flags.Z, a == 0x00);
-        setFlag(Flags.N, (a & 0x80) != 0x00);
+        setFlag(Flags.N, (a & 0x80) == 0x80);
+
         return 0;
     }
 
@@ -1467,13 +1572,15 @@ public class CPU_6502 {
      * Execute one tick of the CPU
      */
     public void clock() {
-        cpu_clock++;
         //If the CPU has finished the last Instruction
-        if (cycles == 0) {
+        if (cycles <= 0) {
             //Fetch the Operation Code
             opcode = read(pc);
+            int log_pc = pc;
+            setFlag(Flags.U, true);
             //Increment the Program Counter
-            pc = (pc + 1) & 0xFFFF;
+            pc++;
+            pc &= 0xFFFF;
             //Get the Instruction
             Instruction instr = opcodes.get(opcode);
             //Set the required number of cycle for this instruction
@@ -1483,8 +1590,29 @@ public class CPU_6502 {
             int additional_cycle_2 = instr.operate();
             //If the Instruction is susceptible of requiring an extra cycle and the addressing mode require one, the the Instruction require an extra cycle
             cycles += (additional_cycle_1 & additional_cycle_2);
+            setFlag(Flags.U, true);
+
+
+            if (LOGMODE) {
+                try {
+                    String log_entry = String.format("%10d:%02d PC:%04X %s A:%02X X:%02X Y:%02X %s%s%s%s%s%s%s%s STKP:%02X\n",
+                            cpu_clock, 0, log_pc, instr.name, a, x, y,
+                            getFlag(Flags.N) ? "N" : ".", getFlag(Flags.V) ? "V" : ".", getFlag(Flags.U) ? "U" : ".",
+                            getFlag(Flags.B) ? "B" : ".", getFlag(Flags.D) ? "D" : ".", getFlag(Flags.I) ? "I" : ".",
+                            getFlag(Flags.Z) ? "Z" : ".", getFlag(Flags.C) ? "C" : ".", stkp);
+                    File logfile = new File("log.txt");
+                    FileWriter fr = new FileWriter(logfile, true);
+                    BufferedWriter br = new BufferedWriter(fr);
+                    br.write(log_entry);
+                    br.close();
+                    fr.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         //Decrement the remaining busy cycle index
+        cpu_clock++;
         cycles--;
     }
 
@@ -1492,22 +1620,30 @@ public class CPU_6502 {
      * Reset the CPU to the default state
      */
     public void reset() {
-        a = 0x00;
-        x = 0x00;
-        y = 0x00;
-        stkp = 0xFD;
-        status = Flags.U.value;
+        stkp -= 3;
+        status |= Flags.I.value;
 
-        addr_abs = 0xFFFC;
-        int low = read(addr_abs);
-        int high = read(addr_abs + 1);
-        pc = high << 8 | low;
+        pc = resetVector();
 
         addr_rel = 0x0000;
         addr_abs = 0x0000;
         fetched = 0x00;
 
         cycles = 8;
+    }
+
+    public void startup() {
+        a = 0x00;
+        x = 0x00;
+        y = 0x00;
+        stkp = 0xFD;
+        status = Flags.I.value | Flags.B.value | Flags.U.value;
+
+        pc = resetVector();
+
+        addr_rel = 0x0000;
+        addr_abs = 0x0000;
+        fetched = 0x00;
     }
 
     /**
@@ -1517,21 +1653,18 @@ public class CPU_6502 {
         //The Interrupt is trigger only if they aren't disable (I Flag of the Status Register)
         if (!getFlag(Flags.I)) {
             //Push the current Program Counter to the Stack LSB first
-            write(0x0100 + (stkp & 0xFF), (short) ((pc >> 8) & 0x00FF));
-            stkp = (short) ((stkp - 1) & 0x00FF);
-            write(0x0100 + (stkp & 0xFF), (short) (pc & 0x00FF));
-            stkp = (short) ((stkp - 1) & 0x00FF);
+            pushStack((pc >> 8) & 0xFF);
+            pushStack(pc & 0xFF);
+
             //Push the current Status Register to the Stack
             setFlag(Flags.B, false);
             setFlag(Flags.U, true);
             setFlag(Flags.I, true);
-            write(0x0100 + (stkp & 0xFF), status);
-            stkp = (short) ((stkp - 1) & 0x00FF);
+            pushStack(status);
+
             //Jump to the NMI Routine specified at 0xFFFA
-            addr_abs = 0xFFFE;
-            int low = read(addr_abs);
-            int high = read(addr_abs + 1);
-            pc = high << 8 | low;
+            pc = irqVector();
+
             // An Interrupt take 7 cycles
             cycles = 7;
         }
@@ -1542,21 +1675,18 @@ public class CPU_6502 {
      */
     public void nmi() {
         //Push the current Program Counter to the Stack LSB first
-        write(0x0100 + (stkp & 0xFF), (short) ((pc >> 8) & 0x00FF));
-        stkp = (short) ((stkp - 1) & 0x00FF);
-        write(0x0100 + (stkp & 0xFF), (short) (pc & 0x00FF));
-        stkp = (short) ((stkp - 1) & 0x00FF);
+        pushStack((pc >> 8) & 0xFF);
+        pushStack(pc & 0xFF);
+
         //Push the current Status Register to the Stack
         setFlag(Flags.B, false);
         setFlag(Flags.U, true);
         setFlag(Flags.I, true);
-        write(0x0100 + (stkp & 0xFF), status);
-        stkp = (short) ((stkp - 1) & 0x00FF);
+        pushStack(status);
+
         //Jump to the NMI Routine specified at 0xFFFA
-        addr_abs = 0xFFFA;
-        int low = read(addr_abs);
-        int high = read(addr_abs + 1);
-        pc = high << 8 | low;
+        pc = nmiVector();
+
         //An NMI take 8 cycles
         cycles = 8;
     }
@@ -1569,6 +1699,35 @@ public class CPU_6502 {
             fetched = read(addr_abs);
     }
 
+    private void pushStack(int data) {
+        write(0x0100 + stkp, data);
+        stkp--;
+        stkp &= 0xFF;
+    }
+
+    private int popStack() {
+        stkp++;
+        stkp &= 0xFF;
+        return read(0x0100 + stkp);
+    }
+
+    private int resetVector() {
+        int low = read(0xFFFC);
+        int high = read(0xFFFD);
+        return (high << 8 | low) & 0xFFFF;
+    }
+
+    private int nmiVector() {
+        int low = read(0xFFFA);
+        int high = read(0xFFFB);
+        return (high << 8 | low) & 0xFFFF;
+    }
+
+    private int irqVector() {
+        int low = read(0xFFFE);
+        int high = read(0xFFFF);
+        return (high << 8 | low) & 0xFFFF;
+    }
 
     // ========================================================== Debug Methods ========================================================== //
 

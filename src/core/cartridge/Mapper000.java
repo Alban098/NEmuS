@@ -28,7 +28,7 @@ public class Mapper000 extends Mapper {
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean cpuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data) {
+    public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         if (addr >= 0x8000 && addr <= 0xFFFF) {
             mapped.value = addr & (nPRGBanks > 1 ? 0x7FFF : 0x3FFF);
             return true;
@@ -45,7 +45,7 @@ public class Mapper000 extends Mapper {
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean cpuMapWrite(int addr, IntegerWrapper mapped, short data) {
+    public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
         if (addr >= 0x8000 && addr <= 0xFFFF) {
             mapped.value = addr & (nPRGBanks > 1 ? 0x7FFF : 0x3FFF);
             return true;
@@ -62,7 +62,7 @@ public class Mapper000 extends Mapper {
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean ppuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data) {
+    public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         if (addr <= 0x1FFF) {
             mapped.value = addr;
             return true;
@@ -79,7 +79,7 @@ public class Mapper000 extends Mapper {
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean ppuMapWrite(int addr, IntegerWrapper mapped, short data) {
+    public boolean ppuMapWrite(int addr, IntegerWrapper mapped, int data) {
         if (addr <= 0x1FFF) {
             if (nCHRBanks == 0) {
                 mapped.value = addr;
@@ -98,6 +98,21 @@ public class Mapper000 extends Mapper {
     @Override
     public Mirror mirror() {
         return Mirror.HARDWARE;
+    }
+
+    @Override
+    public boolean irqState() {
+        return false;
+    }
+
+    @Override
+    public void irqClear() {
+
+    }
+
+    @Override
+    public void scanline() {
+
     }
 
     /**

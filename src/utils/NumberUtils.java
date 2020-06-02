@@ -12,13 +12,13 @@ public class NumberUtils {
      * @param val the value to be flipped
      * @return the flipped value
      */
-    public static byte byteFlip(byte val) {
-        byte tmp = 0x00;
+    public static int byteFlip(int val) {
+        int tmp = 0x00;
         for (int i = 0; i < 8; i++) {
             if ((val & (0x1 << i)) != 0)
                 tmp |= 0x80 >> i;
         }
-        return tmp;
+        return tmp & 0xFF;
     }
 
     /**

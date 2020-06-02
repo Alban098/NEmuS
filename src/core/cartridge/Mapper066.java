@@ -6,8 +6,8 @@ import utils.IntegerWrapper;
 
 public class Mapper066 extends Mapper{
 
-    private short selectedPGRBank = 0x00;
-    private short selectedCHRBank = 0x00;
+    private int selectedPGRBank = 0x00;
+    private int selectedCHRBank = 0x00;
 
     /**
      * Create a new instance of Mapper003
@@ -29,7 +29,7 @@ public class Mapper066 extends Mapper{
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean cpuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data) {
+    public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         if (addr >= 0x8000 && addr <= 0xFFFF) {
             mapped.value = selectedPGRBank * 0x8000 + (addr & 0x7FFF);
             return true;
@@ -48,7 +48,7 @@ public class Mapper066 extends Mapper{
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean cpuMapWrite(int addr, IntegerWrapper mapped, short data) {
+    public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
         if (addr >= 0x8000 && addr <= 0xFFFF) {
             selectedPGRBank = (short) ((data >> 4) & 0x03);
             selectedCHRBank = (short) (data & 0x03);
@@ -67,7 +67,7 @@ public class Mapper066 extends Mapper{
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean ppuMapRead(int addr, IntegerWrapper mapped, ByteWrapper data) {
+    public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         if (addr >= 0x0000 && addr <= 0x1FFF) {
             mapped.value = selectedCHRBank * 0x2000 + addr;
             return true;
@@ -84,7 +84,7 @@ public class Mapper066 extends Mapper{
      * @return Whether or not the Address was mapped
      */
     @Override
-    public boolean ppuMapWrite(int addr, IntegerWrapper mapped, short data) {
+    public boolean ppuMapWrite(int addr, IntegerWrapper mapped, int data) {
         return false;
     }
 
@@ -96,6 +96,21 @@ public class Mapper066 extends Mapper{
     @Override
     public Mirror mirror() {
         return Mirror.HARDWARE;
+    }
+
+    @Override
+    public boolean irqState() {
+        return false;
+    }
+
+    @Override
+    public void irqClear() {
+
+    }
+
+    @Override
+    public void scanline() {
+
     }
 
     /**

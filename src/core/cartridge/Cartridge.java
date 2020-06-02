@@ -13,8 +13,8 @@ import java.io.IOException;
  */
 public class Cartridge {
 
-    private byte[] sPRGMemory;
-    private byte[] sCHRMemory;
+    private int[] sPRGMemory;
+    private int[] sCHRMemory;
 
     private Mapper mapper;
     private Mirror mirror;
@@ -32,7 +32,7 @@ public class Cartridge {
         //Read the Header
         Header header = new Header(reader);
         //Extract the Mapper ID and Mirroring mode
-        byte mapperId = (byte) (((header.mapper2 >> 4) << 4) | header.mapper1 >> 4);
+        int mapperId = ((header.mapper2 >> 4) << 4) | header.mapper1 >> 4;
         mirror = (header.mapper1 & 0x01) == 0x01 ? Mirror.VERTICAL : Mirror.HORIZONTAL;
         //Discard padding if necessary
         if ((header.mapper1 & 0x04) == 0x04)
@@ -42,12 +42,12 @@ public class Cartridge {
         if (fileType == 1) {
             //Read Program Memory
             int nPRGBanks = header.prg_rom_chunks;
-            sPRGMemory = reader.readBytes(nPRGBanks * 16384);
+            sPRGMemory = reader.readBytesI(nPRGBanks * 16384);
             //Read Character Memory
             int nCHRBanks = header.chr_rom_chunks;
-            sCHRMemory = reader.readBytes(nCHRBanks * 8192);
+            sCHRMemory = reader.readBytesI(nCHRBanks * 8192);
             if (nCHRBanks == 0)
-                sCHRMemory = new byte[8192];
+                sCHRMemory = new int[8192];
             //Initialize the right Mapper
             switch (mapperId) {
                 case 0:
@@ -61,6 +61,9 @@ public class Cartridge {
                     break;
                 case 3:
                     mapper = new Mapper003(nPRGBanks, nCHRBanks);
+                    break;
+                case 4:
+                    mapper = new Mapper004(nPRGBanks, nCHRBanks);
                     break;
                 case 66:
                     mapper = new Mapper066(nPRGBanks, nCHRBanks);
@@ -78,11 +81,12 @@ public class Cartridge {
      * @param data the Wrapper where to store the read data
      * @return was the data searched in the Cartridge
      */
-    public boolean cpuRead(int addr, ByteWrapper data) {
+    public boolean cpuRead(int addr, IntegerWrapper data) {
+        addr &= 0xFFFF;
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.cpuMapRead(addr & 0xFFFF, mapped, data)) {
             if (mapped.value == -1) return true;
-            data.value = (byte) (sPRGMemory[mapped.value] & 0xFF);
+            data.value = sPRGMemory[mapped.value] & 0xFF;
             return true;
         }
         return false;
@@ -96,11 +100,12 @@ public class Cartridge {
      * @param data the data to write
      * @return was the data for the Cartridge
      */
-    public boolean cpuWrite(int addr, short data) {
+    public boolean cpuWrite(int addr, int data) {
+        addr &= 0xFFFF;
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.cpuMapWrite(addr, mapped, data)) {
             if (mapped.value == -1) return true;
-            sPRGMemory[mapped.value] = (byte) (data & 0xFF);
+            sPRGMemory[mapped.value] = data & 0xFF;
             return true;
         }
         return false;
@@ -113,10 +118,11 @@ public class Cartridge {
      * @param data the Wrapper where to store the read data
      * @return was the data searched in the Cartridge
      */
-    public boolean ppuRead(int addr, ByteWrapper data) {
+    public boolean ppuRead(int addr, IntegerWrapper data) {
+        addr &= 0xFFFF;
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.ppuMapRead(addr, mapped, data)) {
-            data.value = (byte) (sCHRMemory[mapped.value] & 0xFF);
+            data.value = sCHRMemory[mapped.value] & 0xFF;
             return true;
         }
         return false;
@@ -130,10 +136,11 @@ public class Cartridge {
      * @param data the data to write
      * @return was the data for the Cartridge
      */
-    public boolean ppuWrite(int addr, short  data) {
+    public boolean ppuWrite(int addr, int  data) {
+        addr &= 0xFFFF;
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.ppuMapWrite(addr, mapped, data)) {
-            sCHRMemory[mapped.value] = (byte) (data & 0xFF);
+            sCHRMemory[mapped.value] = data & 0xFF;
             return true;
         }
         return false;
@@ -157,5 +164,9 @@ public class Cartridge {
     public void reset() {
         if (mapper != null)
             mapper.reset();
+    }
+
+    public Mapper getMapper() {
+        return mapper;
     }
 }

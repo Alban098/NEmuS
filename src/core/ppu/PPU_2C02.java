@@ -5,6 +5,7 @@ import core.ppu.registers.*;
 import exceptions.DumpException;
 import org.lwjgl.BufferUtils;
 import utils.ByteWrapper;
+import utils.IntegerWrapper;
 import utils.NumberUtils;
 
 import java.awt.*;
@@ -22,50 +23,50 @@ public class PPU_2C02 {
     private final ByteBuffer screen_buffer;
     private final ByteBuffer[] patterntables;
     private final ByteBuffer[] nametables;
-    private final byte[][] tblName;
-    private final byte[] tblPalette;
-    private final byte[][] tblPattern;
+    private final int[][] tblName;
+    private final int[] tblPalette;
+    private final int[][] tblPattern;
     private final MaskRegister maskRegister;
     private final ControlRegister controlRegister;
     private final StatusRegister statusRegister;
     private final ObjectAttribute[] oams;
     private final ObjectAttribute[] visible_oams;
-    private final short[] sprite_shift_pattern_low;
-    private final short[] sprite_shift_pattern_high;
+    private final int[] sprite_shift_pattern_low;
+    private final int[] sprite_shift_pattern_high;
     private final LoopyRegister vram_addr;
     private final LoopyRegister tram_addr;
     public boolean frameComplete;
     private Cartridge cartridge;
-    private short sprite_count;
-    private short address_latch = 0x00;
-    private short ppu_data_buffer = 0x00;
-    private short oam_addr = 0x00;
-    private short fine_x = 0x00;
+    private int sprite_count;
+    private int address_latch = 0x00;
+    private int ppu_data_buffer = 0x00;
+    private int oam_addr = 0x00;
+    private int fine_x = 0x00;
 
-    private short bg_next_tile_id = 0x00;
-    private short bg_next_tile_attrib = 0x00;
-    private short bg_next_tile_lsb = 0x00;
-    private short bg_next_tile_msb = 0x00;
+    private int bg_next_tile_id = 0x00;
+    private int bg_next_tile_attrib = 0x00;
+    private int bg_next_tile_lsb = 0x00;
+    private int bg_next_tile_msb = 0x00;
 
-    private short bg_shift_pattern_low = 0x0000;
-    private short bg_shift_pattern_high = 0x0000;
-    private short bg_shift_attrib_low = 0x0000;
-    private short bg_shift_attrib_high = 0x0000;
+    private int bg_shift_pattern_low = 0x0000;
+    private int bg_shift_pattern_high = 0x0000;
+    private int bg_shift_attrib_low = 0x0000;
+    private int bg_shift_attrib_high = 0x0000;
 
     private boolean spriteZeroHitPossible = false;
     private boolean spriteZeroBeingRendered = false;
 
-    private short scanline;
-    private short cycle;
+    private int scanline;
+    private int cycle;
     private boolean nmi;
 
     /**
      * Create a new PPU, instantiate its components and fill up the palettes
      */
     public PPU_2C02() {
-        tblName = new byte[2][1024];
-        tblPattern = new byte[2][4096];
-        tblPalette = new byte[32];
+        tblName = new int[2][1024];
+        tblPattern = new int[2][4096];
+        tblPalette = new int[32];
         palScreen = new Color[0x40];
         screen_buffer = BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4);
         patterntables = new ByteBuffer[]{BufferUtils.createByteBuffer(128 * 128 * 4), BufferUtils.createByteBuffer(128 * 128 * 4)};
@@ -84,8 +85,8 @@ public class PPU_2C02 {
         visible_oams = new ObjectAttribute[8];
         for (int i = 0; i < visible_oams.length; i++)
             visible_oams[i] = new ObjectAttribute();
-        sprite_shift_pattern_low = new short[8];
-        sprite_shift_pattern_high = new short[8];
+        sprite_shift_pattern_low = new int[8];
+        sprite_shift_pattern_high = new int[8];
 
         palScreen[0x00] = new Color(84, 84, 84);
         palScreen[0x01] = new Color(0, 30, 116);
@@ -178,7 +179,7 @@ public class PPU_2C02 {
      * @param readOnly is the access allowed to alter the PPU state
      * @return the read data as an 8bit unsigned value
      */
-    public short cpuRead(int addr, boolean readOnly) {
+    public int cpuRead(int addr, boolean readOnly) {
         int data = 0x00;
         if (readOnly) {
             //If in read only, the data access is Thread safe and don't alter the PPU state used for debug purposes
@@ -205,7 +206,7 @@ public class PPU_2C02 {
                     case 0x0007: // PPU Data
                         break;
                 }
-                return (short) (data & 0x00FF);
+                return data & 0xFF;
             }
         }
 
@@ -213,6 +214,7 @@ public class PPU_2C02 {
             case 0x0000: // Control
                 break;
             case 0x0001: // Mask
+                data = oam_addr;
                 break;
             case 0x0002: // Status
                 //When reading the Status Register, the unused bits are filled with le last data that was read
@@ -243,7 +245,7 @@ public class PPU_2C02 {
                 vram_addr.set(vram + (controlRegister.isIncrementModeSet() ? 32 : 1));
                 break;
         }
-        return (short) (data & 0x00FF);
+        return data & 0xFF;
     }
 
     /**
@@ -252,8 +254,8 @@ public class PPU_2C02 {
      * @param addr the address to write to (8 locations mirrored through the addressable range)
      * @param data the data to write
      */
-    public void cpuWrite(int addr, short data) {
-        data &= 0x00FF;
+    public void cpuWrite(int addr, int data) {
+        data &= 0xFF;
         switch (addr) {
             case 0x0000: // Control
                 controlRegister.set(data);
@@ -280,20 +282,21 @@ public class PPU_2C02 {
                     case 0x3:
                         oams[oam_addr >> 2].setX(data);
                 }
-                oam_addr = (short) ((oam_addr + 1) & 0xFF);
+                oam_addr++;
+                oam_addr &= 0xFF;
                 break;
             case 0x0005: // Scroll
                 //When writing to the Scroll Register, we first write the X offset
                 if (address_latch == 0) {
                     //The offset is spliced into coarseX and fineX
-                    fine_x = (short) (data & 0x07);
-                    tram_addr.setCoarseX((byte) (data >> 3));
+                    fine_x = data & 0x07;
+                    tram_addr.setCoarseX(data >> 3);
                     address_latch = 1;
                     //The second write is the Y offset
                 } else {
                     //The offset is spliced into coarseY and fineY
-                    tram_addr.setFineY((byte) (data & 0x07));
-                    tram_addr.setCoarseY((byte) (data >> 3));
+                    tram_addr.setFineY(data & 0x07);
+                    tram_addr.setCoarseY(data >> 3);
                     address_latch = 0;
                 }
                 break;
@@ -328,10 +331,10 @@ public class PPU_2C02 {
      * @param addr the address to read from
      * @return the read data
      */
-    private short ppuRead(int addr) {
+    private int ppuRead(int addr) {
         addr &= 0x3FFF;
         //A Wrapper used to store the data gathered by the Cartridge
-        ByteWrapper data = new ByteWrapper();
+        IntegerWrapper data = new IntegerWrapper();
         //If the address is mapped by the cartridge, let it handle and return read value
         if (!cartridge.ppuRead(addr, data)) {
             //Read from pattern table
@@ -366,10 +369,10 @@ public class PPU_2C02 {
                 if (addr == 0x0014) addr = 0x0004;
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
-                data.value = (byte) (tblPalette[addr] & (maskRegister.isGrayscaleSet() ? 0x30 : 0x3F));
+                data.value = tblPalette[addr] & (maskRegister.isGrayscaleSet() ? 0x30 : 0x3F);
             }
         }
-        return (short) (data.value & 0x00FF);
+        return data.value & 0xFF;
     }
 
     /**
@@ -378,35 +381,35 @@ public class PPU_2C02 {
      * @param addr the address to write to
      * @param data the data to write
      */
-    private void ppuWrite(int addr, short data) {
+    private void ppuWrite(int addr, int data) {
         addr &= 0x3FFF;
         data &= 0x00FF;
         //If the address is mapped by the cartridge, let it handle and return
         if (!cartridge.ppuWrite(addr, data)) {
             //Write to pattern table
             if (addr <= 0x1FFF) {
-                tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = (byte) (data & 0xFF);
+                tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = data & 0xFF;
                 //Write to nametable
             } else if (addr <= 0x3EFF) {
                 addr &= 0x0FFF;
                 if (cartridge.getMirror() == Mirror.VERTICAL) {
                     if (addr <= 0x03FF)
-                        tblName[0][addr & 0x03FF] = (byte) (data & 0xFF);
+                        tblName[0][addr & 0x03FF] = data & 0xFF;
                     if (addr >= 0x0400 && addr <= 0x07FF)
-                        tblName[1][addr & 0x03FF] = (byte) (data & 0xFF);
+                        tblName[1][addr & 0x03FF] = data & 0xFF;
                     if (addr >= 0x0800 && addr <= 0x0BFF)
-                        tblName[0][addr & 0x03FF] = (byte) (data & 0xFF);
+                        tblName[0][addr & 0x03FF] = data & 0xFF;
                     if (addr >= 0x0C00)
-                        tblName[1][addr & 0x03FF] = (byte) (data & 0xFF);
+                        tblName[1][addr & 0x03FF] = data & 0xFF;
                 } else if (cartridge.getMirror() == Mirror.HORIZONTAL) {
                     if (addr <= 0x03FF)
-                        tblName[0][addr & 0x03FF] = (byte) (data & 0xFF);
+                        tblName[0][addr & 0x03FF] = data & 0xFF;
                     if (addr >= 0x0400 && addr <= 0x07FF)
-                        tblName[0][addr & 0x03FF] = (byte) (data & 0xFF);
+                        tblName[0][addr & 0x03FF] = data & 0xFF;
                     if (addr >= 0x0800 && addr <= 0x0BFF)
-                        tblName[1][addr & 0x03FF] = (byte) (data & 0xFF);
+                        tblName[1][addr & 0x03FF] = data & 0xFF;
                     if (addr >= 0x0C00)
-                        tblName[1][addr & 0x03FF] = (byte) (data & 0xFF);
+                        tblName[1][addr & 0x03FF] = data & 0xFF;
                 }
                 //Writting to palette memory
             } else {
@@ -415,7 +418,7 @@ public class PPU_2C02 {
                 if (addr == 0x0014) addr = 0x0004;
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
-                tblPalette[addr] = (byte) (data & 0xFF);
+                tblPalette[addr] =  data & 0xFF;
             }
         }
     }
@@ -425,16 +428,16 @@ public class PPU_2C02 {
      *
      * @return an 8bit unsigned value pointed by the current OAM address
      */
-    private short getOamData() {
+    private int getOamData() {
         switch (oam_addr & 0x03) {
             case 0x0:
-                return (short) (oams[oam_addr >> 2].getY() & 0x00FF);
+                return oams[oam_addr >> 2].getY() & 0xFF;
             case 0x1:
-                return (short) (oams[oam_addr >> 2].getId() & 0x00FF);
+                return oams[oam_addr >> 2].getId() & 0xFF;
             case 0x2:
-                return (short) (oams[oam_addr >> 2].getAttribute() & 0x00FF);
+                return oams[oam_addr >> 2].getAttribute() & 0xFF;
             case 0x3:
-                return (short) (oams[oam_addr >> 2].getX() & 0x00FF);
+                return oams[oam_addr >> 2].getX() & 0xFF;
         }
         return 0x00;
     }
@@ -481,13 +484,15 @@ public class PPU_2C02 {
         bg_shift_pattern_high = 0x0000;
         bg_shift_attrib_low = 0x0000;
         bg_shift_attrib_high = 0x0000;
-        statusRegister.set(0x00);
+        statusRegister.set(0xA0);
         maskRegister.set(0x00);
         controlRegister.set(0x00);
         vram_addr.set(0x0000);
         tram_addr.set(0x0000);
         screen_buffer.clear();
     }
+
+
 
     /**
      * Execute one tick of the PPU
@@ -498,11 +503,11 @@ public class PPU_2C02 {
             if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
                 //If we cross a nametable boundary we invert the nametableX bit to fetch from the other nametable
                 if (vram_addr.getCoarseX() == 31) {
-                    vram_addr.setCoarseX((byte) 0);
+                    vram_addr.setCoarseX(0);
                     vram_addr.setNametableX(!vram_addr.isNametableXSet());
                     //Or we just continue in the same one
                 } else {
-                    vram_addr.setCoarseX((byte) ((vram_addr.getCoarseX() + 1) & 0x1F));
+                    vram_addr.setCoarseX((vram_addr.getCoarseX() + 1) & 0x1F);
                 }
             }
         };
@@ -511,21 +516,21 @@ public class PPU_2C02 {
             if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
                 //If we are still in the same tile row
                 if (vram_addr.getFineY() < 7) {
-                    vram_addr.setFineY((byte) ((vram_addr.getFineY() + 1) & 0x0F));
+                    vram_addr.setFineY((vram_addr.getFineY() + 1) & 0x0F);
                     //If we have passed to the next tile row
                 } else {
                     //reset the offset inside the row to 0
                     vram_addr.setFineY((byte) 0);
                     //If we are at le last tile row, we skip the OAM and switch to the next nametable
                     if (vram_addr.getCoarseY() == 29) {
-                        vram_addr.setCoarseY((byte) 0);
+                        vram_addr.setCoarseY(0);
                         vram_addr.setNametableY(!vram_addr.isNametableYSet());
                         //Just in case we've gone behond the nametable
                     } else if (vram_addr.getCoarseY() == 31) {
-                        vram_addr.setCoarseY((byte) 0);
+                        vram_addr.setCoarseY(0);
                         //Or we simply switch to the next tile row
                     } else {
-                        vram_addr.setCoarseY((byte) ((vram_addr.getCoarseY() + 1) & 0x1F));
+                        vram_addr.setCoarseY((vram_addr.getCoarseY() + 1) & 0x1F);
                     }
                 }
             }
@@ -533,37 +538,37 @@ public class PPU_2C02 {
         Runnable transferAddressX = () -> {
             if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
                 vram_addr.setNametableX(tram_addr.isNametableXSet());
-                vram_addr.setCoarseX((byte) (tram_addr.getCoarseX() & 0x1F));
+                vram_addr.setCoarseX(tram_addr.getCoarseX() & 0x1F);
             }
         };
         Runnable transferAddressY = () -> {
             if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
                 vram_addr.setNametableY(tram_addr.isNametableYSet());
-                vram_addr.setCoarseY((byte) (tram_addr.getCoarseY() & 0xFF));
-                vram_addr.setFineY((byte) (tram_addr.getFineY() & 0x0F));
+                vram_addr.setCoarseY(tram_addr.getCoarseY() & 0xFF);
+                vram_addr.setFineY(tram_addr.getFineY() & 0x0F);
             }
         };
         Runnable loadBackgroundShifter = () -> {
-            bg_shift_pattern_low = (short) (((bg_shift_pattern_low & 0xFF00) | bg_next_tile_lsb) & 0xFFFF);
-            bg_shift_pattern_high = (short) (((bg_shift_pattern_high & 0xFF00) | bg_next_tile_msb) & 0xFFFF);
-            bg_shift_attrib_low = (short) (((bg_shift_attrib_low & 0xFF00) | (((bg_next_tile_attrib & 0b01) == 0b01) ? 0xFF : 0x00)) & 0xFFFF);
-            bg_shift_attrib_high = (short) (((bg_shift_attrib_high & 0xFF00) | (((bg_next_tile_attrib & 0b10) == 0b10) ? 0xFF : 0x00)) & 0xFFFF);
+            bg_shift_pattern_low = ((bg_shift_pattern_low & 0xFF00) | bg_next_tile_lsb) & 0xFFFF;
+            bg_shift_pattern_high = ((bg_shift_pattern_high & 0xFF00) | bg_next_tile_msb) & 0xFFFF;
+            bg_shift_attrib_low = ((bg_shift_attrib_low & 0xFF00) | (((bg_next_tile_attrib & 0b01) == 0b01) ? 0xFF : 0x00)) & 0xFFFF;
+            bg_shift_attrib_high = ((bg_shift_attrib_high & 0xFF00) | (((bg_next_tile_attrib & 0b10) == 0b10) ? 0xFF : 0x00)) & 0xFFFF;
         };
         Runnable updateShifter = () -> {
             if (maskRegister.isRenderBackgroundSet()) {
-                bg_shift_pattern_low = (short) ((bg_shift_pattern_low << 1) & 0xFFFF);
-                bg_shift_pattern_high = (short) ((bg_shift_pattern_high << 1) & 0xFFFF);
-                bg_shift_attrib_low = (short) ((bg_shift_attrib_low << 1) & 0xFFFF);
-                bg_shift_attrib_high = (short) ((bg_shift_attrib_high << 1) & 0xFFFF);
+                bg_shift_pattern_low = (bg_shift_pattern_low << 1) & 0xFFFF;
+                bg_shift_pattern_high = (bg_shift_pattern_high << 1) & 0xFFFF;
+                bg_shift_attrib_low = (bg_shift_attrib_low << 1) & 0xFFFF;
+                bg_shift_attrib_high = (bg_shift_attrib_high << 1) & 0xFFFF;
             }
             if (maskRegister.isRenderSpritesSet() && cycle >= 1 && cycle < 258) {
                 for (int i = 0; i < sprite_count; i++) {
                     //for all visible sprites, we decrement the position by one until it is time to render it
                     if (visible_oams[i].getX() > 0)
-                        visible_oams[i].setX((short) (visible_oams[i].getX() - 1));
+                        visible_oams[i].setX(visible_oams[i].getX() - 1);
                     else {
-                        sprite_shift_pattern_low[i] = (byte) ((sprite_shift_pattern_low[i] << 1) & 0x00FF);
-                        sprite_shift_pattern_high[i] = (byte) ((sprite_shift_pattern_high[i] << 1) & 0x00FF);
+                        sprite_shift_pattern_low[i] = (sprite_shift_pattern_low[i] << 1) & 0x00FF;
+                        sprite_shift_pattern_high[i] = (sprite_shift_pattern_high[i] << 1) & 0x00FF;
                     }
                 }
             }
@@ -604,9 +609,9 @@ public class PPU_2C02 {
                         bg_next_tile_attrib = ppuRead(0x23C0 | (vram_addr.isNametableYSet() ? 0x1 << 11 : 0x0) | (vram_addr.isNametableXSet() ? 0x1 << 10 : 0x0) | ((vram_addr.getCoarseY() >> 2) << 3) | (vram_addr.getCoarseX() >> 2));
                         //We use the Coarses 2 lsb to get select the correct 2 bits of the attribute depending on the position of the tile in the 4*4 grid
                         if ((vram_addr.getCoarseY() & 0x02) == 0x02)
-                            bg_next_tile_attrib = (short) ((bg_next_tile_attrib >> 4) & 0x00FF);
+                            bg_next_tile_attrib = (bg_next_tile_attrib >> 4) & 0x00FF;
                         if ((vram_addr.getCoarseX() & 0x02) == 0x02)
-                            bg_next_tile_attrib = (short) ((bg_next_tile_attrib >> 2) & 0xFF);
+                            bg_next_tile_attrib = (bg_next_tile_attrib >> 2) & 0xFF;
                         //We only keep the 2 lsb of the attribute
                         bg_next_tile_attrib &= 0x03;
                         break;
@@ -640,7 +645,7 @@ public class PPU_2C02 {
             //At the end of a scanline, we fetch the sprite that will be visible on the next scanline
             if (cycle == 257 && scanline >= 0) {
                 //We clear all visible Object Attribute
-                for (ObjectAttribute visible_oam : visible_oams) visible_oam.clear((byte) 0xFF);
+                for (ObjectAttribute visible_oam : visible_oams) visible_oam.clear(0xFF);
                 //And reset the scripte count
                 sprite_count = 0;
 
@@ -667,7 +672,7 @@ public class PPU_2C02 {
                     oam_entry++;
                 }
                 //If we hit a 9th sprite on the scanline, we set the sprite overflow flag to 1
-                statusRegister.setSpriteOverflow(sprite_count > 8);
+                statusRegister.setSpriteOverflow(sprite_count >= 8);
                 if (sprite_count > 8) sprite_count = 8;
             }
             //At the end of the horizontal blank, we fetch all the relevant sprite data for the next scanline
@@ -675,45 +680,45 @@ public class PPU_2C02 {
             if (cycle == 330) {
                 //For each sprite
                 for (int i = 0; i < sprite_count; i++) {
-                    short sprite_pattern_low, sprite_pattern_high;
-                    short sprite_pattern_addr_low, sprite_pattern_addr_high;
+                    int sprite_pattern_low, sprite_pattern_high;
+                    int sprite_pattern_addr_low, sprite_pattern_addr_high;
                     //If the sprites are 8x8
                     if (!controlRegister.isSpriteSizeSet()) {
                         //If the sprite normally oriented
                         if (!((visible_oams[i].getAttribute() & 0x80) == 0x80))
-                            sprite_pattern_addr_low = (short) ((controlRegister.isPatternSpriteSet() ? 0x1 << 12 : 0x0) | ((visible_oams[i].getId() & 0x00FF) << 4) | (scanline - (visible_oams[i].getY() & 0x00FF)));
+                            sprite_pattern_addr_low = (controlRegister.isPatternSpriteSet() ? 0x1 << 12 : 0x0) | ((visible_oams[i].getId() & 0x00FF) << 4) | (scanline - (visible_oams[i].getY() & 0x00FF));
                             //If the sprite is flipped vertically
                         else
-                            sprite_pattern_addr_low = (short) ((controlRegister.isPatternSpriteSet() ? 0x1 << 12 : 0x0) | ((visible_oams[i].getId() & 0x00FF) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF))));
+                            sprite_pattern_addr_low = (controlRegister.isPatternSpriteSet() ? 0x1 << 12 : 0x0) | ((visible_oams[i].getId() & 0x00FF) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)));
                         //If the sprites are 8x16
                     } else {
                         //If the sprite normally oriented
                         if (!((visible_oams[i].getAttribute() & 0x80) == 0x80)) {
                             //Reading top half
                             if (scanline - (visible_oams[i].getY() & 0x00FF) < 8)
-                                sprite_pattern_addr_low = (short) (((visible_oams[i].getId() & 0x01) << 12) | ((visible_oams[i].getId() & 0x00FE) << 4) | ((scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07));
+                                sprite_pattern_addr_low = ((visible_oams[i].getId() & 0x01) << 12) | ((visible_oams[i].getId() & 0x00FE) << 4) | ((scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07);
                                 //Reading bottom half
                             else
-                                sprite_pattern_addr_low = (short) (((visible_oams[i].getId() & 0x01) << 12) | (((visible_oams[i].getId() & 0x00FE) + 1) << 4) | ((scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07));
+                                sprite_pattern_addr_low = ((visible_oams[i].getId() & 0x01) << 12) | (((visible_oams[i].getId() & 0x00FE) + 1) << 4) | ((scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07);
                             //If the sprite is flipped vertically
                         } else {
                             //Reading top half
                             if (scanline - (visible_oams[i].getY() & 0x00FF) < 8)
-                                sprite_pattern_addr_low = (short) (((visible_oams[i].getId() & 0x01) << 12) | (((visible_oams[i].getId() & 0x00FE) + 1) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07));
+                                sprite_pattern_addr_low = ((visible_oams[i].getId() & 0x01) << 12) | (((visible_oams[i].getId() & 0x00FE) + 1) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07);
                                 //Reading bottom half
                             else
-                                sprite_pattern_addr_low = (short) (((visible_oams[i].getId() & 0x01) << 12) | ((visible_oams[i].getId() & 0x00FE) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07));
+                                sprite_pattern_addr_low = ((visible_oams[i].getId() & 0x01) << 12) | ((visible_oams[i].getId() & 0x00FE) << 4) | (7 - (scanline - (visible_oams[i].getY() & 0x00FF)) & 0x07);
                         }
                     }
                     //We compute the complete address and fetch the the sprite's bitplane
-                    sprite_pattern_addr_high = (short) ((sprite_pattern_addr_low + 8) & 0xFFFF);
+                    sprite_pattern_addr_high = (sprite_pattern_addr_low + 8) & 0xFFFF;
                     sprite_pattern_low = ppuRead(sprite_pattern_addr_low);
                     sprite_pattern_high = ppuRead(sprite_pattern_addr_high);
 
                     //If the sprite is flipped horizontally, the sprite bitplane are flipped
                     if ((visible_oams[i].getAttribute() & 0x40) == 0x40) {
-                        sprite_pattern_low = NumberUtils.byteFlip((byte) sprite_pattern_low);
-                        sprite_pattern_high = NumberUtils.byteFlip((byte) sprite_pattern_high);
+                        sprite_pattern_low = NumberUtils.byteFlip(sprite_pattern_low);
+                        sprite_pattern_high = NumberUtils.byteFlip(sprite_pattern_high);
                     }
 
                     //We load the sprites to the Shift Registers
@@ -736,15 +741,17 @@ public class PPU_2C02 {
         //If background rendering is enabled
         if (maskRegister.isRenderBackgroundSet()) {
             //We select the current pixels offset using the scroll information
-            int bit_mux = (0x8000 >> fine_x) & 0xFFFF;
-            //We compute the pixel ID by getting the right bit from the 2 shift registers
-            int p0_pixel = (bg_shift_pattern_low & bit_mux) > 0 ? 0x1 : 0x0;
-            int p1_pixel = (bg_shift_pattern_high & bit_mux) > 0 ? 0x1 : 0x0;
-            bg_pixel = ((p1_pixel << 1) | p0_pixel) & 0x000F;
-            //Same for the palette ID
-            int bg_pal0 = (bg_shift_attrib_low & bit_mux) > 0 ? 0x1 : 0x0;
-            int bg_pal1 = (bg_shift_attrib_high & bit_mux) > 0 ? 0x1 : 0x0;
-            bg_palette = ((bg_pal1 << 1) | bg_pal0) & 0x000F;
+            if (maskRegister.isRenderBackgroundLeftSet() || cycle >= 9) {
+                int bit_mux = (0x8000 >> fine_x) & 0xFFFF;
+                //We compute the pixel ID by getting the right bit from the 2 shift registers
+                int p0_pixel = (bg_shift_pattern_low & bit_mux) > 0 ? 0x1 : 0x0;
+                int p1_pixel = (bg_shift_pattern_high & bit_mux) > 0 ? 0x1 : 0x0;
+                bg_pixel = ((p1_pixel << 1) | p0_pixel) & 0x000F;
+                //Same for the palette ID
+                int bg_pal0 = (bg_shift_attrib_low & bit_mux) > 0 ? 0x1 : 0x0;
+                int bg_pal1 = (bg_shift_attrib_high & bit_mux) > 0 ? 0x1 : 0x0;
+                bg_palette = ((bg_pal1 << 1) | bg_pal0) & 0x000F;
+            }
         }
 
         int fg_pixel = 0x00;
@@ -754,25 +761,27 @@ public class PPU_2C02 {
         //If sprite rendering is enabled
         if (maskRegister.isRenderSpritesSet()) {
             //The 0th sprite being rendered flag is reset
-            spriteZeroBeingRendered = false;
-            //For each sprite in order of priority
-            for (int i = 0; i < sprite_count; i++) {
-                //If we are at the sprite X location
-                if (visible_oams[i].getX() == 0) {
-                    //We get the foreground pixel lsb and msb
-                    int fg_pixel_low = (sprite_shift_pattern_low[i] & 0x80) == 0x80 ? 0x1 : 0x0;
-                    int fg_pixel_high = (sprite_shift_pattern_high[i] & 0x80) == 0x80 ? 0x1 : 0x0;
-                    //We combine them into a 2bit ID
-                    fg_pixel = ((fg_pixel_high << 1) | fg_pixel_low) & 0x03;
-                    //We get the sprite palette and if it has priority over the background
-                    fg_palette = (visible_oams[i].getAttribute() & 0x03) + 0x04;
-                    fg_priority = (visible_oams[i].getAttribute() & 0x20) == 0;
+            if (maskRegister.isRenderSpriteLeftSet() || cycle >= 9) {
+                spriteZeroBeingRendered = false;
+                //For each sprite in order of priority
+                for (int i = 0; i < sprite_count; i++) {
+                    //If we are at the sprite X location
+                    if (visible_oams[i].getX() == 0) {
+                        //We get the foreground pixel lsb and msb
+                        int fg_pixel_low = (sprite_shift_pattern_low[i] & 0x80) == 0x80 ? 0x1 : 0x0;
+                        int fg_pixel_high = (sprite_shift_pattern_high[i] & 0x80) == 0x80 ? 0x1 : 0x0;
+                        //We combine them into a 2bit ID
+                        fg_pixel = ((fg_pixel_high << 1) | fg_pixel_low) & 0x03;
+                        //We get the sprite palette and if it has priority over the background
+                        fg_palette = (visible_oams[i].getAttribute() & 0x03) + 0x04;
+                        fg_priority = (visible_oams[i].getAttribute() & 0x20) == 0;
 
-                    //If the pixel isn't transparent and we are rendering sprite 0, we set the 0th sprite being rendered to true
-                    if (fg_pixel != 0) {
-                        if (i == 0)
-                            spriteZeroBeingRendered = true;
-                        break;
+                        //If the pixel isn't transparent and we are rendering sprite 0, we set the 0th sprite being rendered to true
+                        if (fg_pixel != 0) {
+                            if (i == 0)
+                                spriteZeroBeingRendered = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -802,15 +811,17 @@ public class PPU_2C02 {
                 palette = bg_palette;
             }
             //If we are rendering the 0th sprite and a sprite zero hit is possible then a sprite zero hit may have occur
-            if (spriteZeroBeingRendered && spriteZeroHitPossible)
+            if (spriteZeroBeingRendered && spriteZeroHitPossible) {
                 //If we are rendering background and sprites
-                if (maskRegister.isRenderBackgroundSet() && maskRegister.isRenderSpritesSet())
+                if (maskRegister.isRenderBackgroundSet() && maskRegister.isRenderSpritesSet()) {
                     //If we are in the valid test.state space (if we don't render the first columns we don't test.state for hit in it)
                     if (!(maskRegister.isRenderBackgroundLeftSet() || maskRegister.isRenderSpriteLeftSet())) {
                         if (cycle >= 9 && cycle < 258)
                             statusRegister.setSpriteZeroHit(true);
                     } else if (cycle >= 1 && cycle < 258)
                         statusRegister.setSpriteZeroHit(true);
+                }
+            }
         }
 
         //If we are in the visible area we push a pixel into the screen buffer
@@ -823,6 +834,11 @@ public class PPU_2C02 {
         }
 
         cycle++;
+        if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
+            if (cycle == 260 && scanline == 240) {
+                cartridge.getMapper().scanline();
+            }
+        }
         //If we are at the end of a scanline
         if (cycle >= 341) {
             cycle = 0;
@@ -861,21 +877,21 @@ public class PPU_2C02 {
         //Create a temporary buffer because the pixels are not calculated in screen order
         int[] tmp = new int[128 * 128];
         //For each row of tiles starting at the top
-        for (byte tileY = 0; tileY < 16; tileY++) {
+        for (int tileY = 0; tileY < 16; tileY++) {
             //For each tile starting at the left
-            for (byte tileX = 0; tileX < 16; tileX++) {
+            for (int tileX = 0; tileX < 16; tileX++) {
                 //We compute the tile offset inside the Pattern Memory
-                short offset = (short) (tileY * 256 + tileX * 16);
+                int offset = tileY * 256 + tileX * 16;
                 //For each row of the tile
                 for (byte row = 0; row < 8; row++) {
                     //We get the lsb of the pixels of the row
-                    short tile_lsb = ppuRead(i * 0x1000 + offset + row);
+                    int tile_lsb = ppuRead(i * 0x1000 + offset + row);
                     //We get the msb of the pixels of the row
-                    short tile_msb = ppuRead(i * 0x1000 + offset + row + 8);
+                    int tile_msb = ppuRead(i * 0x1000 + offset + row + 8);
                     //for each pixel of the row
-                    for (byte col = 0; col < 8; col++) {
+                    for (int col = 0; col < 8; col++) {
                         //We compute the pixel id
-                        byte pixel = (byte) (((tile_lsb & 0x01) << 1) | (tile_msb & 0x01));
+                        int pixel = ((tile_lsb & 0x01) << 1) | (tile_msb & 0x01);
                         //We shift the tile registers to get the next pixel id
                         tile_lsb >>= 1;
                         tile_msb >>= 1;
@@ -919,43 +935,43 @@ public class PPU_2C02 {
         //Create a temporary buffer because the pixels are not calculated in screen order
         int[] tmp = new int[256 * 240];
         //For each row of tiles starting at the top
-        for (byte y = 0; y < 30; y++) {
+        for (int y = 0; y < 30; y++) {
             //For each tile starting at the left
-            for (byte x = 0; x < 32; x++) {
+            for (int x = 0; x < 32; x++) {
                 //For each column of the tile
-                for (byte row = 0; row < 8; row++) {
+                for (int row = 0; row < 8; row++) {
                     //We read the tile ID by selecting the correct nametable using the mirroring mode
                     //short tile_id = ppuRead(0x2000 | (i == 1 ? 0x1 << (cartridge.getMirror() == Mirror.VERTICAL ? 10 : 11) : 0x0) | y << 5 | x);
-                    short offset = (short) (0x0400 * (i & 0x3));
-                    short tile_id = ppuRead(0x2000 | offset | y << 5 | x);
+                    int offset = 0x0400 * (i & 0x3);
+                    int tile_id = ppuRead(0x2000 | offset | y << 5 | x);
                     //We read the tile attribute starting at offset 0x03C0 of the selected nametable, the attribute offset is calculated using the tile pos divided by 4
-                    short tile_attrib = ppuRead(0x23C0 | offset | ((y >> 2) << 3) | (x) >> 2);
+                    int tile_attrib = ppuRead(0x23C0 | offset | ((y >> 2) << 3) | (x) >> 2);
                     //We select the right attribute depending on the tile pos inside the current 4x4 tile grid
                     if ((y & 0x02) == 0x02)
-                        tile_attrib = (short) ((tile_attrib >> 4) & 0x00FF);
+                        tile_attrib = (tile_attrib >> 4) & 0x00FF;
                     if ((x & 0x02) == 0x02)
-                        tile_attrib = (short) ((tile_attrib >> 2) & 0x00FF);
+                        tile_attrib = (tile_attrib >> 2) & 0x00FF;
                     //We only keep the 2 lsb of the attribute
                     tile_attrib &= 0x03;
                     //We use the tile id and the current row index to get the lsb of the 8 pixel IDs of the row (low bitplane)
-                    short tile_lsb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row);
+                    int tile_lsb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row);
                     //We use the tile id and the current row index to get the msb of the 8 pixels of the row (high bitplane)
-                    short tile_msb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row + 8);
+                    int tile_msb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row + 8);
                     //We use the attribute to determinate the tile palette
-                    byte palette = (byte) (tile_attrib & 0b11);
-                    byte pid;
+                    int palette = tile_attrib & 0b11;
+                    int pid;
                     //For each pixel of the row
-                    for (byte col = 0; col < 8; col++) {
+                    for (int col = 0; col < 8; col++) {
                         //We get the correct pixel ID by reading the 2 bitplanes
-                        byte p0_pixel = (byte) ((tile_lsb & 0x80) > 0 ? 0x1 : 0x0);
-                        byte p1_pixel = (byte) ((tile_msb & 0x80) > 0 ? 0x1 : 0x0);
-                        byte pixel = (byte) (((p1_pixel << 1) | p0_pixel) & 0x000F);
+                        int p0_pixel = (tile_lsb & 0x80) > 0 ? 0x1 : 0x0;
+                        int p1_pixel = (tile_msb & 0x80) > 0 ? 0x1 : 0x0;
+                        int pixel = ((p1_pixel << 1) | p0_pixel) & 0x000F;
                         pid = palette;
                         //If the pixel ID is 0, then it's transparent so we use pixel 0 of palette 0
                         if (pixel == 0x00) pid = 0x00;
                         //We shift the tile registers to get the next pixel id
-                        tile_lsb = (short) ((tile_lsb << 1) & 0xFFFF);
-                        tile_msb = (short) ((tile_msb << 1) & 0xFFFF);
+                        tile_lsb = (tile_lsb << 1) & 0xFFFF;
+                        tile_msb = (tile_msb << 1) & 0xFFFF;
                         //We populate the buffer by getting the right color from the palette using the palette and pixel IDs
                         tmp[(x * 8 + (col)) + 256 * (y * 8 + row)] = threadSafeGetColorFromPalette(pid, pixel).getRGB();
                     }

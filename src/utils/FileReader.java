@@ -29,9 +29,9 @@ public class FileReader {
      * @return the next byte of the file
      * @throws EOFException If we try to read outside the file
      */
-    public byte nextByte() throws EOFException {
+    public int nextByte() throws EOFException {
         if (currentIndex < file.length)
-            return file[currentIndex++];
+            return file[currentIndex++] & 0xFF;
         throw new EOFException("No bytes left to read");
     }
 
@@ -42,10 +42,17 @@ public class FileReader {
      * @return an array of int containing the bytes
      * @throws EOFException If we try to read outside the file
      */
-    public byte[] readBytes(int size) throws EOFException {
-        byte[] buf = new byte[size];
+    public int[] readBytesI(int size) throws EOFException {
+        int[] buf = new int[size];
         for (int i = 0; i < size; i++)
             buf[i] = nextByte();
+        return buf;
+    }
+
+    public byte[] readBytes(int size) throws EOFException {
+        byte[] buf = new byte[size];
+        for (byte i = 0; i < size; i++)
+            buf[i] = (byte) (nextByte() & 0xFF);
         return buf;
     }
 
