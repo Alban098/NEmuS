@@ -1,7 +1,6 @@
 package core.cartridge;
 
 import core.ppu.Mirror;
-import utils.ByteWrapper;
 import utils.IntegerWrapper;
 
 /**
@@ -69,16 +68,18 @@ public abstract class Mapper {
      * Interrogate the Mapper circuit for the mirroring mode
      * @return the current mirroring mode
      */
-    public abstract Mirror mirror();
+    public Mirror mirror() {
+        return Mirror.HARDWARE;
+    }
 
-    public abstract boolean irqState();
+    public boolean irqState() { return false; }
 
-    public abstract void irqClear();
+    public void irqClear() {}
 
-    public abstract void scanline();
+    public void scanline() {}
 
     /**
      * Reset the Mapper if it has processing capabilities
      */
-    public abstract void reset();
+    public void reset() {}
 }

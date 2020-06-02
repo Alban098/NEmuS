@@ -38,7 +38,7 @@ public class LoopyRegister {
         val |= nametable_x ? 0b0000010000000000 : 0x0000;
         val |= nametable_y ? 0b0000100000000000 : 0x0000;
         val |= (fine_y & 0x0F) << 12;
-        return val;
+        return val & 0xFFFF;
     }
 
     /**

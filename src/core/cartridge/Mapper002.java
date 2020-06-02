@@ -1,7 +1,5 @@
 package core.cartridge;
 
-import core.ppu.Mirror;
-import utils.ByteWrapper;
 import utils.IntegerWrapper;
 
 public class Mapper002 extends Mapper {
@@ -17,6 +15,7 @@ public class Mapper002 extends Mapper {
      */
     Mapper002(int nPRGBanks, int nCHRBanks) {
         super(nPRGBanks, nCHRBanks);
+        reset();
     }
 
     /**
@@ -30,12 +29,13 @@ public class Mapper002 extends Mapper {
      */
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
+        addr &= 0xFFFF;
         if (addr >= 0x8000 && addr <= 0xBFFF) {
-            mapped.value = selectedPRGBankLow * 0x4000 + (addr & 0x3FFF);
+            mapped.value = (selectedPRGBankLow * 0x4000) + (addr & 0x3FFF);
             return true;
         }
         if (addr >= 0xC000 && addr <= 0xFFFF) {
-            mapped.value = selectedPRGBankHigh * 0x4000 + (addr & 0x3FFF);
+            mapped.value = (selectedPRGBankHigh * 0x4000) + (addr & 0x3FFF);
             return true;
         }
         return false;
@@ -51,6 +51,8 @@ public class Mapper002 extends Mapper {
      */
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
+        addr &= 0xFFFF;
+        data &= 0xFF;
         if (addr >= 0x8000 && addr <= 0xFFFF) {
             selectedPRGBankLow = data & 0x0F;
         }
@@ -67,6 +69,7 @@ public class Mapper002 extends Mapper {
      */
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
+        addr &= 0xFFFF;
         if (addr <= 0x1FFF) {
             mapped.value = addr;
             return true;
@@ -91,26 +94,6 @@ public class Mapper002 extends Mapper {
             }
         }
         return false;
-    }
-
-    @Override
-    public Mirror mirror() {
-        return Mirror.HARDWARE;
-    }
-
-    @Override
-    public boolean irqState() {
-        return false;
-    }
-
-    @Override
-    public void irqClear() {
-
-    }
-
-    @Override
-    public void scanline() {
-
     }
 
     @Override

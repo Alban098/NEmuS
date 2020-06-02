@@ -1,14 +1,13 @@
 package core.cartridge;
 
 import core.ppu.Mirror;
-import utils.ByteWrapper;
 import utils.IntegerWrapper;
 
 public class Mapper004 extends Mapper {
 
     private int targetRegister = 0x00;
-    private boolean PRGBankMode = false;
-    private boolean CHRInversion = false;
+    private boolean bPRGBankMode = false;
+    private boolean bCHRInversion = false;
 
     private int[] register;
     private int[] chrBank;
@@ -20,9 +19,9 @@ public class Mapper004 extends Mapper {
     private int irqCounter = 0x0000;
     private int irqReload = 0x0000;
 
-    int[] vram;
+    private int[] staticVRAM;
 
-    Mirror mirror = Mirror.VERTICAL;
+    private Mirror mirror = Mirror.HORIZONTAL;
 
 
     /**
@@ -36,14 +35,16 @@ public class Mapper004 extends Mapper {
         register = new int[8];
         chrBank = new int[8];
         prgBank = new int[4];
-        vram = new int[64*1024];
+        staticVRAM = new int[32*1024];
+        reset();
     }
 
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
+        addr &= 0xFFFF;
         if (addr >= 0x6000 && addr <= 0x7FFF) {
-            mapped.value = 0xFFFFFFFF;
-            data.value = vram[addr & 0x1FFF] & 0xFF;
+            mapped.value = -1;
+            data.value = staticVRAM[addr & 0x1FFF] & 0xFF;
             return true;
         }
         if (addr >= 0x8000 && addr <= 0x9FFF) {
@@ -67,40 +68,42 @@ public class Mapper004 extends Mapper {
 
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
+        addr &= 0xFFFF;
+        data &= 0xFF;
         if (addr >= 0x6000 && addr <= 0x7FFF) {
-            mapped.value = 0xFFFFFFFF;
-            vram[addr & 0x1FFF] = (byte) data;
+            mapped.value = -1;
+            staticVRAM[addr & 0x1FFF] = data & 0xFF;
             return true;
         }
 
         if (addr >= 0x8000 && addr <= 0x9FFF) {
             if ((addr & 0x1) != 0x1) {
-                targetRegister = (short) (data & 0x7);
-                PRGBankMode = (data & 0x40) != 0;
-                CHRInversion = (data & 0x80) != 0;
+                targetRegister = data & 0x7;
+                bPRGBankMode = (data & 0x40) == 0x40;
+                bCHRInversion = (data & 0x80) == 0x80;
             } else {
                 register[targetRegister] = data;
-                if (CHRInversion) {
+                if (bCHRInversion) {
                     chrBank[0] = register[2] * 0x0400;
                     chrBank[1] = register[3] * 0x0400;
                     chrBank[2] = register[4] * 0x0400;
                     chrBank[3] = register[5] * 0x0400;
                     chrBank[4] = (register[0] & 0xFE) * 0x0400;
-                    chrBank[5] = register[0] * 0x0400;
+                    chrBank[5] = register[0] * 0x0400 + 0x0400;
                     chrBank[6] = (register[1] & 0xFE) * 0x0400;
-                    chrBank[7] = register[1] * 0x0400;
+                    chrBank[7] = register[1] * 0x0400 + 0x0400;
                 } else {
                     chrBank[0] = (register[0] & 0xFE) * 0x0400;
-                    chrBank[1] = register[0] * 0x0400;
+                    chrBank[1] = register[0] * 0x0400 + 0x0400;
                     chrBank[2] = (register[1] & 0xFE) * 0x0400;
-                    chrBank[3] = register[1] * 0x0400;
+                    chrBank[3] = register[1] * 0x0400 + 0x0400;
                     chrBank[4] = register[2] * 0x0400;
                     chrBank[5] = register[3] * 0x0400;
                     chrBank[6] = register[4] * 0x0400;
                     chrBank[7] = register[5] * 0x0400;
                 }
 
-                if (PRGBankMode) {
+                if (bPRGBankMode) {
                     prgBank[2] = (register[6] & 0x3F) * 0x2000;
                     prgBank[0] = (nPRGBanks * 2 - 2) * 0x2000;
                 } else {
@@ -143,6 +146,7 @@ public class Mapper004 extends Mapper {
 
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
+        addr &= 0xFFFF;
         if (addr >= 0x0000 && addr <= 0x03FF) {
             mapped.value = chrBank[0] + (addr & 0x03FF);
             return true;
@@ -212,8 +216,8 @@ public class Mapper004 extends Mapper {
     @Override
     public void reset() {
         targetRegister = 0;
-        PRGBankMode = false;
-        CHRInversion = false;
+        bPRGBankMode = false;
+        bCHRInversion = false;
         mirror = Mirror.HORIZONTAL;
         irqActive = false;
         irqEnable = false;

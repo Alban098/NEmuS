@@ -45,7 +45,7 @@ public class MaskRegister {
         val |= enhance_red ? 0x20 : 0x00;
         val |= enhance_green ? 0x40 : 0x00;
         val |= enhance_blue ? 0x80 : 0x00;
-        return val;
+        return val & 0xFF;
     }
 
     /**

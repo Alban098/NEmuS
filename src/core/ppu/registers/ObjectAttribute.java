@@ -42,7 +42,7 @@ public class ObjectAttribute {
      * @return the y coordinate of the ObjectAttribute
      */
     public int getY() {
-        return y;
+        return y & 0xFF;
     }
 
     /**
@@ -62,7 +62,7 @@ public class ObjectAttribute {
      * @return the id of the ObjectAttribute
      */
     public int getId() {
-        return id;
+        return id & 0xFF;
     }
 
     /**
@@ -82,7 +82,7 @@ public class ObjectAttribute {
      * @return the attribute of the ObjectAttribute
      */
     public int getAttribute() {
-        return attribute;
+        return attribute & 0xFF;
     }
 
     /**
@@ -102,7 +102,7 @@ public class ObjectAttribute {
      * @return the x coordinate of the ObjectAttribute
      */
     public int getX() {
-        return x;
+        return x & 0xFF;
     }
 
     /**

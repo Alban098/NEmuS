@@ -14,10 +14,10 @@ class Header {
     final int chr_rom_chunks;
     final int mapper1;
     final int mapper2;
-    private final char[] name;
-    private final int prg_ram_size;
-    private final int tv_system1;
-    private final int tv_system2;
+    final char[] name;
+    final int prg_ram_size;
+    final int tv_system1;
+    final int tv_system2;
 
     /**
      * Load the header from the FileReader

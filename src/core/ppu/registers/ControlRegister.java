@@ -46,7 +46,7 @@ public class ControlRegister {
         val |= sprite_size ? 0x20 : 0x00;
         val |= slave_mode ? 0x40 : 0x00;
         val |= enable_nmi ? 0x80 : 0x00;
-        return val;
+        return val & 0xFF;
     }
 
     /**

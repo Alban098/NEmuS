@@ -1,7 +1,5 @@
 package core.cartridge;
 
-import core.ppu.Mirror;
-import utils.ByteWrapper;
 import utils.IntegerWrapper;
 
 /**
@@ -29,6 +27,7 @@ public class Mapper000 extends Mapper {
      */
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
+        addr &= 0xFFFF;
         if (addr >= 0x8000 && addr <= 0xFFFF) {
             mapped.value = addr & (nPRGBanks > 1 ? 0x7FFF : 0x3FFF);
             return true;
@@ -46,6 +45,7 @@ public class Mapper000 extends Mapper {
      */
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
+        addr &= 0xFFFF;
         if (addr >= 0x8000 && addr <= 0xFFFF) {
             mapped.value = addr & (nPRGBanks > 1 ? 0x7FFF : 0x3FFF);
             return true;
@@ -63,10 +63,11 @@ public class Mapper000 extends Mapper {
      */
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
+        addr &= 0xFFFF;
         if (addr <= 0x1FFF) {
             mapped.value = addr;
             return true;
-    }
+        }
         return false;
     }
 
@@ -85,41 +86,7 @@ public class Mapper000 extends Mapper {
                 mapped.value = addr;
                 return true;
             }
-            return true;
         }
         return false;
-    }
-
-    /**
-     * The mirroring mode is hard wired inside the cartridge
-     *
-     * @return HARDWARE mirroring mode
-     */
-    @Override
-    public Mirror mirror() {
-        return Mirror.HARDWARE;
-    }
-
-    @Override
-    public boolean irqState() {
-        return false;
-    }
-
-    @Override
-    public void irqClear() {
-
-    }
-
-    @Override
-    public void scanline() {
-
-    }
-
-    /**
-     * There is nothing to reset here
-     */
-    @Override
-    public void reset() {
-        //Do nothing
     }
 }

@@ -1,7 +1,5 @@
 package core.cartridge;
 
-import core.ppu.Mirror;
-import utils.ByteWrapper;
 import utils.IntegerWrapper;
 
 public class Mapper066 extends Mapper{
@@ -17,6 +15,7 @@ public class Mapper066 extends Mapper{
      */
     public Mapper066(int nPRGBanks, int nCHRBanks) {
         super(nPRGBanks, nCHRBanks);
+        reset();
     }
 
     /**
@@ -30,8 +29,9 @@ public class Mapper066 extends Mapper{
      */
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
+        addr &= 0xFFFF;
         if (addr >= 0x8000 && addr <= 0xFFFF) {
-            mapped.value = selectedPGRBank * 0x8000 + (addr & 0x7FFF);
+            mapped.value = (selectedPGRBank * 0x8000) + (addr & 0x7FFF);
             return true;
         }
         return false;
@@ -49,10 +49,10 @@ public class Mapper066 extends Mapper{
      */
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
+        addr &= 0xFFFF;
         if (addr >= 0x8000 && addr <= 0xFFFF) {
-            selectedPGRBank = (short) ((data >> 4) & 0x03);
-            selectedCHRBank = (short) (data & 0x03);
-            mapped.value = addr;
+            selectedPGRBank = (data & 0x30) >> 4;
+            selectedCHRBank = data & 0x03;
         }
         return false;
     }
@@ -68,6 +68,7 @@ public class Mapper066 extends Mapper{
      */
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
+        addr &= 0xFFFF;
         if (addr >= 0x0000 && addr <= 0x1FFF) {
             mapped.value = selectedCHRBank * 0x2000 + addr;
             return true;
@@ -88,34 +89,7 @@ public class Mapper066 extends Mapper{
         return false;
     }
 
-    /**
-     * The mirroring mode is hard wired inside the cartridge
-     *
-     * @return HARDWARE mirroring mode
-     */
-    @Override
-    public Mirror mirror() {
-        return Mirror.HARDWARE;
-    }
 
-    @Override
-    public boolean irqState() {
-        return false;
-    }
-
-    @Override
-    public void irqClear() {
-
-    }
-
-    @Override
-    public void scanline() {
-
-    }
-
-    /**
-     * There is nothing to reset here
-     */
     @Override
     public void reset() {
         selectedPGRBank = 0x00;

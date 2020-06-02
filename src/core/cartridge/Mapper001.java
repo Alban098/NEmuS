@@ -31,28 +31,29 @@ public class Mapper001 extends Mapper {
     Mapper001(int nPRGBanks, int nCHRBanks) {
         super(nPRGBanks, nCHRBanks);
         staticVRAM = new int[32 * 1024];
+        reset();
     }
 
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
+        addr &= 0xFFFF;
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
-            data.value = staticVRAM[addr & 0x1FFF];
+            data.value = staticVRAM[addr & 0x1FFF] & 0xFF;
             return true;
         }
 
         if (addr >= 0x8000) {
             if ((controlRegister & 0b01000) == 0b01000) {
                 if (addr <= 0xBFFF) {
-                    mapped.value = selectedPRGBank16Low * 0x4000 + (addr & 0x3FFF);
+                    mapped.value = (selectedPRGBank16Low * 0x4000) + (addr & 0x3FFF);
                     return true;
-                }
-                if (addr <= 0xFFFF) {
-                    mapped.value = selectedPRGBank16High * 0x4000 + (addr & 0x3FFF);
+                } else if (addr <= 0xFFFF) {
+                    mapped.value = (selectedPRGBank16High * 0x4000) + (addr & 0x3FFF);
                     return true;
                 }
             } else {
-                mapped.value = selectedPRGBank32 * 0x8000 + (addr & 0x7FFF);
+                mapped.value = (selectedPRGBank32 * 0x8000) + (addr & 0x7FFF);
                 return true;
             }
         }
@@ -61,8 +62,10 @@ public class Mapper001 extends Mapper {
 
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
+        addr &= 0xFFFF;
+        data &= 0xFF;
         if (addr >= 0x6000 && addr <= 0x7FFF) {
-            mapped.value = 0xFFFFFFFF;
+            mapped.value = -1;
             staticVRAM[addr & 0x1FFF] = data & 0xFF;
             return true;
         }
@@ -70,17 +73,17 @@ public class Mapper001 extends Mapper {
         if (addr >= 0x8000) {
             if ((data & 0x80) == 0x80) {
                 loadRegister = 0x00;
-                loadRegisterCount = 0x00;
+                loadRegisterCount = 0;
                 controlRegister = controlRegister | 0x0C;
             } else {
                 loadRegister >>= 1;
-                loadRegister |= (data & 0x01 << 4);
+                loadRegister |= ((data & 0x01) << 4);
                 loadRegisterCount++;
 
                 if (loadRegisterCount == 5) {
-                    short targetRegister = (short) ((addr >> 13) & 0x03);
+                    int targetRegister = (addr >> 13) & 0x03;
                     if (targetRegister == 0) {
-                        controlRegister = (short) (loadRegister & 0x1F);
+                        controlRegister = loadRegister & 0x1F;
                         switch (controlRegister & 0x03) {
                             case 0: mirroring_mode = Mirror.ONESCREEN_LOW; break;
                             case 1: mirroring_mode = Mirror.ONESCREEN_HIGH; break;
@@ -89,26 +92,26 @@ public class Mapper001 extends Mapper {
                         }
                     } else if (targetRegister == 1) {
                         if ((controlRegister & 0b10000) == 0b10000)
-                            selectedCHRBank4Low = (short) (loadRegister & 0x1F);
+                            selectedCHRBank4Low =  loadRegister & 0x1F;
                         else
-                            selectedCHRBank8 = (short) (loadRegister & 0x1E);
+                            selectedCHRBank8 =  loadRegister & 0x1E;
                     } else if (targetRegister == 2) {
                         if ((controlRegister & 0b10000) == 0b10000)
-                            selectedCHRBank4High = (short) (loadRegister & 0x1F);
+                            selectedCHRBank4High = loadRegister & 0x1F;
                     } else {
-                        short prgMode = (short) ((controlRegister >> 2) & 0x03);
+                        int prgMode = (controlRegister >> 2) & 0x03;
                         if (prgMode == 0 || prgMode == 1) {
-                            selectedPRGBank32 = (short) ((loadRegister & 0x0E) >> 1);
+                            selectedPRGBank32 = (loadRegister & 0x0E) >> 1;
                         } else if (prgMode == 2) {
                             selectedPRGBank16Low = 0;
-                            selectedPRGBank16High = (short) (loadRegister & 0x0F);
+                            selectedPRGBank16High = loadRegister & 0x0F;
                         } else {
-                            selectedPRGBank16Low = (short) (loadRegister & 0x0F);
-                            selectedPRGBank16High = (short) (nPRGBanks - 1);
+                            selectedPRGBank16Low = loadRegister & 0x0F;
+                            selectedPRGBank16High = nPRGBanks - 1;
                         }
                     }
                     loadRegister = 0x00;
-                    loadRegisterCount = 0x00;
+                    loadRegisterCount = 0;
                 }
             }
         }
@@ -117,6 +120,7 @@ public class Mapper001 extends Mapper {
 
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
+        addr &= 0xFFFF;
         if (addr >= 0x0000 && addr <= 0x1FFF) {
             if (nCHRBanks == 0) {
                 mapped.value = addr;
@@ -124,13 +128,13 @@ public class Mapper001 extends Mapper {
             } else {
                 if ((controlRegister & 0b10000) == 0b10000) {
                     if (addr <= 0x0FFF) {
-                        mapped.value = selectedCHRBank4Low * 0x1000 + (addr & 0x0FFF);
+                        mapped.value = (selectedCHRBank4Low * 0x1000) + (addr & 0x0FFF);
                         return true;
                     }
-                    mapped.value = selectedCHRBank4High * 0x1000 + (addr & 0x0FFF);
+                    mapped.value = (selectedCHRBank4High * 0x1000) + (addr & 0x0FFF);
                     return true;
                 } else {
-                    mapped.value = selectedCHRBank8 * 0x2000 + (addr & 0x1FFF);
+                    mapped.value = (selectedCHRBank8 * 0x2000) + (addr & 0x1FFF);
                     return true;
                 }
             }
@@ -140,6 +144,7 @@ public class Mapper001 extends Mapper {
 
     @Override
     public boolean ppuMapWrite(int addr, IntegerWrapper mapped, int data) {
+        addr &= 0xFFFF;
         if (addr <= 0x1FFF) {
             if (nCHRBanks == 0) {
                 mapped.value = addr;
@@ -155,20 +160,6 @@ public class Mapper001 extends Mapper {
         return mirroring_mode;
     }
 
-    @Override
-    public boolean irqState() {
-        return false;
-    }
-
-    @Override
-    public void irqClear() {
-
-    }
-
-    @Override
-    public void scanline() {
-
-    }
 
     @Override
     public void reset() {
@@ -176,12 +167,12 @@ public class Mapper001 extends Mapper {
         loadRegister = 0x00;
         loadRegisterCount = 0x00;
 
-        selectedCHRBank4Low = 0x00;
-        selectedCHRBank4High = 0x00;
-        selectedCHRBank8 = 0x00;
+        selectedCHRBank4Low = 0;
+        selectedCHRBank4High = 0;
+        selectedCHRBank8 = 0;
 
-        selectedPRGBank16Low = 0x00;
+        selectedPRGBank16Low = 0;
         selectedPRGBank16High = nPRGBanks - 1;
-        selectedPRGBank32 = 0x00;
+        selectedPRGBank32 = 0;
     }
 }

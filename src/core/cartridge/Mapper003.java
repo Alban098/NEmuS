@@ -1,6 +1,5 @@
 package core.cartridge;
 
-import core.ppu.Mirror;
 import utils.IntegerWrapper;
 
 public class Mapper003 extends Mapper{
@@ -15,6 +14,7 @@ public class Mapper003 extends Mapper{
      */
     public Mapper003(int nPRGBanks, int nCHRBanks) {
         super(nPRGBanks, nCHRBanks);
+        reset();
     }
 
     /**
@@ -28,8 +28,12 @@ public class Mapper003 extends Mapper{
      */
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
+        addr &= 0xFFFF;
         if (addr >= 0x8000 && addr <= 0xFFFF) {
-            mapped.value = addr & (nPRGBanks > 1 ? 0x7FFF : 0x3FFF);
+            if (nPRGBanks == 1)
+                mapped.value = addr & 0x3FFF;
+            if (nPRGBanks == 2)
+                mapped.value = addr & 0x7FFF;
             return true;
         }
         return false;
@@ -47,6 +51,8 @@ public class Mapper003 extends Mapper{
      */
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
+        addr &= 0xFFFF;
+        data &= 0xFF;
         if (addr >= 0x8000 && addr <= 0xFFFF) {
             selectedCHRBank = data & 0x03;
             mapped.value = addr;
@@ -65,8 +71,9 @@ public class Mapper003 extends Mapper{
      */
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
+        addr &= 0xFFFF;
         if (addr >= 0x0000 && addr <= 0x1FFF) {
-            mapped.value = selectedCHRBank * 0x2000 + addr;
+            mapped.value = (selectedCHRBank * 0x2000) + addr;
             return true;
         }
         return false;
@@ -85,30 +92,7 @@ public class Mapper003 extends Mapper{
         return false;
     }
 
-    /**
-     * The mirroring mode is hard wired inside the cartridge
-     *
-     * @return HARDWARE mirroring mode
-     */
-    @Override
-    public Mirror mirror() {
-        return Mirror.VERTICAL;
-    }
 
-    @Override
-    public boolean irqState() {
-        return false;
-    }
-
-    @Override
-    public void irqClear() {
-
-    }
-
-    @Override
-    public void scanline() {
-
-    }
 
     /**
      * There is nothing to reset here

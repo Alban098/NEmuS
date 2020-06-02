@@ -30,7 +30,7 @@ public class StatusRegister {
         val |= vertical_blank ? 0x80 : 0x00;
         val |= sprite_zero_hit ? 0x40 : 0x00;
         val |= sprite_zero_hit ? 0x20 : 0x00;
-        return val;
+        return val & 0xFF;
     }
 
     /**

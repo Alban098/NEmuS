@@ -129,7 +129,7 @@ public class NEmuS {
                         emulationRunning = false;
                         nes.reset();
                         emulationRunning = true;
-                    } else if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
+                    /*} else if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
                         //Before a savestate the emulation is paused
                         emulationRunning = false;
                         //We finish the rendering of the current frame (a savestate cannot occur during a frame)
@@ -175,10 +175,10 @@ public class NEmuS {
                             } catch (InvalidFileException e) {
                                 JOptionPane.showMessageDialog(null, e.getMessage(), "Error loading Savestate", JOptionPane.ERROR_MESSAGE);
                             }
-                        emulationRunning = true;
+                        emulationRunning = true;*/
                     } else if (key == GLFW_KEY_F12 && action == GLFW_PRESS) {
                         emulationRunning = false;
-                        JOptionPane.showMessageDialog(null, "F1 : Load ROM\nF2 : Reset NES\nF3 : Save Savestate\nF4 : Load Savestate", "Keyboard Shortcut Help", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(null, "F1 : Load ROM\nF2 : Reset NES\n", "Keyboard Shortcut Help", JOptionPane.INFORMATION_MESSAGE);
                         emulationRunning = true;
                     }
                 }
