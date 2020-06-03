@@ -1,26 +1,24 @@
-package core.cartridge;
+package core.cartridge.mappers;
 
 import utils.IntegerWrapper;
 
-public class Mapper002 extends Mapper {
-
-    private int selectedPRGBankLow = 0x00;
-    private int selectedPRGBankHigh = 0x00;
+/**
+ * This class implement the Mapped 000
+ */
+public class Mapper000 extends Mapper {
 
     /**
-     * Create a new instance of Mapper 002
+     * Create a new instance of Mapper000
      *
      * @param nPRGBanks number of Program ROM Banks
      * @param nCHRBanks number of Character ROM Banks
      */
-    Mapper002(int nPRGBanks, int nCHRBanks) {
+    public Mapper000(int nPRGBanks, int nCHRBanks) {
         super(nPRGBanks, nCHRBanks);
-        reset();
     }
 
     /**
-     * The Mapper map the lower 16Kb to the Bank selected by the PRGBankLow Register
-     * and the upper 16Kb to the last PRG Bank
+     * No mapping occur, the address is directly returned
      *
      * @param addr   the CPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
@@ -30,19 +28,15 @@ public class Mapper002 extends Mapper {
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
-        if (addr >= 0x8000 && addr <= 0xBFFF) {
-            mapped.value = (selectedPRGBankLow * 0x4000) + (addr & 0x3FFF);
-            return true;
-        }
-        if (addr >= 0xC000 && addr <= 0xFFFF) {
-            mapped.value = (selectedPRGBankHigh * 0x4000) + (addr & 0x3FFF);
+        if (addr >= 0x8000 && addr <= 0xFFFF) {
+            mapped.value = addr & (nPRGBanks > 1 ? 0x7FFF : 0x3FFF);
             return true;
         }
         return false;
     }
 
     /**
-     * If the address is in the upper 16Kb, the data is written to the Mapper Register
+     * No mapping occur, the address is directly returned
      *
      * @param addr   the CPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
@@ -52,9 +46,9 @@ public class Mapper002 extends Mapper {
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
         addr &= 0xFFFF;
-        data &= 0xFF;
         if (addr >= 0x8000 && addr <= 0xFFFF) {
-            selectedPRGBankLow = data & 0x0F;
+            mapped.value = addr & (nPRGBanks > 1 ? 0x7FFF : 0x3FFF);
+            return true;
         }
         return false;
     }
@@ -78,7 +72,7 @@ public class Mapper002 extends Mapper {
     }
 
     /**
-     * The PPU never write, for Mapper 002 the Character Memory is ROM
+     * The PPU never write, for Mapper 000 the Character Memory is ROM
      *
      * @param addr   the PPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
@@ -94,11 +88,5 @@ public class Mapper002 extends Mapper {
             }
         }
         return false;
-    }
-
-    @Override
-    public void reset() {
-        selectedPRGBankLow = 0;
-        selectedPRGBankHigh = nPRGBanks - 1;
     }
 }

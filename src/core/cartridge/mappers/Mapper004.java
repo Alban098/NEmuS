@@ -1,4 +1,4 @@
-package core.cartridge;
+package core.cartridge.mappers;
 
 import core.ppu.Mirror;
 import utils.IntegerWrapper;
@@ -30,7 +30,7 @@ public class Mapper004 extends Mapper {
      * @param nPRGBanks number of Program ROM Banks
      * @param nCHRBanks number of Character ROM Banks
      */
-    Mapper004(int nPRGBanks, int nCHRBanks) {
+    public Mapper004(int nPRGBanks, int nCHRBanks) {
         super(nPRGBanks, nCHRBanks);
         register = new int[8];
         chrBank = new int[8];

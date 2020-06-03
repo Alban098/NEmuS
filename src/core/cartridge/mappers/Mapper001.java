@@ -1,4 +1,4 @@
-package core.cartridge;
+package core.cartridge.mappers;
 
 import core.ppu.Mirror;
 import utils.IntegerWrapper;
@@ -28,7 +28,7 @@ public class Mapper001 extends Mapper {
      * @param nPRGBanks number of Program ROM Banks
      * @param nCHRBanks number of Character ROM Banks
      */
-    Mapper001(int nPRGBanks, int nCHRBanks) {
+    public Mapper001(int nPRGBanks, int nCHRBanks) {
         super(nPRGBanks, nCHRBanks);
         staticVRAM = new int[32 * 1024];
         reset();
@@ -79,6 +79,7 @@ public class Mapper001 extends Mapper {
                 loadRegister >>= 1;
                 loadRegister |= ((data & 0x01) << 4);
                 loadRegisterCount++;
+                loadRegisterCount &= 0xFF;
 
                 if (loadRegisterCount == 5) {
                     int targetRegister = (addr >> 13) & 0x03;
@@ -94,7 +95,7 @@ public class Mapper001 extends Mapper {
                         if ((controlRegister & 0b10000) == 0b10000)
                             selectedCHRBank4Low =  loadRegister & 0x1F;
                         else
-                            selectedCHRBank8 =  loadRegister & 0x1E;
+                            selectedCHRBank8 = (loadRegister & 0x1E) >> 1;
                     } else if (targetRegister == 2) {
                         if ((controlRegister & 0b10000) == 0b10000)
                             selectedCHRBank4High = loadRegister & 0x1F;
@@ -131,8 +132,10 @@ public class Mapper001 extends Mapper {
                         mapped.value = (selectedCHRBank4Low * 0x1000) + (addr & 0x0FFF);
                         return true;
                     }
-                    mapped.value = (selectedCHRBank4High * 0x1000) + (addr & 0x0FFF);
-                    return true;
+                    if (addr <= 0x1FFF) {
+                        mapped.value = (selectedCHRBank4High * 0x1000) + (addr & 0x0FFF);
+                        return true;
+                    }
                 } else {
                     mapped.value = (selectedCHRBank8 * 0x2000) + (addr & 0x1FFF);
                     return true;

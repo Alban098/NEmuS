@@ -1,24 +1,25 @@
-package core.cartridge;
+package core.cartridge.mappers;
 
 import utils.IntegerWrapper;
 
-/**
- * This class implement the Mapped 000
- */
-public class Mapper000 extends Mapper {
+public class Mapper003 extends Mapper{
+
+    private int selectedCHRBank = 0x00;
 
     /**
-     * Create a new instance of Mapper000
+     * Create a new instance of Mapper003
      *
      * @param nPRGBanks number of Program ROM Banks
      * @param nCHRBanks number of Character ROM Banks
      */
-    public Mapper000(int nPRGBanks, int nCHRBanks) {
+    public Mapper003(int nPRGBanks, int nCHRBanks) {
         super(nPRGBanks, nCHRBanks);
+        reset();
     }
 
     /**
-     * No mapping occur, the address is directly returned
+     * Map an Address the CPU want to read from to a Program Memory Address
+     * if the Cartridge need to map it
      *
      * @param addr   the CPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
@@ -29,14 +30,19 @@ public class Mapper000 extends Mapper {
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
         if (addr >= 0x8000 && addr <= 0xFFFF) {
-            mapped.value = addr & (nPRGBanks > 1 ? 0x7FFF : 0x3FFF);
+            if (nPRGBanks == 1)
+                mapped.value = addr & 0x3FFF;
+            if (nPRGBanks == 2)
+                mapped.value = addr & 0x7FFF;
             return true;
         }
         return false;
     }
 
     /**
-     * No mapping occur, the address is directly returned
+     * Map an Address the CPU want to write to to a Program Memory Address
+     * if the Cartridge need to map it
+     * if the address is in the upper 16Kb, the data is written to the Mapper Register
      *
      * @param addr   the CPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
@@ -46,15 +52,17 @@ public class Mapper000 extends Mapper {
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
         addr &= 0xFFFF;
+        data &= 0xFF;
         if (addr >= 0x8000 && addr <= 0xFFFF) {
-            mapped.value = addr & (nPRGBanks > 1 ? 0x7FFF : 0x3FFF);
-            return true;
+            selectedCHRBank = data & 0x03;
+            mapped.value = addr;
         }
         return false;
     }
 
     /**
-     * No mapping occur, the address is directly returned
+     * Map an Address the PPU want to read from to a Character Memory Address
+     * if the Cartridge need to map it
      *
      * @param addr   the PPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
@@ -64,15 +72,15 @@ public class Mapper000 extends Mapper {
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
-        if (addr <= 0x1FFF) {
-            mapped.value = addr;
+        if (addr >= 0x0000 && addr <= 0x1FFF) {
+            mapped.value = (selectedCHRBank * 0x2000) + addr;
             return true;
         }
         return false;
     }
 
     /**
-     * The PPU never write, for Mapper 000 the Character Memory is ROM
+     * The PPU never write, for Mapper 003 the Character Memory is ROM
      *
      * @param addr   the PPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
@@ -81,12 +89,16 @@ public class Mapper000 extends Mapper {
      */
     @Override
     public boolean ppuMapWrite(int addr, IntegerWrapper mapped, int data) {
-        if (addr <= 0x1FFF) {
-            if (nCHRBanks == 0) {
-                mapped.value = addr;
-                return true;
-            }
-        }
         return false;
+    }
+
+
+
+    /**
+     * There is nothing to reset here
+     */
+    @Override
+    public void reset() {
+        selectedCHRBank = 0x00;
     }
 }

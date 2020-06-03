@@ -333,4 +333,8 @@ public class Bus {
         System.arraycopy(dump, index, oam, 0, 256);
         ppu.restoreOAMDump(oam);
     }
+
+    public Cartridge getCartridge() {
+        return cartridge;
+    }
 }

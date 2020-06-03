@@ -1,10 +1,13 @@
 package core.cartridge;
 
+import core.cartridge.mappers.*;
 import core.ppu.Mirror;
+import exceptions.InvalidFileException;
 import exceptions.UnsupportedMapperException;
 import utils.FileReader;
 import utils.IntegerWrapper;
 
+import java.io.EOFException;
 import java.io.IOException;
 
 /**
@@ -25,7 +28,7 @@ public class Cartridge {
      *
      * @param filename the path to the ROM
      */
-    public Cartridge(String filename) throws IOException, UnsupportedMapperException {
+    public Cartridge(String filename) throws InvalidFileException, UnsupportedMapperException, EOFException {
         int fileType = 1;
 
         //Initialize the file reader
@@ -35,7 +38,8 @@ public class Cartridge {
         //Extract the Mapper ID and Mirroring mode
         int mapperId = ((header.mapper2 >> 4) << 4) | header.mapper1 >> 4;
         mirror = (header.mapper1 & 0x01) == 0x01 ? Mirror.VERTICAL : Mirror.HORIZONTAL;
-        System.out.println("mapper " + mapperId);
+        System.out.println("Mapper " + mapperId);
+        System.out.println("Mirroring mode : " + mirror.name());
         //Discard padding if necessary
         if ((header.mapper1 & 0x04) == 0x04)
             reader.readBytes(512);
@@ -52,7 +56,7 @@ public class Cartridge {
             nCHRBanks = header.chr_rom_chunks;
             sCHRMemory = reader.readBytesI(nCHRBanks * 8192);
             if (nCHRBanks == 0)
-                sCHRMemory = new int[8192];
+                sCHRMemory = reader.readBytesI(8192);
             //Initialize the right Mapper
         }
         if (fileType == 2) {
@@ -63,7 +67,7 @@ public class Cartridge {
             nCHRBanks = (header.prg_ram_size & 0x38) << 8 | (header.chr_rom_chunks & 0xFF);
             sCHRMemory = reader.readBytesI(nCHRBanks * 8192);
             if (nCHRBanks == 0)
-                sCHRMemory = new int[8192];
+                sCHRMemory = reader.readBytesI(8192);
             //Initialize the right Mapper
         }
         switch (mapperId) {

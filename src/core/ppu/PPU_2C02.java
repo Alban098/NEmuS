@@ -290,8 +290,8 @@ public class PPU_2C02 {
                     case 0x3:
                         oams[oam_addr >> 2].setX(data);
                 }
-                //TODO Test influence oam_addr++;
-                //TODO Test influence oam_addr &= 0xFF;
+                oam_addr++;
+                oam_addr &= 0xFF;
                 break;
             case 0x0005: // Scroll
                 //When writing to the Scroll Register, we first write the X offset
@@ -640,6 +640,11 @@ public class PPU_2C02 {
                 loadBackgroundShifter.run();
                 transferAddressX.run();
             }
+
+            if (cycle == 338 || cycle == 340)
+            {
+                bg_next_tile_id = ppuRead(0x2000 | (vram_addr.get() & 0x0FFF));
+            }
             //At the start of a new frame we reset the Y coordinates to the top of the screen
             if (scanline == -1 && cycle >= 280 && cycle < 305) {
                 transferAddressY.run();
@@ -665,7 +670,7 @@ public class PPU_2C02 {
                 while (oam_entry < 64 && sprite_count < 9) {
                     //We compute if the sprite is in the current scanline
                     int diff = scanline - oams[oam_entry].getY();
-                    if (diff >= 0 && diff < (controlRegister.isSpriteSizeSet() ? 16 : 8) && sprite_count < 8) {
+                    if (diff >= 0 && diff < (controlRegister.isSpriteSizeSet() ? 16 : 8)) {
                         //If their is room left for another sprite, we add it to the rendered sprite
                         if (sprite_count < 8) {
                             //If this is the first sprite, a sprite zero hit is possible, we update the flag
@@ -681,6 +686,7 @@ public class PPU_2C02 {
                 }
                 //If we hit a 9th sprite on the scanline, we set the sprite overflow flag to 1
                 statusRegister.setSpriteOverflow(sprite_count >= 8);
+                if (sprite_count >= 8) sprite_count = 8;
             }
             //At the end of the horizontal blank, we fetch all the relevant sprite data for the next scanline
             //This is really done one multiple cycles, but it's easier to do it all in one go and doesn't change the overall behaviour of the rendering process
@@ -834,7 +840,7 @@ public class PPU_2C02 {
 
         cycle++;
         if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
-            if (cycle == 260 && scanline == 240) {
+            if (cycle == 260 && scanline < 240) {
                 cartridge.getMapper().scanline();
             }
         }
@@ -941,11 +947,10 @@ public class PPU_2C02 {
                 //For each column of the tile
                 for (int row = 0; row < 8; row++) {
                     //We read the tile ID by selecting the correct nametable using the mirroring mode
-                    //short tile_id = ppuRead(0x2000 | (i == 1 ? 0x1 << (cartridge.getMirror() == Mirror.VERTICAL ? 10 : 11) : 0x0) | y << 5 | x);
                     int offset = 0x0400 * (i & 0x3);
-                    int tile_id = ppuRead(0x2000 | offset | y << 5 | x);
+                    int tile_id = ppuRead(0x2000 | offset | (y << 5) | x);
                     //We read the tile attribute starting at offset 0x03C0 of the selected nametable, the attribute offset is calculated using the tile pos divided by 4
-                    int tile_attrib = ppuRead(0x23C0 | offset | ((y >> 2) << 3) | (x) >> 2);
+                    int tile_attrib = ppuRead(0x23C0 | offset | ((y >> 2) << 3) | (x >> 2));
                     //We select the right attribute depending on the tile pos inside the current 4x4 tile grid
                     if ((y & 0x02) == 0x02)
                         tile_attrib = (tile_attrib >> 4) & 0x00FF;

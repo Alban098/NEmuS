@@ -1,5 +1,7 @@
 package utils;
 
+import exceptions.InvalidFileException;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,11 +16,11 @@ public class FileReader {
     private int currentIndex;
     private byte[] file;
 
-    public FileReader(String filename) {
+    public FileReader(String filename) throws InvalidFileException {
         try {
             file = Files.readAllBytes(Paths.get(filename));
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new InvalidFileException("Unable to open file \"" + filename + "\"");
         }
         currentIndex = 0;
     }

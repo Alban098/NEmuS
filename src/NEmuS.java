@@ -1,5 +1,4 @@
 import core.Bus;
-import core.SaveState;
 import core.cartridge.Cartridge;
 import core.cpu.Flags;
 import core.ppu.PPU_2C02;
@@ -19,6 +18,7 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -51,7 +51,7 @@ public class NEmuS {
 
     private int game_width = PPU_2C02.SCREEN_WIDTH * 2;
     private int game_height = PPU_2C02.SCREEN_HEIGHT * 2;
-    private int info_width = 1920;
+    private int info_width = 1100;
     private int info_height = 1020;
     private float game_aspect = (float) game_width / game_height;
     private float info_aspect = (float) info_width / info_height;
@@ -98,7 +98,7 @@ public class NEmuS {
             game_name = romSelector.getSelectedFile().getName();
             try {
                 initEmulator(filename);
-            } catch (IOException | UnsupportedMapperException e) {
+            } catch (EOFException | InvalidFileException | UnsupportedMapperException e) {
                 JOptionPane.showMessageDialog(null, e.getMessage(), "ROM Loading Error", JOptionPane.ERROR_MESSAGE);
                 System.exit(-1);
             }
@@ -120,7 +120,7 @@ public class NEmuS {
                             game_name = romSelector.getSelectedFile().getName();
                             try {
                                 initEmulator(filename);
-                            } catch (IOException | UnsupportedMapperException e) {
+                            } catch (EOFException | InvalidFileException | UnsupportedMapperException e) {
                                 JOptionPane.showMessageDialog(null, e.getMessage() + "\nGame not loaded", "ROM Loading Error", JOptionPane.ERROR_MESSAGE);
                             }
                         }
@@ -279,14 +279,14 @@ public class NEmuS {
     /**
      * Create an instance of a NES and load the game
      */
-    private void initEmulator(String rom) throws IOException, UnsupportedMapperException {
+    private void initEmulator(String rom) throws UnsupportedMapperException, EOFException, InvalidFileException {
         Cartridge cart = new Cartridge(rom);
         //Create the Bus
         nes = new Bus();
         //Load the game into the NES
         nes.insertCartridge(cart);
         //Decompile the entire addressable range, for debug purposes
-        decompiled = nes.getCpu().disassemble(0x0000, 0xFFFF);
+        decompiled = nes.getCpu().disassemble(0x7F00, 0xFFFF);
         //Reset the CPU to its default state
         nes.startup();
     }
@@ -356,7 +356,7 @@ public class NEmuS {
         nametable3_texture = new Texture(256, 240, nes.getPpu().getNametable(2));
         nametable4_texture = new Texture(256, 240, nes.getPpu().getNametable(3));
         cpu_texture = new Texture(new BufferedImage(258 + 258 + 3, 990 - 258 - 30, BufferedImage.TYPE_INT_RGB));
-        oam_texture = new Texture(new BufferedImage(305, 990, BufferedImage.TYPE_INT_RGB));
+        oam_texture = new Texture(new BufferedImage(610, 510, BufferedImage.TYPE_INT_RGB));
 
         //Set the KeyCallBack
         glfwSetKeyCallback(info_window, infoKeyCallBack);
@@ -614,42 +614,42 @@ public class NEmuS {
         g.drawString("CPU - RAM", 150, 40);
         g.setFont(new Font("monospaced", Font.BOLD, 16));
         g.setColor(Color.WHITE);
-        g.drawString("STATUS:", 10, 70);
+        g.drawString("STATUS:", 18, 70);
         if (nes.getCpu().threadSafeGetState(Flags.N)) g.setColor(Color.GREEN);
         else g.setColor(Color.RED);
-        g.drawString("N", 80, 70);
+        g.drawString("N", 88, 70);
         if (nes.getCpu().threadSafeGetState(Flags.V)) g.setColor(Color.GREEN);
         else g.setColor(Color.RED);
-        g.drawString("V", 96, 70);
+        g.drawString("V", 104, 70);
         if (nes.getCpu().threadSafeGetState(Flags.U)) g.setColor(Color.GREEN);
         else g.setColor(Color.RED);
-        g.drawString("-", 112, 70);
+        g.drawString("-", 120, 70);
         if (nes.getCpu().threadSafeGetState(Flags.B)) g.setColor(Color.GREEN);
         else g.setColor(Color.RED);
-        g.drawString("B", 128, 70);
+        g.drawString("B", 136, 70);
         if (nes.getCpu().threadSafeGetState(Flags.D)) g.setColor(Color.GREEN);
         else g.setColor(Color.RED);
-        g.drawString("D", 144, 70);
+        g.drawString("D", 152, 70);
         if (nes.getCpu().threadSafeGetState(Flags.I)) g.setColor(Color.GREEN);
         else g.setColor(Color.RED);
-        g.drawString("I", 160, 70);
+        g.drawString("I", 168, 70);
         if (nes.getCpu().threadSafeGetState(Flags.Z)) g.setColor(Color.GREEN);
         else g.setColor(Color.RED);
-        g.drawString("Z", 176, 70);
+        g.drawString("Z", 184, 70);
         if (nes.getCpu().threadSafeGetState(Flags.C)) g.setColor(Color.GREEN);
         else g.setColor(Color.RED);
-        g.drawString("C", 194, 70);
+        g.drawString("C", 202, 70);
         g.setColor(Color.WHITE);
-        g.drawString("Program C  : $" + String.format("%02X", nes.getCpu().threadSafeGetPc()), 10, 125 + 60);
-        g.drawString("A Register : $" + String.format("%02X", nes.getCpu().threadSafeGetA()) + "[" + nes.getCpu().threadSafeGetA() + "]", 10, 140 + 60);
-        g.drawString("X Register : $" + String.format("%02X", nes.getCpu().threadSafeGetX()) + "[" + nes.getCpu().threadSafeGetX() + "]", 10, 155 + 60);
-        g.drawString("Y Register : $" + String.format("%02X", nes.getCpu().threadSafeGetY()) + "[" + nes.getCpu().threadSafeGetY() + "]", 10, 170 + 60);
-        g.drawString("Stack Ptr  : $" + String.format("%04X", nes.getCpu().threadSafeGetStkp()), 10, 185 + 60);
-        g.drawString("Ticks  : " + nes.getCpu().threadSafeGetCpuClock(), 10, 340);
-        g.drawString("Frames : " + frameCount, 10, 355);
+        g.drawString("Program C  : $" + String.format("%02X", nes.getCpu().threadSafeGetPc()), 18, 125 + 60);
+        g.drawString("A Register : $" + String.format("%02X", nes.getCpu().threadSafeGetA()) + "[" + nes.getCpu().threadSafeGetA() + "]", 18, 140 + 60);
+        g.drawString("X Register : $" + String.format("%02X", nes.getCpu().threadSafeGetX()) + "[" + nes.getCpu().threadSafeGetX() + "]", 18, 155 + 60);
+        g.drawString("Y Register : $" + String.format("%02X", nes.getCpu().threadSafeGetY()) + "[" + nes.getCpu().threadSafeGetY() + "]", 18, 170 + 60);
+        g.drawString("Stack Ptr  : $" + String.format("%04X", nes.getCpu().threadSafeGetStkp()), 18, 185 + 60);
+        g.drawString("Ticks  : " + nes.getCpu().threadSafeGetCpuClock(), 18, 340);
+        g.drawString("Frames : " + frameCount, 18, 355);
 
         // ================================= RAM =================================
-        int nRamX = 5, nRamY = 440;
+        int nRamX = 13, nRamY = 440;
         g.setFont(new Font("monospaced", Font.BOLD, 15));
         int nAddr = ram_page << 8;
         for (int row = 0; row < 16; row++) {
@@ -682,18 +682,18 @@ public class NEmuS {
                         break;
                 }
             }
-            int lineY = 70;
+            int lineY = 60;
             g.setColor(Color.WHITE);
             for (String line : before) {
-                g.drawString(line, 230, lineY);
+                g.drawString(line, 240, lineY);
                 lineY += 15;
             }
             g.setColor(Color.CYAN);
-            g.drawString(currentLine, 230, lineY);
+            g.drawString(currentLine, 240, lineY);
             lineY += 15;
             g.setColor(Color.WHITE);
             for (String line : after) {
-                g.drawString(line, 230, lineY);
+                g.drawString(line, 240, lineY);
                 lineY += 15;
             }
             cpu_texture.update();
@@ -705,13 +705,17 @@ public class NEmuS {
         g2.fillRect(0, 0, oam_texture.getImg().getWidth(), oam_texture.getImg().getHeight());
         g2.setFont(new Font("monospaced", Font.BOLD, 35));
         g2.setColor(Color.GREEN);
-        g2.drawString("OAM Memory", 30, 40);
+        g2.drawString("OAM Memory", 140, 40);
         g2.setFont(new Font("monospaced", Font.BOLD, 15));
         g2.setColor(Color.WHITE);
         synchronized (nes.getPpu()) {
-            for (int i = 0; i < 64; i++) {
+            for (int i = 0; i < 32; i++) {
                 String s = String.format("%02X:", i) + " (" + nes.getPpu().getOams()[i].getX() + ", " + nes.getPpu().getOams()[i].getY() + ") ID: " + String.format("%02X", nes.getPpu().getOams()[i].getId()) + " AT: " + String.format("%02X", nes.getPpu().getOams()[i].getAttribute());
-                g2.drawString(s, 25, (int) (70 + 14.5 * i));
+                g2.drawString(s, 0, 60 + 14 * i);
+            }
+            for (int i = 0; i < 32; i++) {
+                String s = String.format("%02X:", i + 32) + " (" + nes.getPpu().getOams()[i + 32].getX() + ", " + nes.getPpu().getOams()[i + 32].getY() + ") ID: " + String.format("%02X", nes.getPpu().getOams()[i + 32].getId()) + " AT: " + String.format("%02X", nes.getPpu().getOams()[i + 32].getAttribute());
+                g2.drawString(s, 275, 60 + 14 * i);
             }
         }
         oam_texture.update();
@@ -853,32 +857,30 @@ public class NEmuS {
         glVertex2f(x_end_pattern1 + x_offset_pattern2, y_end_pattern);
         glEnd();
 
-        // ============================================= Nametable 1 ============================================= //
+       // ============================================= Nametable 1 ============================================= //
         nametable1_texture.bind();
-        float x_start_nametable1 = NumberUtils.map(cpu_texture.getWidth() + oam_texture.getWidth() + 50, 0, info_width, -info_aspect, info_aspect);
-        float x_end_nametable1 = NumberUtils.map(2 * nametable1_texture.getWidth() + cpu_texture.getWidth() + oam_texture.getWidth() + 50, 0, info_width, -info_aspect, info_aspect);
-        float y_start_nametable1 = NumberUtils.map(10, 0, info_height, 1, -1);
-        float y_end_nametable1 = NumberUtils.map(10 + 2 * nametable1_texture.getHeight(), 0, info_height, 1, -1);
+        float x_end_nametable1 = NumberUtils.map(nametable1_texture.getWidth() + cpu_texture.getWidth() + 35, 0, info_width, -info_aspect, info_aspect);
+        float y_end_nametable1 = NumberUtils.map(oam_texture.getHeight() + nametable1_texture.getHeight(), 0, info_height, 1, -1);
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex2f(x_start_nametable1, y_start_nametable1);
+        glVertex2f(x_start_oam, y_end_oam);
         glTexCoord2f(1, 0);
-        glVertex2f(x_end_nametable1, y_start_nametable1);
+        glVertex2f(x_end_nametable1, y_end_oam);
         glTexCoord2f(1, 1);
         glVertex2f(x_end_nametable1, y_end_nametable1);
         glTexCoord2f(0, 1);
-        glVertex2f(x_start_nametable1, y_end_nametable1);
+        glVertex2f(x_start_oam, y_end_nametable1);
         glEnd();
 
         // ============================================= Nametable 2 ============================================= //
         nametable2_texture.bind();
-        float x_start_nametable2 = NumberUtils.map(cpu_texture.getWidth() + oam_texture.getWidth() + 50 + 2 * nametable1_texture.getWidth() + 10, 0, info_width, -info_aspect, info_aspect);
-        float x_end_nametable2 = NumberUtils.map(cpu_texture.getWidth() + oam_texture.getWidth() + 50 + 4 * nametable1_texture.getWidth() + 10, 0, info_width, -info_aspect, info_aspect);
+        float x_start_nametable2 = NumberUtils.map(cpu_texture.getWidth() + 35 + nametable1_texture.getWidth() + 6, 0, info_width, -info_aspect, info_aspect);
+        float x_end_nametable2 = NumberUtils.map(cpu_texture.getWidth() + 35 + 2 * nametable1_texture.getWidth() + 6, 0, info_width, -info_aspect, info_aspect);
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex2f(x_start_nametable2, y_start_nametable1);
+        glVertex2f(x_start_nametable2, y_end_oam);
         glTexCoord2f(1, 0);
-        glVertex2f(x_end_nametable2, y_start_nametable1);
+        glVertex2f(x_end_nametable2, y_end_oam);
         glTexCoord2f(1, 1);
         glVertex2f(x_end_nametable2, y_end_nametable1);
         glTexCoord2f(0, 1);
@@ -887,17 +889,17 @@ public class NEmuS {
 
         // ============================================= Nametable 3 ============================================= //
         nametable3_texture.bind();
-        float y_start_nametable3 = NumberUtils.map(20 + 2 * nametable1_texture.getHeight(), 0, info_height, 1, -1);
-        float y_end_nametable3 = NumberUtils.map(20 + 2 * nametable1_texture.getHeight() + 20 + 2 * nametable1_texture.getHeight(), 0, info_height, 1, -1);
+        float y_start_nametable3 = NumberUtils.map(6 + nametable1_texture.getHeight() + oam_texture.getHeight(), 0, info_height, 1, -1);
+        float y_end_nametable3 = NumberUtils.map(6 + 2 * nametable1_texture.getHeight() + oam_texture.getHeight(), 0, info_height, 1, -1);
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex2f(x_start_nametable1, y_start_nametable3);
+        glVertex2f(x_start_oam, y_start_nametable3);
         glTexCoord2f(1, 0);
         glVertex2f(x_end_nametable1, y_start_nametable3);
         glTexCoord2f(1, 1);
         glVertex2f(x_end_nametable1, y_end_nametable3);
         glTexCoord2f(0, 1);
-        glVertex2f(x_start_nametable1, y_end_nametable3);
+        glVertex2f(x_start_oam, y_end_nametable3);
         glEnd();
 
         // ============================================= Nametable 4 ============================================= //
@@ -912,5 +914,31 @@ public class NEmuS {
         glTexCoord2f(0, 1);
         glVertex2f(x_start_nametable2, y_end_nametable3);
         glEnd();
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glColor3f(1, 0, 0);
+        switch (nes.getCartridge().getMirror()) {
+            case HORIZONTAL:
+                float x_start_mirror = NumberUtils.map(cpu_texture.getWidth() + 35 + nametable1_texture.getWidth() , 0, info_width, -info_aspect, info_aspect);
+                float x_end_mirror = NumberUtils.map(cpu_texture.getWidth() + 35 + nametable1_texture.getWidth() + 6, 0, info_width, -info_aspect, info_aspect);
+                glBegin(GL_QUADS);
+                glVertex2f(x_start_mirror, y_end_oam);
+                glVertex2f(x_end_mirror, y_end_oam);
+                glVertex2f(x_end_mirror, y_end_nametable3);
+                glVertex2f(x_start_mirror, y_end_nametable3);
+                glEnd();
+                break;
+            case VERTICAL:
+                float y_start_mirror = NumberUtils.map(nametable1_texture.getHeight() + oam_texture.getHeight(), 0, info_height, 1, -1);
+                float y_end_mirror = NumberUtils.map(nametable1_texture.getHeight() + oam_texture.getHeight() + 6, 0, info_height, 1, -1);
+                glBegin(GL_QUADS);
+                glVertex2f(x_start_oam, y_start_mirror);
+                glVertex2f(x_end_nametable2, y_start_mirror);
+                glVertex2f(x_end_nametable2, y_end_mirror);
+                glVertex2f(x_start_oam, y_end_mirror);
+                glEnd();
+                break;
+        }
+        glColor3f(1, 1, 1);
     }
 }

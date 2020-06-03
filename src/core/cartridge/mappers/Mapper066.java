@@ -1,9 +1,10 @@
-package core.cartridge;
+package core.cartridge.mappers;
 
 import utils.IntegerWrapper;
 
-public class Mapper003 extends Mapper{
+public class Mapper066 extends Mapper{
 
+    private int selectedPGRBank = 0x00;
     private int selectedCHRBank = 0x00;
 
     /**
@@ -12,14 +13,14 @@ public class Mapper003 extends Mapper{
      * @param nPRGBanks number of Program ROM Banks
      * @param nCHRBanks number of Character ROM Banks
      */
-    public Mapper003(int nPRGBanks, int nCHRBanks) {
+    public Mapper066(int nPRGBanks, int nCHRBanks) {
         super(nPRGBanks, nCHRBanks);
         reset();
     }
 
     /**
-     * Map an Address the CPU want to read from to a Program Memory Address
-     * if the Cartridge need to map it
+     * The Mapper map the lower 16Kb to the Bank selected by the PRGBankLow Register
+     * and the upper 16Kb to the last PRG Bank
      *
      * @param addr   the CPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
@@ -30,10 +31,7 @@ public class Mapper003 extends Mapper{
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
         if (addr >= 0x8000 && addr <= 0xFFFF) {
-            if (nPRGBanks == 1)
-                mapped.value = addr & 0x3FFF;
-            if (nPRGBanks == 2)
-                mapped.value = addr & 0x7FFF;
+            mapped.value = (selectedPGRBank * 0x8000) + (addr & 0x7FFF);
             return true;
         }
         return false;
@@ -52,10 +50,9 @@ public class Mapper003 extends Mapper{
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
         addr &= 0xFFFF;
-        data &= 0xFF;
         if (addr >= 0x8000 && addr <= 0xFFFF) {
+            selectedPGRBank = (data & 0x30) >> 4;
             selectedCHRBank = data & 0x03;
-            mapped.value = addr;
         }
         return false;
     }
@@ -73,7 +70,7 @@ public class Mapper003 extends Mapper{
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
         if (addr >= 0x0000 && addr <= 0x1FFF) {
-            mapped.value = (selectedCHRBank * 0x2000) + addr;
+            mapped.value = selectedCHRBank * 0x2000 + addr;
             return true;
         }
         return false;
@@ -93,12 +90,9 @@ public class Mapper003 extends Mapper{
     }
 
 
-
-    /**
-     * There is nothing to reset here
-     */
     @Override
     public void reset() {
+        selectedPGRBank = 0x00;
         selectedCHRBank = 0x00;
     }
 }

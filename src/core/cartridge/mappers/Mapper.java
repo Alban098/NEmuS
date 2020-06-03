@@ -1,4 +1,4 @@
-package core.cartridge;
+package core.cartridge.mappers;
 
 import core.ppu.Mirror;
 import utils.IntegerWrapper;
