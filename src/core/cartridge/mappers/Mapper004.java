@@ -1,7 +1,11 @@
 package core.cartridge.mappers;
 
 import core.ppu.Mirror;
+import exceptions.InvalidFileException;
+import utils.FileReader;
 import utils.IntegerWrapper;
+
+import java.io.EOFException;
 
 public class Mapper004 extends Mapper {
 
@@ -15,11 +19,10 @@ public class Mapper004 extends Mapper {
 
     private boolean irqActive = false;
     private boolean irqEnable = false;
-    private boolean irqUpdate = false;
     private int irqCounter = 0x0000;
     private int irqReload = 0x0000;
 
-    private int[] staticVRAM;
+    private byte[] cartridgeRAM;
 
     private Mirror mirror = Mirror.HORIZONTAL;
 
@@ -30,12 +33,17 @@ public class Mapper004 extends Mapper {
      * @param nPRGBanks number of Program ROM Banks
      * @param nCHRBanks number of Character ROM Banks
      */
-    public Mapper004(int nPRGBanks, int nCHRBanks) {
+    public Mapper004(int nPRGBanks, int nCHRBanks, String saveFile) {
         super(nPRGBanks, nCHRBanks);
         register = new int[8];
         chrBank = new int[8];
         prgBank = new int[4];
-        staticVRAM = new int[32*1024];
+        try {
+            FileReader saveReader = new FileReader(saveFile);
+            cartridgeRAM = saveReader.readBytes(32 * 1024);
+        } catch (InvalidFileException | EOFException e) {
+            cartridgeRAM = new byte[32 * 1024];
+        }
         reset();
     }
 
@@ -44,7 +52,7 @@ public class Mapper004 extends Mapper {
         addr &= 0xFFFF;
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
-            data.value = staticVRAM[addr & 0x1FFF] & 0xFF;
+            data.value = cartridgeRAM[addr & 0x1FFF] & 0xFF;
             return true;
         }
         if (addr >= 0x8000 && addr <= 0x9FFF) {
@@ -72,7 +80,7 @@ public class Mapper004 extends Mapper {
         data &= 0xFF;
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
-            staticVRAM[addr & 0x1FFF] = data & 0xFF;
+            cartridgeRAM[addr & 0x1FFF] = (byte) data;
             return true;
         }
 
@@ -122,7 +130,8 @@ public class Mapper004 extends Mapper {
                     mirror = Mirror.HORIZONTAL;
                 else
                     mirror = Mirror.VERTICAL;
-            } else {}
+            } else {
+            }
             return false;
         }
         if (addr >= 0xC000 && addr <= 0xDFFF) {
@@ -221,16 +230,28 @@ public class Mapper004 extends Mapper {
         mirror = Mirror.HORIZONTAL;
         irqActive = false;
         irqEnable = false;
-        irqUpdate = false;
         irqCounter = 0;
         irqReload = 0;
 
         for (int i = 0; i < 4; i++) prgBank[i] = 0;
-        for (int i = 0; i < 8; i++) {chrBank[i] = 0; register[i] = 0;}
+        for (int i = 0; i < 8; i++) {
+            chrBank[i] = 0;
+            register[i] = 0;
+        }
 
         prgBank[0] = 0;
         prgBank[1] = 0x2000;
         prgBank[2] = (nPRGBanks * 2 - 2) * 0x2000;
         prgBank[3] = (nPRGBanks * 2 - 1) * 0x2000;
+    }
+
+    @Override
+    public boolean hasRAM() {
+        return true;
+    }
+
+    @Override
+    public byte[] getRAM() {
+        return cartridgeRAM;
     }
 }

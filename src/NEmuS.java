@@ -19,7 +19,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.EOFException;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -39,7 +38,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  */
 public class NEmuS {
 
-    private static final int FRAME_DURATION = 1000000000 / 60;
+    private static final int FRAME_DURATION = 1000 / 60;
     private static final float DEAD_ZONE_RADIUS = .4f;
 
     private static String game_name;
@@ -129,7 +128,7 @@ public class NEmuS {
                         emulationRunning = false;
                         nes.reset();
                         emulationRunning = true;
-                    /*} else if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
+                    } else if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
                         //Before a savestate the emulation is paused
                         emulationRunning = false;
                         //We finish the rendering of the current frame (a savestate cannot occur during a frame)
@@ -139,43 +138,8 @@ public class NEmuS {
                         //We ensure the PPU is at the top left corner
                         nes.clock();
                         nes.getPpu().frameComplete = false;
-                        //We select the file
-                        JFileChooser stateSelector = new JFileChooser("./");
-                        stateSelector.setFileFilter(new FileNameExtensionFilter("Savestate file (.state)", "state"));
-                        if (stateSelector.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-                            //We append the name of the game in front of the file name and force the extension
-                            String filename = stateSelector.getSelectedFile().getName();
-                            String filePath = stateSelector.getSelectedFile().getAbsolutePath();
-                            if (!filename.endsWith(".state")) {
-                                filename += ".state";
-                                filePath += ".state";
-                            }
-                            filePath = filePath.substring(0, filePath.length() - filename.length()) + "[" + game_name + "]" + filename;
-                            //We create a savestate from the current Emulator state and save it to the file
-                            new SaveState(nes).saveToFile(filePath);
-                        }
+                        nes.getCartridge().save();
                         emulationRunning = true;
-                    } else if (key == GLFW_KEY_F4 && action == GLFW_PRESS) {
-                        //Before a savestate loading the emulation is paused
-                        emulationRunning = false;
-                        //We finish the rendering of the current frame (a savestate cannot occur during a frame)
-                        do {
-                            nes.clock();
-                        } while (!nes.getPpu().frameComplete);
-                        //We ensure the PPU is at the top left corner
-                        nes.clock();
-                        nes.getPpu().frameComplete = false;
-                        //We select the file
-                        JFileChooser stateSelector = new JFileChooser("./");
-                        stateSelector.setFileFilter(new FileNameExtensionFilter("Savestate file (.state)", "state"));
-                        if (stateSelector.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
-                            try {
-                                //We attempt to load the file and restore the savestate
-                                new SaveState(stateSelector.getSelectedFile().getAbsolutePath()).restore(nes);
-                            } catch (InvalidFileException e) {
-                                JOptionPane.showMessageDialog(null, e.getMessage(), "Error loading Savestate", JOptionPane.ERROR_MESSAGE);
-                            }
-                        emulationRunning = true;*/
                     } else if (key == GLFW_KEY_F12 && action == GLFW_PRESS) {
                         emulationRunning = false;
                         JOptionPane.showMessageDialog(null, "F1 : Load ROM\nF2 : Reset NES\n", "Keyboard Shortcut Help", JOptionPane.INFORMATION_MESSAGE);
@@ -197,7 +161,7 @@ public class NEmuS {
                         //before resetting from other Thread, we pause the emulation and wait a couple of frame to be sure that the Game Thread isn't messing with the system
                         emulationRunning = false;
                         try {
-                            Thread.sleep(10 * FRAME_DURATION/1000000);
+                            Thread.sleep(10 * FRAME_DURATION/1000);
                         } catch (InterruptedException ignored) {
                         }
                         nes.reset();
@@ -412,9 +376,9 @@ public class NEmuS {
                 //We load the screen pixels into VRAM and display them
                 //We update the controller registers
                 InputHandling();
-                if (System.nanoTime() >= next_frame) {
+                if (System.currentTimeMillis() >= next_frame) {
                     //Set when the next frame should occur
-                    next_frame = System.nanoTime() + FRAME_DURATION;
+                    next_frame = System.currentTimeMillis() + FRAME_DURATION;
                     if (emulationRunning) {
                         //We compute an entire frame in one go and wait for the next one
                         //this isn't hardware accurate, but is close enough to have most game run properly
@@ -425,8 +389,8 @@ public class NEmuS {
                         frameCount++;
                     }
                     //Keep track of the FPS number
-                    glfwSetWindowTitle(game_window, game_name + " / " + (1000000000/(System.nanoTime() - last_frame)) + " FPS");
-                    last_frame = System.nanoTime();
+                    glfwSetWindowTitle(game_window, game_name + " / " +  1000 /((System.currentTimeMillis() - last_frame) + 1) + " FPS");
+                    last_frame = System.currentTimeMillis();
                 }
                 screen_texture.load(nes.getPpu().getScreenBuffer());
                 renderGameScreen();
@@ -459,15 +423,15 @@ public class NEmuS {
                 if (ram_page < 0x00) ram_page += 0x100;
                 if (ram_page > 0xFF) ram_page -= 0x100;
                 //If it's time to draw the next frame
-                if (System.nanoTime() >= next_frame) {
+                if (System.currentTimeMillis() >= next_frame) {
                     GL11.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                     //Set when the next frame should occur
-                    next_frame = System.nanoTime() + FRAME_DURATION;
+                    next_frame = System.currentTimeMillis() + FRAME_DURATION*4;
                     //Compute and update the debug textures (CPU, OAM, PatternTables and Nametables)
                     computeTextures();
                     //Keep track of the FPS number
-                    glfwSetWindowTitle(info_window, "Info Window : " + 1000000000 / (System.nanoTime() - last_frame) + " fps");
-                    last_frame = System.nanoTime();
+                    glfwSetWindowTitle(info_window, "Info Window : " + 1000 / ((System.currentTimeMillis() - last_frame) + 1) + " fps");
+                    last_frame = System.currentTimeMillis();
                     //We actually draw the frame
                     renderInfoScreen();
                 }

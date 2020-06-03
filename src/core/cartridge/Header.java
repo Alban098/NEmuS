@@ -11,14 +11,14 @@ import java.io.IOException;
  */
 class Header {
 
-    final int prg_rom_chunks;
-    final int chr_rom_chunks;
-    final int mapper1;
-    final int mapper2;
+    final byte prg_rom_chunks;
+    final byte chr_rom_chunks;
+    final byte mapper1;
+    final byte mapper2;
     final char[] name;
-    final int prg_ram_size;
-    final int tv_system1;
-    final int tv_system2;
+    final byte prg_ram_size;
+    final byte tv_system1;
+    final byte tv_system2;
 
     /**
      * Load the header from the FileReader

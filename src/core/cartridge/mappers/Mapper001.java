@@ -1,7 +1,11 @@
 package core.cartridge.mappers;
 
 import core.ppu.Mirror;
+import exceptions.InvalidFileException;
+import utils.FileReader;
 import utils.IntegerWrapper;
+
+import java.io.EOFException;
 
 
 public class Mapper001 extends Mapper {
@@ -20,7 +24,7 @@ public class Mapper001 extends Mapper {
 
     private Mirror mirroring_mode = Mirror.HORIZONTAL;
 
-    private int[] staticVRAM;
+    private byte[] cartridgeRAM;
 
     /**
      * Create a new instance of Mapper
@@ -28,9 +32,14 @@ public class Mapper001 extends Mapper {
      * @param nPRGBanks number of Program ROM Banks
      * @param nCHRBanks number of Character ROM Banks
      */
-    public Mapper001(int nPRGBanks, int nCHRBanks) {
+    public Mapper001(int nPRGBanks, int nCHRBanks, String saveFile) {
         super(nPRGBanks, nCHRBanks);
-        staticVRAM = new int[32 * 1024];
+        try {
+            FileReader saveReader = new FileReader(saveFile);
+            cartridgeRAM = saveReader.readBytes(32*1024);
+        } catch (InvalidFileException | EOFException e) {
+            cartridgeRAM = new byte[32 * 1024];
+        }
         reset();
     }
 
@@ -39,7 +48,7 @@ public class Mapper001 extends Mapper {
         addr &= 0xFFFF;
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
-            data.value = staticVRAM[addr & 0x1FFF] & 0xFF;
+            data.value = cartridgeRAM[addr & 0x1FFF] & 0xFF;
             return true;
         }
 
@@ -66,7 +75,7 @@ public class Mapper001 extends Mapper {
         data &= 0xFF;
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
-            staticVRAM[addr & 0x1FFF] = data & 0xFF;
+            cartridgeRAM[addr & 0x1FFF] = (byte) data;
             return true;
         }
 
@@ -177,5 +186,15 @@ public class Mapper001 extends Mapper {
         selectedPRGBank16Low = 0;
         selectedPRGBank16High = nPRGBanks - 1;
         selectedPRGBank32 = 0;
+    }
+
+    @Override
+    public boolean hasRAM() {
+        return true;
+    }
+
+    @Override
+    public byte[] getRAM() {
+        return cartridgeRAM;
     }
 }

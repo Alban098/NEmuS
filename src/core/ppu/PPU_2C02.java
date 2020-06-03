@@ -24,9 +24,9 @@ public class PPU_2C02 {
     private final ByteBuffer[] patterntables;
     private final ByteBuffer[] nametables;
 
-    private final int[][] tblName;
-    private final int[] tblPalette;
-    private final int[][] tblPattern;
+    private final byte[][] tblName;
+    private final byte[] tblPalette;
+    private final byte[][] tblPattern;
 
     private final MaskRegister maskRegister;
     private final ControlRegister controlRegister;
@@ -66,15 +66,14 @@ public class PPU_2C02 {
     private int cycle;
     private boolean odd_frame = false;
     private boolean nmi;
-    private boolean scanline_trigger = false;
 
     /**
      * Create a new PPU, instantiate its components and fill up the palettes
      */
     public PPU_2C02() {
-        tblName = new int[2][1024];
-        tblPattern = new int[2][4096];
-        tblPalette = new int[32];
+        tblName = new byte[2][1024];
+        tblPattern = new byte[2][4096];
+        tblPalette = new byte[32];
         palScreen = new Color[0x40];
         screen_buffer = BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4);
         patterntables = new ByteBuffer[]{BufferUtils.createByteBuffer(128 * 128 * 4), BufferUtils.createByteBuffer(128 * 128 * 4)};
@@ -390,28 +389,28 @@ public class PPU_2C02 {
         //If the address is mapped by the cartridge, let it handle and return
         if (!cartridge.ppuWrite(addr, data)) {
             if (addr <= 0x1FFF) { //Write to pattern table
-                tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = data;
+                tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = (byte) data;
 
             } else if (addr <= 0x3EFF) { //Write to nametable
                 addr &= 0x0FFF;
                 if (cartridge.getMirror() == Mirror.VERTICAL) {
                     if (addr <= 0x03FF)
-                        tblName[0][addr & 0x03FF] = data;
+                        tblName[0][addr & 0x03FF] = (byte) data;
                     if (addr >= 0x0400 && addr <= 0x07FF)
-                        tblName[1][addr & 0x03FF] = data;
+                        tblName[1][addr & 0x03FF] = (byte) data;
                     if (addr >= 0x0800 && addr <= 0x0BFF)
-                        tblName[0][addr & 0x03FF] = data;
+                        tblName[0][addr & 0x03FF] = (byte) data;
                     if (addr >= 0x0C00)
-                        tblName[1][addr & 0x03FF] = data;
+                        tblName[1][addr & 0x03FF] = (byte) data;
                 } else if (cartridge.getMirror() == Mirror.HORIZONTAL) {
                     if (addr <= 0x03FF)
-                        tblName[0][addr & 0x03FF] = data;
+                        tblName[0][addr & 0x03FF] = (byte) data;
                     if (addr >= 0x0400 && addr <= 0x07FF)
-                        tblName[0][addr & 0x03FF] = data;
+                        tblName[0][addr & 0x03FF] = (byte) data;
                     if (addr >= 0x0800 && addr <= 0x0BFF)
-                        tblName[1][addr & 0x03FF] = data;
+                        tblName[1][addr & 0x03FF] = (byte) data;
                     if (addr >= 0x0C00)
-                        tblName[1][addr & 0x03FF] = data;
+                        tblName[1][addr & 0x03FF] = (byte) data;
                 }
             } else { //Writting to palette memory
                 addr &= 0x001F;
@@ -419,7 +418,7 @@ public class PPU_2C02 {
                 if (addr == 0x0014) addr = 0x0004;
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
-                tblPalette[addr] = data;
+                tblPalette[addr] = (byte) data;
             }
         }
     }
@@ -998,164 +997,5 @@ public class PPU_2C02 {
      */
     public synchronized Color threadSafeGetColorFromPalette(int paletteId, int pixel) {
         return palScreen[ppuRead(0x3F00 + ((paletteId << 2) & 0xFF) + (pixel & 0xFF)) & 0x3F];
-    }
-
-    // ======================================= Savestates Methods ======================================= //
-
-    /**
-     * Return a dump of the PPU Status
-     * that can be restored later
-     *
-     * @return a byte[11] containing the PPU Status
-     */
-    public byte[] dumpStatus() {
-        return new byte[]{
-                (byte) maskRegister.get(),
-                (byte) controlRegister.get(),
-                (byte) statusRegister.get(),
-                (byte) address_latch,
-                (byte) ppu_data_buffer,
-                (byte) oam_addr,
-                (byte) ((vram_addr.get() >> 8) & 0xFF),
-                (byte) (vram_addr.get() & 0xFF),
-                (byte) ((tram_addr.get() >> 8) & 0xFF),
-                (byte) (tram_addr.get() & 0xFF),
-                (byte) fine_x
-        };
-    }
-
-    /**
-     * Restore the PPU Status to a dumped state
-     *
-     * @param dump the dumped memory (Must be 11 bytes)
-     * @throws DumpException when the dump size isn't 11 bytes
-     */
-    public void restoreStatusDump(byte[] dump) throws DumpException {
-        if (dump.length != 11)
-            throw new DumpException("Invalid PPU Status size (" + dump.length + ") must be 11 bytes");
-        maskRegister.set(dump[0] & 0xFF);
-        controlRegister.set(dump[1] & 0xFF);
-        statusRegister.set(dump[2] & 0xFF);
-        address_latch = dump[3];
-        ppu_data_buffer = dump[4];
-        oam_addr = dump[5];
-        vram_addr.set((((dump[6] & 0xFF) << 8) & 0xFF00) | ((dump[7] & 0xFF)));
-        tram_addr.set((((dump[8] & 0xFF) << 8) & 0xFF00) | ((dump[9] & 0xFF)));
-        fine_x = dump[10];
-    }
-
-    /**
-     * Return a dump of the Object Attribute Memory
-     * that can be restored later
-     *
-     * @return a byte[256] containing the Object Attribute Memory
-     */
-    public byte[] dumpOAM() {
-        byte[] oam = new byte[256];
-        for (int i = 0; i < 64; i++) {
-            byte[] oa = oams[i].dump();
-            oam[4 * i] = oa[0];
-            oam[4 * i + 1] = oa[1];
-            oam[4 * i + 2] = oa[2];
-            oam[4 * i + 3] = oa[3];
-        }
-        return oam;
-    }
-
-    /**
-     * Restore the Object Attribute Memory to a dumped state
-     *
-     * @param dump the dumped memory (Must be 256 bytes)
-     * @throws DumpException when the dump size isn't 256 bytes
-     */
-    public void restoreOAMDump(byte[] dump) throws DumpException {
-        if (dump.length != 256)
-            throw new DumpException("Invalid Object Attribute Memory size (" + dump.length + ") must be 256 bytes");
-        for (int i = 0; i < 64; i++) {
-            oams[i].setX(dump[4 * i]);
-            oams[i].setAttribute(dump[4 * i + 1]);
-            oams[i].setId(dump[4 * i + 2]);
-            oams[i].setY(dump[4 * i + 3]);
-        }
-    }
-
-    /**
-     * Return a dump of the Nametable Memory
-     * that can be restored later
-     *
-     * @return a byte[2048] containing the Nametable Memory
-     */
-    public byte[] dumpNametables() {
-        byte[] dump = new byte[2048];
-        for (int i = 0; i < 2; i++) {
-            System.arraycopy(tblName[i], 0, dump, i * 1024, 1024);
-        }
-        return dump;
-    }
-
-    /**
-     * Restore the Nametable Memory to a dumped state
-     *
-     * @param dump the dumped memory (Must be 2048 bytes)
-     * @throws DumpException when the dump size isn't 2048 bytes
-     */
-    public void restoreNametablesDump(byte[] dump) throws DumpException {
-        if (dump.length != 2048)
-            throw new DumpException("Invalid Nametable Memory size (" + dump.length + ") must be 2048 bytes");
-        for (int i = 0; i < 2; i++) {
-            System.arraycopy(dump, i * 1024, tblName[i], 0, 1024);
-        }
-    }
-
-    /**
-     * Return a dump of the Palette Memory
-     * that can be restored later
-     *
-     * @return a byte[32] containing the Palette Memory
-     */
-    public byte[] dumpPalette() {
-        byte[] dump = new byte[32];
-        System.arraycopy(tblPalette, 0, dump, 0, 32);
-        return dump;
-    }
-
-    /**
-     * Restore the Palette Memory to a dumped state
-     *
-     * @param dump the dumped memory (Must be 32 bytes)
-     * @throws DumpException when the dump size isn't 32 bytes
-     */
-    public void restorePaletteDump(byte[] dump) throws DumpException {
-        if (dump.length != 32)
-            throw new DumpException("Invalid Palette Memory size (" + dump.length + ") must be 32 bytes");
-        System.arraycopy(dump, 0, tblPalette, 0, 32);
-    }
-
-    /**
-     * Return a dump of the Pattern Table Memory
-     * that can be restored later
-     *
-     * @return a byte[8192] containing the Pattern Table Memory
-     */
-    public byte[] dumpPatternTables() {
-        byte[] dump = new byte[8192];
-        for (int i = 0; i < 2; i++) {
-            System.arraycopy(tblPattern[i], 0, dump, i * 4096, 4096);
-        }
-        return dump;
-    }
-
-    /**
-     * Restore the Pattern Table Memory to a dumped state
-     *
-     * @param dump the dumped memory (Must be 8192 bytes)
-     * @throws DumpException when the dump size isn't 8192 bytes
-     */
-    public void restorePatternTablesDump(byte[] dump) throws DumpException {
-        if (dump.length != 8192)
-            throw new DumpException("Invalid Pattern Table Memory size (" + dump.length + ") must be 8192 bytes");
-        for (int i = 0; i < 2; i++) {
-            System.arraycopy(dump, i * 4096, tblPattern[i], 0, 4096);
-        }
     }
 }

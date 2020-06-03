@@ -82,4 +82,12 @@ public abstract class Mapper {
      * Reset the Mapper if it has processing capabilities
      */
     public void reset() {}
+
+    public boolean hasRAM() {
+        return false;
+    }
+
+    public byte[] getRAM() {
+        return null;
+    }
 }

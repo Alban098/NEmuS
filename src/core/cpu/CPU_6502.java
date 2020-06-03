@@ -1914,35 +1914,6 @@ public class CPU_6502 {
     public synchronized long threadSafeGetCpuClock() {
         return cpu_clock;
     }
-
-    // ======================================= Savestates Methods ======================================= //
-
-    /**
-     * Return a dump of the CPU Status
-     * that can be restored later
-     *
-     * @return a byte[7] containing the PPU Status
-     */
-    public byte[] dumpStatus() {
-        return new byte[]{(byte) a, (byte) x, (byte) y, (byte) stkp, (byte) status, (byte) (pc >> 8), (byte) (pc & 0xFF)};
-    }
-
-    /**
-     * Restore the CPU Status to a dumped state
-     *
-     * @param dump the dumped memory (Must be 7 bytes)
-     * @throws DumpException when the dump size isn't 7 bytes
-     */
-    public void restoreStatusDump(byte[] dump) throws DumpException {
-        if (dump.length != 7)
-            throw new DumpException("Invalid CPU Status size (" + dump.length + ") must be 7 bytes");
-        a = dump[0];
-        x = dump[1];
-        y = dump[2];
-        stkp = dump[3];
-        status = dump[4];
-        pc = ((dump[5] << 8) | dump[6]) & 0xFFFF;
-    }
 }
 
 /**

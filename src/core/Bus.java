@@ -3,7 +3,6 @@ package core;
 import core.cartridge.Cartridge;
 import core.cpu.CPU_6502;
 import core.ppu.PPU_2C02;
-import exceptions.DumpException;
 import utils.IntegerWrapper;
 
 /**
@@ -12,10 +11,14 @@ import utils.IntegerWrapper;
  */
 public class Bus {
 
+    private static final long SAVE_INTERVAL = 30000;
+
+    private long next_save = 0;
+
     public final int[] controller;
 
     private long systemTicks = 0;
-    private final int[] ram;
+    private final byte[] ram;
     private final CPU_6502 cpu;
     private final PPU_2C02 ppu;
     private Cartridge cartridge;
@@ -31,7 +34,7 @@ public class Bus {
      * Create a new Instance of Bus ready to be started
      */
     public Bus() {
-        ram = new int[2048];
+        ram = new byte[2048];
         for (int i = 0; i < 2048; i++)
             ram[i] = 0x0000;
         cpu = new CPU_6502();
@@ -71,7 +74,7 @@ public class Bus {
         //If the Cartridge is interested we write the value and directly return
         if (!cartridge.cpuWrite(addr, data)) {
             if (addr <= 0x1FFF) { //Write to RAM (8Kb addressable, mirror in 4 2Kb chunks)
-                ram[addr & 0x07FF] = data;
+                ram[addr & 0x07FF] = (byte) data;
             } else if (addr <= 0x3FFF) { //Write PPU Register (8 values mirrored over the range)
                 ppu.cpuWrite(addr & 0x0007, data);
             } else if (addr == 0x4014) { //Write to DMA Register
@@ -219,119 +222,11 @@ public class Bus {
             cartridge.getMapper().irqClear();
             cpu.irq();
         }
+        if (System.currentTimeMillis() >= next_save) {
+            cartridge.save();
+            next_save = System.currentTimeMillis() + SAVE_INTERVAL;
+        }
         systemTicks++;
-    }
-
-    // ======================================= Savestates Methods ======================================= //
-
-    /**
-     * Return a dump of the CPU Status
-     * that can be restored later
-     *
-     * @return a byte[7] containing the PPU Status
-     */
-    public byte[] dumpCPU() {
-        return cpu.dumpStatus();
-    }
-
-    /**
-     * Restore the CPU Status to a dumped state
-     *
-     * @param dump the dumped memory (Must be 7 bytes)
-     * @throws DumpException when the dump size isn't 7 bytes
-     */
-    public void restoreCPUDump(byte[] dump) throws DumpException {
-        cpu.restoreStatusDump(dump);
-    }
-
-    /**
-     * Return a dump of the PPU Status
-     * that can be restored later
-     *
-     * @return a byte[11] containing the PPU Status
-     */
-    public byte[] dumpPPU() {
-        return ppu.dumpStatus();
-    }
-
-    /**
-     * Restore the PPU Status to a dumped state
-     *
-     * @param dump the dumped memory (Must be 11 bytes)
-     * @throws DumpException when the dump size isn't 11 bytes
-     */
-    public void restorePPUDump(byte[] dump) throws DumpException {
-        ppu.restoreStatusDump(dump);
-    }
-
-    /**
-     * Return a dump of the RAM
-     * that can be restored later
-     *
-     * @return a byte[2048] containing the RAM
-     */
-    public byte[] dumpRAM() {
-        byte[] dump = new byte[2048];
-        System.arraycopy(ram, 0, dump, 0, 2048);
-        return dump;
-    }
-
-    /**
-     * Restore the RAM to a dumped state
-     *
-     * @param dump the dumped memory (Must be 2048 bytes)
-     * @throws DumpException when the dump size isn't 2048 bytes
-     */
-    public void restoreRAMDump(byte[] dump) throws DumpException {
-        if (dump.length != 2048)
-            throw new DumpException("RAM size (" + dump.length + ") must be 2048 bytes");
-        System.arraycopy(dump, 0, ram, 0, 2048);
-    }
-
-    /**
-     * Return a dump of the RAM
-     * that can be restored later
-     *
-     * @return a byte[10528] containing the VRAM
-     */
-    public byte[] dumpVRAM() {
-        byte[] dump = new byte[10528];
-        int index = 0;
-        System.arraycopy(ppu.dumpPatternTables(), 0, dump, index, 8192);
-        index += 8192;
-        System.arraycopy(ppu.dumpNametables(), 0, dump, index, 2048);
-        index += 2048;
-        System.arraycopy(ppu.dumpPalette(), 0, dump, index, 32);
-        index += 32;
-        System.arraycopy(ppu.dumpOAM(), 0, dump, index, 256);
-        return dump;
-    }
-
-    /**
-     * Restore the RAM to a dumped state
-     *
-     * @param dump the dumped memory (Must be 10528 bytes)
-     * @throws DumpException when the dump size isn't 10528 bytes
-     */
-    public void restoreVRAMDump(byte[] dump) throws DumpException {
-        if (dump.length != 10528)
-            throw new DumpException("VRAM size (" + dump.length + ") must be 10528 bytes");
-        int index = 0;
-        byte[] patterntables = new byte[8192];
-        byte[] nametables = new byte[2048];
-        byte[] palettes = new byte[32];
-        byte[] oam = new byte[256];
-        System.arraycopy(dump, index, patterntables, 0, 8192);
-        ppu.restorePatternTablesDump(patterntables);
-        index += 8192;
-        System.arraycopy(dump, index, nametables, 0, 2048);
-        ppu.restoreNametablesDump(nametables);
-        index += 2048;
-        System.arraycopy(dump, index, palettes, 0, 32);
-        ppu.restorePaletteDump(palettes);
-        index += 32;
-        System.arraycopy(dump, index, oam, 0, 256);
-        ppu.restoreOAMDump(oam);
     }
 
     public Cartridge getCartridge() {

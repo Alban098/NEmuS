@@ -7,18 +7,24 @@ import exceptions.UnsupportedMapperException;
 import utils.FileReader;
 import utils.IntegerWrapper;
 
+import javax.swing.*;
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 /**
  * This class represent a physical Cartridge
  */
 public class Cartridge {
 
+    private final String filename;
+
     private int nPRGBanks;
     private int nCHRBanks;
-    private int[] sPRGMemory;
-    private int[] sCHRMemory;
+    private byte[] sPRGMemory;
+    private byte[] sCHRMemory;
 
     private Mapper mapper;
     private Mirror mirror;
@@ -30,6 +36,7 @@ public class Cartridge {
      */
     public Cartridge(String filename) throws InvalidFileException, UnsupportedMapperException, EOFException {
         int fileType = 1;
+        this.filename = filename;
 
         //Initialize the file reader
         FileReader reader = new FileReader(filename);
@@ -51,31 +58,30 @@ public class Cartridge {
         if (fileType == 1) {
             //Read Program Memory
             nPRGBanks = header.prg_rom_chunks;
-            sPRGMemory = reader.readBytesI(nPRGBanks * 16384);
+            sPRGMemory = reader.readBytes(nPRGBanks * 16384);
             //Read Character Memory
             nCHRBanks = header.chr_rom_chunks;
-            sCHRMemory = reader.readBytesI(nCHRBanks * 8192);
+            sCHRMemory = reader.readBytes(nCHRBanks * 8192);
             if (nCHRBanks == 0)
-                sCHRMemory = reader.readBytesI(8192);
-            //Initialize the right Mapper
+                sCHRMemory = new byte[8192];
         }
         if (fileType == 2) {
             //Read Program Memory
             nPRGBanks = (header.prg_ram_size & 0x07) << 8 | (header.prg_rom_chunks & 0xFF);
-            sPRGMemory = reader.readBytesI(nPRGBanks * 16384);
+            sPRGMemory = reader.readBytes(nPRGBanks * 16384);
             //Read Character Memory
             nCHRBanks = (header.prg_ram_size & 0x38) << 8 | (header.chr_rom_chunks & 0xFF);
-            sCHRMemory = reader.readBytesI(nCHRBanks * 8192);
+            sCHRMemory = reader.readBytes(nCHRBanks * 8192);
             if (nCHRBanks == 0)
-                sCHRMemory = reader.readBytesI(8192);
-            //Initialize the right Mapper
+                sCHRMemory = reader.readBytes(8192);
         }
+        //Initialize the right Mapper
         switch (mapperId) {
             case 0:
                 mapper = new Mapper000(nPRGBanks, nCHRBanks);
                 break;
             case 1:
-                mapper = new Mapper001(nPRGBanks, nCHRBanks);
+                mapper = new Mapper001(nPRGBanks, nCHRBanks, filename + ".sav");
                 break;
             case 2:
                 mapper = new Mapper002(nPRGBanks, nCHRBanks);
@@ -84,7 +90,7 @@ public class Cartridge {
                 mapper = new Mapper003(nPRGBanks, nCHRBanks);
                 break;
             case 4:
-                mapper = new Mapper004(nPRGBanks, nCHRBanks);
+                mapper = new Mapper004(nPRGBanks, nCHRBanks, filename + ".sav");
                 break;
             case 66:
                 mapper = new Mapper066(nPRGBanks, nCHRBanks);
@@ -126,7 +132,7 @@ public class Cartridge {
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.cpuMapWrite(addr, mapped, data)) {
             if (mapped.value == -1) return true;
-            sPRGMemory[mapped.value] = data;
+            sPRGMemory[mapped.value] = (byte) data;
             return true;
         }
         return false;
@@ -162,7 +168,7 @@ public class Cartridge {
         data &= 0xFF;
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.ppuMapWrite(addr, mapped, data)) {
-            sCHRMemory[mapped.value] = data;
+            sCHRMemory[mapped.value] = (byte) data;
             return true;
         }
         return false;
@@ -190,5 +196,15 @@ public class Cartridge {
 
     public Mapper getMapper() {
         return mapper;
+    }
+
+    public void save() {
+        if (mapper.hasRAM()) {
+            try {
+                Files.write(Paths.get(filename + ".sav"), mapper.getRAM(), new StandardOpenOption[]{StandardOpenOption.CREATE});
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(null, e.getMessage(), "Error saving game", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 }

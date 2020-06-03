@@ -101,4 +101,5 @@ public class Mapper003 extends Mapper{
     public void reset() {
         selectedCHRBank = 0x00;
     }
+
 }
