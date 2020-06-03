@@ -1,7 +1,6 @@
 package core.cpu;
 
-import core.Bus;
-import exceptions.DumpException;
+import core.NES;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -19,13 +18,13 @@ public class CPU_6502 {
 
     private static final boolean LOGMODE = false;
     private final List<Instruction> opcodes;
-    private Bus bus;
-    private int a = 0x00;
-    private int x = 0x00;
-    private int y = 0x00;
-    private int stkp = 0x00;
+    private NES nes;
+    private int accumulator = 0x00;
+    private int x_register = 0x00;
+    private int y_register = 0x00;
+    private int stack_pointer = 0x00;
     private int status = 0x00;
-    private int pc = 0x0000;
+    private int program_counter = 0x0000;
     private int tmp = 0x0000;
     private int fetched = 0x00;
     private int opcode = 0x00;
@@ -301,10 +300,10 @@ public class CPU_6502 {
     /**
      * Connect the CPU to a Bus
      *
-     * @param bus the Bus to connect to
+     * @param NES the Bus to connect to
      */
-    public void connectBus(Bus bus) {
-        this.bus = bus;
+    public void connectBus(NES NES) {
+        this.nes = NES;
     }
 
     /**
@@ -313,7 +312,7 @@ public class CPU_6502 {
      * @param addr the address to write to
      */
     private void write(int addr, int data) {
-        bus.cpuWrite(addr & 0xFFFF, data & 0xFF);
+        nes.cpuWrite(addr & 0xFFFF, data & 0xFF);
     }
 
     /**
@@ -323,7 +322,7 @@ public class CPU_6502 {
      * @return the read data
      */
     private int read(int addr) {
-        return bus.cpuRead(addr & 0xFFFF, false) & 0xFF;
+        return nes.cpuRead(addr & 0xFFFF, false) & 0xFF;
     }
 
     /**
@@ -358,7 +357,7 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int imp() {
-        fetched = a & 0xFF;
+        fetched = accumulator & 0xFF;
 
         return 0;
     }
@@ -373,9 +372,9 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int zp0() {
-        addr_abs = read(pc++);
+        addr_abs = read(program_counter++);
         addr_abs &= 0x00FF;
-        pc &= 0xFFFF;
+        program_counter &= 0xFFFF;
 
         return 0;
     }
@@ -392,9 +391,9 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int zpy() {
-        addr_abs = read(pc++) + (y & 0xFF);
+        addr_abs = read(program_counter++) + (y_register & 0xFF);
         addr_abs &= 0x00FF;
-        pc &= 0xFFFF;
+        program_counter &= 0xFFFF;
 
         return 0;
     }
@@ -406,10 +405,10 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int abs() {
-        int low = read(pc++);
-        pc &= 0xFFFF;
-        int high = read(pc++);
-        pc &= 0xFFFF;
+        int low = read(program_counter++);
+        program_counter &= 0xFFFF;
+        int high = read(program_counter++);
+        program_counter &= 0xFFFF;
 
         addr_abs = (high << 8) | low;
         addr_abs &= 0xFFFF;
@@ -425,12 +424,12 @@ public class CPU_6502 {
      * @return 1 if a page Boundary is crossed when adding Y Register, 0 otherwise
      */
     private int aby() {
-        int low = read(pc++);
-        pc &= 0xFFFF;
-        int high = read(pc++);
-        pc &= 0xFFFF;
+        int low = read(program_counter++);
+        program_counter &= 0xFFFF;
+        int high = read(program_counter++);
+        program_counter &= 0xFFFF;
 
-        addr_abs = (high << 8 | low) + (y & 0xFF);
+        addr_abs = (high << 8 | low) + (y_register & 0xFF);
         addr_abs &= 0xFFFF;
 
         if ((addr_abs & 0xFF00) != (high << 8)) return 1;
@@ -452,11 +451,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int izx() {
-        int ptr = read(pc++);
-        pc &= 0xFFFF;
+        int ptr = read(program_counter++);
+        program_counter &= 0xFFFF;
 
-        int low = read((ptr + (x & 0xFF) & 0xFFFF) & 0x00FF);
-        int high = read(((ptr + (x & 0xFF) + 1) & 0xFFFF) & 0x00FF);
+        int low = read((ptr + (x_register & 0xFF) & 0xFFFF) & 0x00FF);
+        int high = read(((ptr + (x_register & 0xFF) + 1) & 0xFFFF) & 0x00FF);
 
         addr_abs = (high << 8) | low;
         addr_abs &= 0xFFFF;
@@ -472,8 +471,8 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int imm() {
-        addr_abs = pc++;
-        pc &= 0xFFFF;
+        addr_abs = program_counter++;
+        program_counter &= 0xFFFF;
 
         return 0;
     }
@@ -490,9 +489,9 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int zpx() {
-        addr_abs = read(pc++) + (x & 0xFF);
+        addr_abs = read(program_counter++) + (x_register & 0xFF);
         addr_abs &= 0x00FF;
-        pc &= 0xFFFF;
+        program_counter &= 0xFFFF;
 
         return 0;
     }
@@ -505,8 +504,8 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int rel() {
-        addr_rel = read(pc++);
-        pc &= 0xFFFF;
+        addr_rel = read(program_counter++);
+        program_counter &= 0xFFFF;
 
         if ((addr_rel & 0x80) == 0x80) addr_rel |= 0xFFFFFF00;
 
@@ -521,16 +520,16 @@ public class CPU_6502 {
      * @return 1 if a page boundary is crossed when adding X Register, 0 otherwise
      */
     private int abx() {
-        int low = read(pc++);
-        pc &= 0xFFFF;
-        int high = read(pc++);
-        pc &= 0xFFFF;
+        int low = read(program_counter++);
+        program_counter &= 0xFFFF;
+        int high = read(program_counter++);
+        program_counter &= 0xFFFF;
 
-        addr_abs = ((high << 8) | low) + (x & 0xFF);
+        addr_abs = ((high << 8) | low) + (x_register & 0xFF);
         addr_abs &= 0xFFFF;
 
         //Dummy read
-        if ((low & 0xFF) + (x & 0xFF) > 0xFF || opcodes.get(opcode).name.equals("ROL"))
+        if ((low & 0xFF) + (x_register & 0xFF) > 0xFF || opcodes.get(opcode).name.equals("ROL"))
             read(((high << 8) & 0xFF00) | (addr_abs & 0xFF));
         if ((addr_abs & 0xFF00) != (high << 8)) return 1;
         return 0;
@@ -556,10 +555,10 @@ public class CPU_6502 {
      * @return 0 No extra cycle required (because no page boundary cross can occur)
      */
     private int ind() {
-        int low = read(pc++);
-        pc &= 0xFFFF;
-        int high = read(pc++);
-        pc &= 0xFFFF;
+        int low = read(program_counter++);
+        program_counter &= 0xFFFF;
+        int high = read(program_counter++);
+        program_counter &= 0xFFFF;
 
         int ptr = (high << 8) | low;
         ptr &= 0xFFFF;
@@ -586,18 +585,18 @@ public class CPU_6502 {
      * @return 1 If when adding Y we cross a page boundary 0 otherwise
      */
     private int izy() {
-        int ptr = read(pc++);
-        pc &= 0xFFFF;
+        int ptr = read(program_counter++);
+        program_counter &= 0xFFFF;
 
         int low = read(ptr & 0x00FF) & 0x00FF;
         int high = read((ptr + 1) & 0x00FF) & 0x00FF;
 
         addr_abs = (high << 8) | low;
-        addr_abs += y & 0xFF;
+        addr_abs += y_register & 0xFF;
         addr_abs &= 0xFFFF;
 
         //Dummy read
-        if ((low & 0xFF) + (y & 0xFF) > 0xFF)
+        if ((low & 0xFF) + (y_register & 0xFF) > 0xFF)
             read(((high << 8) & 0xFF00) | (addr_abs & 0xFF));
 
         if ((addr_abs & 0xFF00) != (high << 8)) return 1;
@@ -620,14 +619,14 @@ public class CPU_6502 {
      */
     private int adc() {
         fetch();
-        tmp = (a + fetched + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF;
+        tmp = (accumulator + fetched + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF;
 
-        setFlag(Flags.V, ((tmp ^ a) & (tmp ^ fetched) & 0x80) == 0x80);
+        setFlag(Flags.V, ((tmp ^ accumulator) & (tmp ^ fetched) & 0x80) == 0x80);
         setFlag(Flags.C, tmp > 0xFF);
         setFlag(Flags.Z, (tmp & 0xFF) == 0);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
 
-        a = tmp & 0x00FF;
+        accumulator = tmp & 0x00FF;
 
         return 1;
     }
@@ -642,11 +641,11 @@ public class CPU_6502 {
      */
     private int and() {
         fetch();
-        a = a & fetched;
-        a &= 0xFF;
+        accumulator = accumulator & fetched;
+        accumulator &= 0xFF;
 
-        setFlag(Flags.Z, a == 0x00);
-        setFlag(Flags.N, (a & 0x80) != 0x00);
+        setFlag(Flags.Z, accumulator == 0x00);
+        setFlag(Flags.N, (accumulator & 0x80) != 0x00);
 
         return 1;
     }
@@ -667,7 +666,7 @@ public class CPU_6502 {
         setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
 
-        if (opcodes.get(opcode).addr_mode.equals("IMP")) a = tmp & 0xFF;
+        if (opcodes.get(opcode).addr_mode.equals("IMP")) accumulator = tmp & 0xFF;
         else write(addr_abs, tmp & 0xFF);
 
         return 0;
@@ -682,11 +681,11 @@ public class CPU_6502 {
     private int bcc() {
         if (!getFlag(Flags.C)) {
             cycles++;
-            addr_abs = pc + addr_rel;
+            addr_abs = program_counter + addr_rel;
             addr_abs &= 0xFFFF;
-            if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            if ((addr_abs & 0xFF00) != (program_counter & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            program_counter = addr_abs;
         }
         return 0;
     }
@@ -700,11 +699,11 @@ public class CPU_6502 {
     private int bcs() {
         if (getFlag(Flags.C)) {
             cycles++;
-            addr_abs = pc + addr_rel;
+            addr_abs = program_counter + addr_rel;
             addr_abs &= 0xFFFF;
-            if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            if ((addr_abs & 0xFF00) != (program_counter & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            program_counter = addr_abs;
         }
         return 0;
     }
@@ -718,11 +717,11 @@ public class CPU_6502 {
     private int beq() {
         if (getFlag(Flags.Z)) {
             cycles++;
-            addr_abs = pc + addr_rel;
+            addr_abs = program_counter + addr_rel;
             addr_abs &= 0xFFFF;
-            if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            if ((addr_abs & 0xFF00) != (program_counter & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            program_counter = addr_abs;
         }
         return 0;
     }
@@ -737,7 +736,7 @@ public class CPU_6502 {
      */
     private int bit() {
         fetch();
-        tmp = (a & fetched) & 0x00FF;
+        tmp = (accumulator & fetched) & 0x00FF;
 
         setFlag(Flags.Z, (tmp & 0xFF) == 0x0000);
         setFlag(Flags.N, (fetched & 0x80) == 0x80);
@@ -755,11 +754,11 @@ public class CPU_6502 {
     private int bmi() {
         if (getFlag(Flags.N)) {
             cycles++;
-            addr_abs = pc + addr_rel;
+            addr_abs = program_counter + addr_rel;
             addr_abs &= 0xFFFF;
-            if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            if ((addr_abs & 0xFF00) != (program_counter & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            program_counter = addr_abs;
         }
         return 0;
     }
@@ -773,11 +772,11 @@ public class CPU_6502 {
     private int bne() {
         if (!getFlag(Flags.Z)) {
             cycles++;
-            addr_abs = pc + addr_rel;
+            addr_abs = program_counter + addr_rel;
             addr_abs &= 0xFFFF;
-            if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            if ((addr_abs & 0xFF00) != (program_counter & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            program_counter = addr_abs;
         }
         return 0;
     }
@@ -791,11 +790,11 @@ public class CPU_6502 {
     private int bpl() {
         if (!getFlag(Flags.N)) {
             cycles++;
-            addr_abs = pc + addr_rel;
+            addr_abs = program_counter + addr_rel;
             addr_abs &= 0xFFFF;
-            if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            if ((addr_abs & 0xFF00) != (program_counter & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            program_counter = addr_abs;
         }
         return 0;
     }
@@ -809,13 +808,12 @@ public class CPU_6502 {
      */
     private int brk() {
         //Dummy Read
-        read((pc - 1) & 0xFFFF);
-        pushStack((pc >> 8) & 0xFF);
-        pushStack(pc & 0xFF);
+        read((program_counter - 1) & 0xFFFF);
+        pushStack((program_counter >> 8) & 0xFF);
+        pushStack(program_counter & 0xFF);
         pushStack((status | Flags.B.value) & 0xFF);
-        pc = irqVector();
+        program_counter = irqVector();
 
-        //TODO Test setting before push
         setFlag(Flags.I, true);
 
         return 0;
@@ -830,11 +828,11 @@ public class CPU_6502 {
     private int bvc() {
         if (!getFlag(Flags.V)) {
             cycles++;
-            addr_abs = pc + addr_rel;
+            addr_abs = program_counter + addr_rel;
             addr_abs &= 0xFFFF;
-            if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            if ((addr_abs & 0xFF00) != (program_counter & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            program_counter = addr_abs;
         }
         return 0;
     }
@@ -848,11 +846,11 @@ public class CPU_6502 {
     private int bvs() {
         if (getFlag(Flags.V)) {
             cycles++;
-            addr_abs = pc + addr_rel;
+            addr_abs = program_counter + addr_rel;
             addr_abs &= 0xFFFF;
-            if ((addr_abs & 0xFF00) != (pc & 0xFF00))
+            if ((addr_abs & 0xFF00) != (program_counter & 0xFF00))
                 cycles++;
-            pc = addr_abs;
+            program_counter = addr_abs;
         }
         return 0;
     }
@@ -912,9 +910,9 @@ public class CPU_6502 {
     private int cmp() {
         fetch();
         //tmp =  ((a + (fetched ^ 0x00FF) + 1) & 0x00FF);
-        tmp = a - fetched;
+        tmp = accumulator - fetched;
 
-        setFlag(Flags.C, a >= fetched);
+        setFlag(Flags.C, accumulator >= fetched);
         setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
 
@@ -931,9 +929,9 @@ public class CPU_6502 {
      */
     private int cpx() {
         fetch();
-        tmp = x - fetched;
+        tmp = x_register - fetched;
 
-        setFlag(Flags.C, x >= fetched);
+        setFlag(Flags.C, x_register >= fetched);
         setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
 
@@ -950,9 +948,9 @@ public class CPU_6502 {
      */
     private int cpy() {
         fetch();
-        tmp = y - fetched;
+        tmp = y_register - fetched;
 
-        setFlag(Flags.C, y >= fetched);
+        setFlag(Flags.C, y_register >= fetched);
         setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
 
@@ -987,11 +985,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int dex() {
-        x--;
-        x &= 0xFF;
+        x_register--;
+        x_register &= 0xFF;
 
-        setFlag(Flags.Z, (x & 0xFF) == 0x00);
-        setFlag(Flags.N, (x & 0x80) == 0x80);
+        setFlag(Flags.Z, (x_register & 0xFF) == 0x00);
+        setFlag(Flags.N, (x_register & 0x80) == 0x80);
 
         return 0;
     }
@@ -1005,11 +1003,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int dey() {
-        y--;
-        y &= 0xFF;
+        y_register--;
+        y_register &= 0xFF;
 
-        setFlag(Flags.Z, (y & 0xFF) == 0x00);
-        setFlag(Flags.N, (y & 0x80) == 0x80);
+        setFlag(Flags.Z, (y_register & 0xFF) == 0x00);
+        setFlag(Flags.N, (y_register & 0x80) == 0x80);
 
         return 0;
     }
@@ -1024,10 +1022,10 @@ public class CPU_6502 {
      */
     private int eor() {
         fetch();
-        a = (a ^ fetched) & 0x00FF;
+        accumulator = (accumulator ^ fetched) & 0x00FF;
 
-        setFlag(Flags.Z, (a & 0xFF) == 0x00);
-        setFlag(Flags.N, (a & 0x80) == 0x80);
+        setFlag(Flags.Z, (accumulator & 0xFF) == 0x00);
+        setFlag(Flags.N, (accumulator & 0x80) == 0x80);
 
         return 1;
     }
@@ -1060,11 +1058,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int inx() {
-        x++;
-        x &= 0xFF;
+        x_register++;
+        x_register &= 0xFF;
 
-        setFlag(Flags.Z, (x & 0xFF) == 0x00);
-        setFlag(Flags.N, (x & 0x80) == 0x80);
+        setFlag(Flags.Z, (x_register & 0xFF) == 0x00);
+        setFlag(Flags.N, (x_register & 0x80) == 0x80);
 
         return 0;
     }
@@ -1078,11 +1076,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int iny() {
-        y++;
-        y &= 0xFF;
+        y_register++;
+        y_register &= 0xFF;
 
-        setFlag(Flags.Z, (y & 0xFF) == 0x00);
-        setFlag(Flags.N, (y & 0x80) == 0x80);
+        setFlag(Flags.Z, (y_register & 0xFF) == 0x00);
+        setFlag(Flags.N, (y_register & 0x80) == 0x80);
 
         return 0;
     }
@@ -1094,7 +1092,7 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int jmp() {
-        pc = addr_abs & 0xFFFF;
+        program_counter = addr_abs & 0xFFFF;
         return 0;
     }
 
@@ -1106,12 +1104,12 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int jsr() {
-        pc--;
-        pc &= 0xFFFF;
+        program_counter--;
+        program_counter &= 0xFFFF;
 
-        pushStack((pc >> 8) & 0xFF);
-        pushStack(pc & 0xFF);
-        pc = addr_abs & 0xFFFF;
+        pushStack((program_counter >> 8) & 0xFF);
+        pushStack(program_counter & 0xFF);
+        program_counter = addr_abs & 0xFFFF;
 
         return 0;
     }
@@ -1125,10 +1123,10 @@ public class CPU_6502 {
      */
     private int lda() {
         fetch();
-        a = fetched & 0xFF;
+        accumulator = fetched & 0xFF;
 
-        setFlag(Flags.Z, (a & 0xFF) == 0x00);
-        setFlag(Flags.N, (a & 0x80) == 0x80);
+        setFlag(Flags.Z, (accumulator & 0xFF) == 0x00);
+        setFlag(Flags.N, (accumulator & 0x80) == 0x80);
 
         return 1;
     }
@@ -1142,10 +1140,10 @@ public class CPU_6502 {
      */
     private int ldx() {
         fetch();
-        x = fetched & 0xFF;
+        x_register = fetched & 0xFF;
 
-        setFlag(Flags.Z, (x & 0xFF) == 0x00);
-        setFlag(Flags.N, (x & 0x80) == 0x80);
+        setFlag(Flags.Z, (x_register & 0xFF) == 0x00);
+        setFlag(Flags.N, (x_register & 0x80) == 0x80);
 
         return 1;
     }
@@ -1159,10 +1157,10 @@ public class CPU_6502 {
      */
     private int ldy() {
         fetch();
-        y = fetched & 0xFF;
+        y_register = fetched & 0xFF;
 
-        setFlag(Flags.Z, (y & 0xFF) == 0x00);
-        setFlag(Flags.N, (y & 0x80) == 0x80);
+        setFlag(Flags.Z, (y_register & 0xFF) == 0x00);
+        setFlag(Flags.N, (y_register & 0x80) == 0x80);
 
         return 1;
     }
@@ -1182,7 +1180,7 @@ public class CPU_6502 {
         setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
 
-        if (opcodes.get(opcode).addr_mode.equals("IMP")) a = tmp & 0xFF;
+        if (opcodes.get(opcode).addr_mode.equals("IMP")) accumulator = tmp & 0xFF;
         else write(addr_abs, tmp & 0xFF);
 
         return 0;
@@ -1216,10 +1214,10 @@ public class CPU_6502 {
      */
     private int ora() {
         fetch();
-        a = (a | fetched) & 0xFF;
+        accumulator = (accumulator | fetched) & 0xFF;
 
-        setFlag(Flags.Z, a == 0x00);
-        setFlag(Flags.N, (a & 0x80) == 0x80);
+        setFlag(Flags.Z, accumulator == 0x00);
+        setFlag(Flags.N, (accumulator & 0x80) == 0x80);
 
         return 1;
     }
@@ -1231,7 +1229,7 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int pha() {
-        pushStack(a);
+        pushStack(accumulator);
         return 0;
     }
 
@@ -1259,10 +1257,10 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int pla() {
-        a = popStack();
+        accumulator = popStack();
 
-        setFlag(Flags.Z, a == 0x00);
-        setFlag(Flags.N, (a & 0x80) == 0x80);
+        setFlag(Flags.Z, accumulator == 0x00);
+        setFlag(Flags.N, (accumulator & 0x80) == 0x80);
 
         return 0;
     }
@@ -1299,7 +1297,7 @@ public class CPU_6502 {
         setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
 
-        if (opcodes.get(opcode).addr_mode.equals("IMP")) a = tmp & 0xFF;
+        if (opcodes.get(opcode).addr_mode.equals("IMP")) accumulator = tmp & 0xFF;
         else write(addr_abs, tmp & 0xFF);
 
         return 0;
@@ -1322,7 +1320,7 @@ public class CPU_6502 {
         setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
 
-        if (opcodes.get(opcode).addr_mode.equals("IMP")) a = tmp & 0xFF;
+        if (opcodes.get(opcode).addr_mode.equals("IMP")) accumulator = tmp & 0xFF;
         else write(addr_abs, tmp & 0xFF);
 
         return 0;
@@ -1338,11 +1336,11 @@ public class CPU_6502 {
      */
     private int rti() {
         //Dummy read
-        read(pc);
+        read(program_counter);
         status = popStack();
-        pc = popStack();
-        pc |= popStack() << 8;
-        pc &= 0xFFFF;
+        program_counter = popStack();
+        program_counter |= popStack() << 8;
+        program_counter &= 0xFFFF;
 
         status &= ~Flags.B.value & 0x00FF;
         status &= ~Flags.U.value & 0x00FF;
@@ -1358,11 +1356,11 @@ public class CPU_6502 {
      */
     private int rts() {
         //Dummy read
-        read(pc);
-        pc = popStack();
-        pc |= popStack() << 8;
-        pc++;
-        pc &= 0xFFFF;
+        read(program_counter);
+        program_counter = popStack();
+        program_counter |= popStack() << 8;
+        program_counter++;
+        program_counter &= 0xFFFF;
 
         return 0;
     }
@@ -1379,14 +1377,14 @@ public class CPU_6502 {
     private int sbc() {
         fetch();
         int complement = (fetched ^ 0xFF);
-        tmp = ((a + complement + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF);
+        tmp = ((accumulator + complement + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF);
 
         setFlag(Flags.C, tmp > 0xFF);
         setFlag(Flags.Z, (tmp & 0xFF) == 0);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
-        setFlag(Flags.V, ((tmp ^ a) & (tmp ^ complement) & 0x80) == 0x80);
+        setFlag(Flags.V, ((tmp ^ accumulator) & (tmp ^ complement) & 0x80) == 0x80);
 
-        a = (tmp & 0xFF);
+        accumulator = (tmp & 0xFF);
 
         return 1;
     }
@@ -1431,7 +1429,7 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int sta() {
-        write(addr_abs, a);
+        write(addr_abs, accumulator);
         return 0;
     }
 
@@ -1442,7 +1440,7 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int stx() {
-        write(addr_abs, x);
+        write(addr_abs, x_register);
         return 0;
     }
 
@@ -1453,7 +1451,7 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int sty() {
-        write(addr_abs, y);
+        write(addr_abs, y_register);
         return 0;
     }
 
@@ -1465,11 +1463,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int tax() {
-        x = a;
-        x &= 0xFF;
+        x_register = accumulator;
+        x_register &= 0xFF;
 
-        setFlag(Flags.Z, x == 0x00);
-        setFlag(Flags.N, (x & 0x80) == 0x80);
+        setFlag(Flags.Z, x_register == 0x00);
+        setFlag(Flags.N, (x_register & 0x80) == 0x80);
 
         return 0;
     }
@@ -1482,11 +1480,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int tay() {
-        y = a;
-        y &= 0xFF;
+        y_register = accumulator;
+        y_register &= 0xFF;
 
-        setFlag(Flags.Z, y == 0x00);
-        setFlag(Flags.N, (y & 0x80) == 0x80);
+        setFlag(Flags.Z, y_register == 0x00);
+        setFlag(Flags.N, (y_register & 0x80) == 0x80);
 
         return 0;
     }
@@ -1499,11 +1497,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int tsx() {
-        x = stkp;
-        x &= 0xFF;
+        x_register = stack_pointer;
+        x_register &= 0xFF;
 
-        setFlag(Flags.Z, x == 0x00);
-        setFlag(Flags.N, (x & 0x80) == 0x80);
+        setFlag(Flags.Z, x_register == 0x00);
+        setFlag(Flags.N, (x_register & 0x80) == 0x80);
 
         return 0;
     }
@@ -1516,11 +1514,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int txa() {
-        a = x;
-        a &= 0xFF;
+        accumulator = x_register;
+        accumulator &= 0xFF;
 
-        setFlag(Flags.Z, a == 0x00);
-        setFlag(Flags.N, (a & 0x80) == 0x80);
+        setFlag(Flags.Z, accumulator == 0x00);
+        setFlag(Flags.N, (accumulator & 0x80) == 0x80);
 
         return 0;
     }
@@ -1532,8 +1530,8 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int txs() {
-        stkp = x;
-        stkp &= 0xFF;
+        stack_pointer = x_register;
+        stack_pointer &= 0xFF;
 
         return 0;
     }
@@ -1546,11 +1544,11 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int tya() {
-        a = y;
-        a &= 0xFF;
+        accumulator = y_register;
+        accumulator &= 0xFF;
 
-        setFlag(Flags.Z, a == 0x00);
-        setFlag(Flags.N, (a & 0x80) == 0x80);
+        setFlag(Flags.Z, accumulator == 0x00);
+        setFlag(Flags.N, (accumulator & 0x80) == 0x80);
 
         return 0;
     }
@@ -1575,12 +1573,12 @@ public class CPU_6502 {
         //If the CPU has finished the last Instruction
         if (cycles <= 0) {
             //Fetch the Operation Code
-            opcode = read(pc);
-            int log_pc = pc;
+            opcode = read(program_counter);
+            int log_pc = program_counter;
             setFlag(Flags.U, true);
             //Increment the Program Counter
-            pc++;
-            pc &= 0xFFFF;
+            program_counter++;
+            program_counter &= 0xFFFF;
             //Get the Instruction
             Instruction instr = opcodes.get(opcode);
             //Set the required number of cycle for this instruction
@@ -1596,10 +1594,10 @@ public class CPU_6502 {
             if (LOGMODE) {
                 try {
                     String log_entry = String.format("%10d:%02d PC:%04X %s A:%02X X:%02X Y:%02X %s%s%s%s%s%s%s%s STKP:%02X\n",
-                            cpu_clock, 0, log_pc, instr.name, a, x, y,
+                            cpu_clock, 0, log_pc, instr.name, accumulator, x_register, y_register,
                             getFlag(Flags.N) ? "N" : ".", getFlag(Flags.V) ? "V" : ".", getFlag(Flags.U) ? "U" : ".",
                             getFlag(Flags.B) ? "B" : ".", getFlag(Flags.D) ? "D" : ".", getFlag(Flags.I) ? "I" : ".",
-                            getFlag(Flags.Z) ? "Z" : ".", getFlag(Flags.C) ? "C" : ".", stkp);
+                            getFlag(Flags.Z) ? "Z" : ".", getFlag(Flags.C) ? "C" : ".", stack_pointer);
                     File logfile = new File("log.txt");
                     FileWriter fr = new FileWriter(logfile, true);
                     BufferedWriter br = new BufferedWriter(fr);
@@ -1620,10 +1618,10 @@ public class CPU_6502 {
      * Reset the CPU to the default state
      */
     public void reset() {
-        stkp -= 3;
+        stack_pointer -= 3;
         status |= Flags.I.value;
 
-        pc = resetVector();
+        program_counter = resetVector();
 
         addr_rel = 0x0000;
         addr_abs = 0x0000;
@@ -1633,13 +1631,13 @@ public class CPU_6502 {
     }
 
     public void startup() {
-        a = 0x00;
-        x = 0x00;
-        y = 0x00;
-        stkp = 0xFD;
+        accumulator = 0x00;
+        x_register = 0x00;
+        y_register = 0x00;
+        stack_pointer = 0xFD;
         status = Flags.I.value | Flags.B.value | Flags.U.value;
 
-        pc = resetVector();
+        program_counter = resetVector();
 
         addr_rel = 0x0000;
         addr_abs = 0x0000;
@@ -1653,8 +1651,8 @@ public class CPU_6502 {
         //The Interrupt is trigger only if they aren't disable (I Flag of the Status Register)
         if (!getFlag(Flags.I)) {
             //Push the current Program Counter to the Stack LSB first
-            pushStack((pc >> 8) & 0xFF);
-            pushStack(pc & 0xFF);
+            pushStack((program_counter >> 8) & 0xFF);
+            pushStack(program_counter & 0xFF);
 
             //Push the current Status Register to the Stack
             setFlag(Flags.B, false);
@@ -1663,7 +1661,7 @@ public class CPU_6502 {
             pushStack(status);
 
             //Jump to the NMI Routine specified at 0xFFFA
-            pc = irqVector();
+            program_counter = irqVector();
 
             // An Interrupt take 7 cycles
             cycles = 7;
@@ -1675,8 +1673,8 @@ public class CPU_6502 {
      */
     public void nmi() {
         //Push the current Program Counter to the Stack LSB first
-        pushStack((pc >> 8) & 0xFF);
-        pushStack(pc & 0xFF);
+        pushStack((program_counter >> 8) & 0xFF);
+        pushStack(program_counter & 0xFF);
 
         //Push the current Status Register to the Stack
         setFlag(Flags.B, false);
@@ -1685,7 +1683,7 @@ public class CPU_6502 {
         pushStack(status);
 
         //Jump to the NMI Routine specified at 0xFFFA
-        pc = nmiVector();
+        program_counter = nmiVector();
 
         //An NMI take 8 cycles
         cycles = 8;
@@ -1699,30 +1697,57 @@ public class CPU_6502 {
             fetched = read(addr_abs);
     }
 
+    /**
+     * Push data to the stack
+     * Update the Stack Pointer accordingly
+     *
+     * @param data the data to push
+     */
     private void pushStack(int data) {
-        write(0x0100 + stkp, data);
-        stkp--;
-        stkp &= 0xFF;
+        write(0x0100 + stack_pointer, data);
+        stack_pointer--;
+        stack_pointer &= 0xFF;
     }
 
+    /**
+     * Pop data from the stack
+     * Update the Stack Pointer accordingly
+     *
+     * @return the popped data
+     */
     private int popStack() {
-        stkp++;
-        stkp &= 0xFF;
-        return read(0x0100 + stkp);
+        stack_pointer++;
+        stack_pointer &= 0xFF;
+        return read(0x0100 + stack_pointer);
     }
 
+    /**
+     * Return the Reset Vector stored at (0xFFFA-0xFFFB)
+     *
+     * @return the Non Maskable Interrupt Vector
+     */
     private int resetVector() {
         int low = read(0xFFFC);
         int high = read(0xFFFD);
         return (high << 8 | low) & 0xFFFF;
     }
 
+    /**
+     * Return the Non Maskable Interrupt Vector stored at (0xFFFA-0xFFFB)
+     *
+     * @return the Non Maskable Interrupt Vector
+     */
     private int nmiVector() {
         int low = read(0xFFFA);
         int high = read(0xFFFB);
         return (high << 8 | low) & 0xFFFF;
     }
 
+    /**
+     * Return the Interrupt Vector stored at (0xFFFE-0xFFFF)
+     *
+     * @return the Interrupt Vector
+     */
     private int irqVector() {
         int low = read(0xFFFE);
         int high = read(0xFFFF);
@@ -1748,7 +1773,7 @@ public class CPU_6502 {
         while (addr < end) {
             line_addr = addr;
             String line = String.format("$%04X: ", addr);
-            int opcode = bus.cpuRead(addr, true);
+            int opcode = nes.cpuRead(addr, true);
             addr = (addr + 1) & 0x1FFFF;
             Instruction instr = opcodes.get(opcode);
             line += instr.name + " ";
@@ -1757,65 +1782,65 @@ public class CPU_6502 {
                     line += "{IMP}";
                     break;
                 case "IMM":
-                    value = bus.cpuRead(addr, true);
+                    value = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     line += String.format("#$%02X {IMM}", value);
                     break;
                 case "ZP0":
-                    low = bus.cpuRead(addr, true);
+                    low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%02X {ZP0}", low);
                     break;
                 case "ZPX":
-                    low = bus.cpuRead(addr, true);
+                    low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%02X, X {ZPX}", low);
                     break;
                 case "ZPY":
-                    low = bus.cpuRead(addr, true);
+                    low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%02X, Y {ZPY}", low);
                     break;
                 case "IZX":
-                    low = bus.cpuRead(addr, true);
+                    low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     line += String.format("($%02X, X) {IZX}", low);
                     break;
                 case "IZY":
-                    low = bus.cpuRead(addr, true);
+                    low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     line += String.format("($%02X), Y {IZY}", low);
                     break;
                 case "ABS":
-                    low = bus.cpuRead(addr, true);
+                    low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    high = bus.cpuRead(addr, true);
+                    high = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%04X {ABS}", (high << 8) | low);
                     break;
                 case "ABX":
-                    low = bus.cpuRead(addr, true);
+                    low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    high = bus.cpuRead(addr, true);
+                    high = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%04X, X {ABX}", (high << 8) | low);
                     break;
                 case "ABY":
-                    low = bus.cpuRead(addr, true);
+                    low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    high = bus.cpuRead(addr, true);
+                    high = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%04X, Y {ABY}", (high << 8) | low);
                     break;
                 case "IND":
-                    low = bus.cpuRead(addr, true);
+                    low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    high = bus.cpuRead(addr, true);
+                    high = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     line += String.format("($%04X) {IND}", (high << 8) | low);
                     break;
                 case "REL":
-                    value = bus.cpuRead(addr, true);
+                    value = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     line += String.format("$%02X ", value) + String.format("[$%04X] {IND}", addr + (byte) (value));
             }
@@ -1841,7 +1866,7 @@ public class CPU_6502 {
      * @return the current Y Accumulator value as an 8bit unsigned value
      */
     public synchronized int threadSafeGetA() {
-        return a;
+        return accumulator;
     }
 
     /**
@@ -1851,7 +1876,7 @@ public class CPU_6502 {
      * @return the current X Register value as an 8bit unsigned value
      */
     public synchronized int threadSafeGetX() {
-        return x;
+        return x_register;
     }
 
     /**
@@ -1861,7 +1886,7 @@ public class CPU_6502 {
      * @return the current Y Register value as an 8bit unsigned value
      */
     public synchronized int threadSafeGetY() {
-        return y;
+        return y_register;
     }
 
     /**
@@ -1871,7 +1896,7 @@ public class CPU_6502 {
      * @return the current Stack Pointer as an 8bit unsigned value
      */
     public synchronized int threadSafeGetStkp() {
-        return stkp;
+        return stack_pointer;
     }
 
     /**
@@ -1902,7 +1927,7 @@ public class CPU_6502 {
      * @return the current Program Counter as a 16bit unsigned value
      */
     public synchronized int threadSafeGetPc() {
-        return pc;
+        return program_counter;
     }
 
     /**

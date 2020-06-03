@@ -44,13 +44,6 @@ public class FileReader {
      * @return an array of int containing the bytes
      * @throws EOFException If we try to read outside the file
      */
-    public int[] readBytesI(int size) throws EOFException {
-        int[] buf = new int[size];
-        for (int i = 0; i < size; i++)
-            buf[i] = nextByte() & 0xFF;
-        return buf;
-    }
-
     public byte[] readBytes(int size) throws EOFException {
         byte[] buf = new byte[size];
         for (int i = 0; i < size; i++)

@@ -30,7 +30,7 @@ public class Mapper066 extends Mapper {
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
-        if (addr >= 0x8000 && addr <= 0xFFFF) {
+        if (addr >= 0x8000) {
             mapped.value = (selectedPGRBank * 0x8000) + (addr & 0x7FFF);
             return true;
         }
@@ -50,7 +50,7 @@ public class Mapper066 extends Mapper {
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
         addr &= 0xFFFF;
-        if (addr >= 0x8000 && addr <= 0xFFFF) {
+        if (addr >= 0x8000) {
             selectedPGRBank = (data & 0x30) >> 4;
             selectedCHRBank = data & 0x03;
         }
@@ -69,7 +69,7 @@ public class Mapper066 extends Mapper {
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
-        if (addr >= 0x0000 && addr <= 0x1FFF) {
+        if (addr <= 0x1FFF) {
             mapped.value = selectedCHRBank * 0x2000 + addr;
             return true;
         }
@@ -77,7 +77,7 @@ public class Mapper066 extends Mapper {
     }
 
     /**
-     * The PPU never write, for Mapper 003 the Character Memory is ROM
+     * The PPU never write, for Mapper 066 the Character Memory is ROM
      *
      * @param addr   the PPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
@@ -90,6 +90,10 @@ public class Mapper066 extends Mapper {
     }
 
 
+    /**
+     * Reset the Mapper to the default state
+     * (set the selected banks to the lower ones)
+     */
     @Override
     public void reset() {
         selectedPGRBank = 0x00;

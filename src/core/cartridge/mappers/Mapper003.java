@@ -2,6 +2,9 @@ package core.cartridge.mappers;
 
 import utils.IntegerWrapper;
 
+/**
+ * This class implement the iNES Mapper 003 (CNROM)
+ */
 public class Mapper003 extends Mapper{
 
     private int selectedCHRBank = 0x00;
@@ -29,7 +32,7 @@ public class Mapper003 extends Mapper{
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
-        if (addr >= 0x8000 && addr <= 0xFFFF) {
+        if (addr >= 0x8000) {
             if (nPRGBanks == 1)
                 mapped.value = addr & 0x3FFF;
             if (nPRGBanks == 2)
@@ -53,7 +56,7 @@ public class Mapper003 extends Mapper{
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
         addr &= 0xFFFF;
         data &= 0xFF;
-        if (addr >= 0x8000 && addr <= 0xFFFF) {
+        if (addr >= 0x8000) {
             selectedCHRBank = data & 0x03;
             mapped.value = addr;
         }
@@ -72,7 +75,7 @@ public class Mapper003 extends Mapper{
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
-        if (addr >= 0x0000 && addr <= 0x1FFF) {
+        if (addr <= 0x1FFF) {
             mapped.value = (selectedCHRBank * 0x2000) + addr;
             return true;
         }
@@ -95,7 +98,7 @@ public class Mapper003 extends Mapper{
 
 
     /**
-     * There is nothing to reset here
+     * Set the selected CHR bank to the first one
      */
     @Override
     public void reset() {

@@ -5,5 +5,7 @@ package utils;
  * and keep the change outside of the called function
  */
 public class ByteWrapper {
+
     public byte value;
+
 }

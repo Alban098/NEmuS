@@ -9,7 +9,7 @@ import utils.IntegerWrapper;
  * This class represent the Bus of the NES
  * it is the Core of the system and control everything
  */
-public class Bus {
+public class NES {
 
     private static final long SAVE_INTERVAL = 30000;
 
@@ -33,7 +33,7 @@ public class Bus {
     /**
      * Create a new Instance of Bus ready to be started
      */
-    public Bus() {
+    public NES() {
         ram = new byte[2048];
         for (int i = 0; i < 2048; i++)
             ram[i] = 0x0000;

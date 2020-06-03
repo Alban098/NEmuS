@@ -2,7 +2,6 @@ package core.ppu;
 
 import core.cartridge.Cartridge;
 import core.ppu.registers.*;
-import exceptions.DumpException;
 import org.lwjgl.BufferUtils;
 import utils.IntegerWrapper;
 import utils.NumberUtils;
@@ -76,8 +75,16 @@ public class PPU_2C02 {
         tblPalette = new byte[32];
         palScreen = new Color[0x40];
         screen_buffer = BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4);
-        patterntables = new ByteBuffer[]{BufferUtils.createByteBuffer(128 * 128 * 4), BufferUtils.createByteBuffer(128 * 128 * 4)};
-        nametables = new ByteBuffer[]{BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4), BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4), BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4), BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4)};
+        patterntables = new ByteBuffer[]{
+            BufferUtils.createByteBuffer(128 * 128 * 4),
+            BufferUtils.createByteBuffer(128 * 128 * 4)
+        };
+        nametables = new ByteBuffer[]{
+            BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4),
+            BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4),
+            BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4),
+            BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4)
+        };
         frameComplete = false;
         scanline = 0;
         cycle = 0;
@@ -640,8 +647,7 @@ public class PPU_2C02 {
                 transferAddressX.run();
             }
 
-            if (cycle == 338 || cycle == 340)
-            {
+            if (cycle == 338 || cycle == 340) {
                 bg_next_tile_id = ppuRead(0x2000 | (vram_addr.get() & 0x0FFF));
             }
             //At the start of a new frame we reset the Y coordinates to the top of the screen
@@ -935,6 +941,7 @@ public class PPU_2C02 {
      * @return a ByteBuffer containing the pixel values of the nametable already flipped and ready to be fed to OpenGL
      */
     public synchronized ByteBuffer getNametable(int i) {
+
         //Clear the nametable buffer
         nametables[i].clear();
         //Create a temporary buffer because the pixels are not calculated in screen order
@@ -943,7 +950,7 @@ public class PPU_2C02 {
         for (int y = 0; y < 30; y++) {
             //For each tile starting at the left
             for (int x = 0; x < 32; x++) {
-                //For each column of the tile
+                //For each row of the tile
                 for (int row = 0; row < 8; row++) {
                     //We read the tile ID by selecting the correct nametable using the mirroring mode
                     int offset = 0x0400 * (i & 0x3);

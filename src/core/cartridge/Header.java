@@ -26,7 +26,7 @@ class Header {
      *
      * @param reader the FileReader of the iNES file
      */
-    public Header(FileReader reader) throws InvalidFileException {
+    Header(FileReader reader) throws InvalidFileException {
         try {
             name = new char[]{(char) reader.nextByte(), (char) reader.nextByte(), (char) reader.nextByte(), (char) reader.nextByte()};
             prg_rom_chunks = reader.nextByte();

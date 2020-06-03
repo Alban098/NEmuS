@@ -14,9 +14,9 @@ public enum Flags {
     V(1 << 6),  // Overflow
     N(1 << 7);  // Negative
 
-    final short value;
+    final int value;
 
     Flags(int value) {
-        this.value = (short) value;
+        this.value = value;
     }
 }

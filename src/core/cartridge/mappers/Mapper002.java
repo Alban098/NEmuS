@@ -2,6 +2,9 @@ package core.cartridge.mappers;
 
 import utils.IntegerWrapper;
 
+/**
+ * This class implement the iNES Mapper 002 (UxROM)
+ */
 public class Mapper002 extends Mapper {
 
     private int selectedPRGBankLow = 0x00;
@@ -34,7 +37,7 @@ public class Mapper002 extends Mapper {
             mapped.value = (selectedPRGBankLow * 0x4000) + (addr & 0x3FFF);
             return true;
         }
-        if (addr >= 0xC000 && addr <= 0xFFFF) {
+        if (addr >= 0xC000) {
             mapped.value = (selectedPRGBankHigh * 0x4000) + (addr & 0x3FFF);
             return true;
         }
@@ -53,7 +56,7 @@ public class Mapper002 extends Mapper {
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
         addr &= 0xFFFF;
         data &= 0xFF;
-        if (addr >= 0x8000 && addr <= 0xFFFF) {
+        if (addr >= 0x8000) {
             selectedPRGBankLow = data & 0x0F;
         }
         return false;
@@ -96,6 +99,9 @@ public class Mapper002 extends Mapper {
         return false;
     }
 
+    /**
+     * Reset the lower PRG bank to the first and higher PRG bank to the last one
+     */
     @Override
     public void reset() {
         selectedPRGBankLow = 0;

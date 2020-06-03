@@ -35,7 +35,6 @@ public class ControlRegister {
      *
      * @return an int with the 8 lsb set accordingly
      */
-    @SuppressWarnings("DuplicatedCode")
     public int get() {
         int val = 0x00;
         val |= nametable_x ? 0x01 : 0x00;

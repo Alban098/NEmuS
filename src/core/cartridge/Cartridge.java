@@ -194,10 +194,18 @@ public class Cartridge {
             mapper.reset();
     }
 
+    /**
+     * Return the Mapper used by the Cartridge
+     *
+     * @return the current Mapper
+     */
     public Mapper getMapper() {
         return mapper;
     }
 
+    /**
+     * Save the current Cartridge RAM to a file (filename.sav)
+     */
     public void save() {
         if (mapper.hasRAM()) {
             try {
