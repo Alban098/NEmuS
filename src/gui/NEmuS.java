@@ -143,7 +143,7 @@ public class NEmuS {
                         emulationRunning = true;
                     } else if (key == GLFW_KEY_F12 && action == GLFW_PRESS) {
                         emulationRunning = false;
-                        JOptionPane.showMessageDialog(null, "F1 : Load ROM\nF2 : Reset NES\n", "Keyboard Shortcut Help", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(null, "F1 : Load ROM\nF2 : Reset NES\nF3 : Force Savegame", "Keyboard Shortcut Help", JOptionPane.INFORMATION_MESSAGE);
                         emulationRunning = true;
                     }
                 }

@@ -3,7 +3,7 @@ package core.cartridge.mappers;
 import utils.IntegerWrapper;
 
 /**
- * This class implement the iNES Mapper 002 (UxROM)
+ * This class implements the iNES Mapper 002 (UxROM)
  */
 public class Mapper002 extends Mapper {
 

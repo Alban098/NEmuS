@@ -8,7 +8,7 @@ import utils.IntegerWrapper;
 import java.io.EOFException;
 
 /**
- * This class implement the iNES Mapper 004 (MMC3)
+ * This class implements the iNES Mapper 004 (MMC3)
  */
 public class Mapper004 extends Mapper {
 

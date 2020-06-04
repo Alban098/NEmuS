@@ -2,6 +2,9 @@ package core.cartridge.mappers;
 
 import utils.IntegerWrapper;
 
+/**
+ * This class implements the iNES Mapper 066 (GxROM)
+ */
 public class Mapper066 extends Mapper {
 
     private int selectedPGRBank = 0x00;
