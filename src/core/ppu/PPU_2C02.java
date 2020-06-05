@@ -20,6 +20,7 @@ public class PPU_2C02 {
 
     private final Color[] palScreen;
     private final ByteBuffer screen_buffer;
+    private final ByteBuffer screen_buffer_tmp;
     private final ByteBuffer[] patterntables;
     private final ByteBuffer[] nametables;
 
@@ -75,6 +76,7 @@ public class PPU_2C02 {
         tblPalette = new byte[32];
         palScreen = new Color[0x40];
         screen_buffer = BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4);
+        screen_buffer_tmp = BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4);
         patterntables = new ByteBuffer[]{
             BufferUtils.createByteBuffer(128 * 128 * 4),
             BufferUtils.createByteBuffer(128 * 128 * 4)
@@ -496,7 +498,7 @@ public class PPU_2C02 {
         controlRegister.set(0x00);
         vram_addr.set(0x0000);
         tram_addr.set(0x0000);
-        screen_buffer.clear();
+        screen_buffer_tmp.clear();
     }
 
 
@@ -584,7 +586,7 @@ public class PPU_2C02 {
         //If we are in the visible screen (regarding scanlines and omitting horizontal blank)
         if (scanline >= -1 && scanline < 240) {
             if (scanline == -1 && cycle == 0)
-                screen_buffer.clear();
+                screen_buffer_tmp.clear();
             //If we are on the top left we increment the cycle count and clear the screen buffer
             if (scanline == 0 && cycle == 0 && odd_frame && (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet())) {
                 cycle = 1;
@@ -837,10 +839,10 @@ public class PPU_2C02 {
         //If we are in the visible area we push a pixel into the screen buffer
         if (cycle - 1 >= 0 && cycle - 1 < SCREEN_WIDTH && scanline >= 0 && scanline < SCREEN_HEIGHT) {
             int rgba = getColorFromPalette(palette, pixel).getRGB();
-            screen_buffer.put((byte) ((rgba >> 16) & 0xFF));
-            screen_buffer.put((byte) ((rgba >> 8) & 0xFF));
-            screen_buffer.put((byte) ((rgba) & 0xFF));
-            screen_buffer.put((byte) ((rgba >> 24) & 0xFF));
+            screen_buffer_tmp.put((byte) ((rgba >> 16) & 0xFF));
+            screen_buffer_tmp.put((byte) ((rgba >> 8) & 0xFF));
+            screen_buffer_tmp.put((byte) ((rgba) & 0xFF));
+            screen_buffer_tmp.put((byte) ((rgba >> 24) & 0xFF));
         }
 
         cycle++;
@@ -859,6 +861,9 @@ public class PPU_2C02 {
                 scanline = -1;
                 frameComplete = true;
                 odd_frame = !odd_frame;
+                screen_buffer_tmp.flip();
+                screen_buffer.clear();
+                screen_buffer.put(screen_buffer_tmp);
                 screen_buffer.flip();
             }
         }

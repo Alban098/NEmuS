@@ -6,6 +6,6 @@ package utils;
  */
 public class IntegerWrapper {
 
-    public int value;
+    public int value = 0;
 
 }
