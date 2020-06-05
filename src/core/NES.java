@@ -1,5 +1,6 @@
 package core;
 
+import core.apu.APU_2A03;
 import core.cartridge.Cartridge;
 import core.cpu.CPU_6502;
 import core.ppu.PPU_2C02;
@@ -21,6 +22,7 @@ public class NES {
     private final byte[] ram;
     private final CPU_6502 cpu;
     private final PPU_2C02 ppu;
+    private final APU_2A03 apu;
     private Cartridge cartridge;
     private final int[] controller_state;
 
@@ -29,6 +31,14 @@ public class NES {
     private int dma_data = 0x00;
     private boolean dma_transfer = false;
     private boolean dma_dummy = true;
+
+    double dAudioTime = 0.0;
+    double dAudioGlobalTime = 0.0;
+    double dAudioTimePerNESClock = 0.0;
+    double dAudioTimePerSystemSample = 0.0f;
+
+    public double dAudioSample = 0.0;
+
 
     /**
      * Create a new Instance of Bus ready to be started
@@ -39,9 +49,15 @@ public class NES {
             ram[i] = 0x0000;
         cpu = new CPU_6502();
         ppu = new PPU_2C02();
+        apu = new APU_2A03();
         controller = new int[2];
         controller_state = new int[2];
         cpu.connectBus(this);
+    }
+
+    public void setSampleFreq(int sampleRate) {
+        dAudioTimePerSystemSample = 1.0 / (double)sampleRate;
+        dAudioTimePerNESClock = 1.0 / 5369318.0; // PPU Clock Frequency
     }
 
     /**
@@ -77,6 +93,9 @@ public class NES {
                 ram[addr & 0x07FF] = (byte) data;
             } else if (addr <= 0x3FFF) { //Write PPU Register (8 values mirrored over the range)
                 ppu.cpuWrite(addr & 0x0007, data);
+
+            } else if (addr <= 0x4013 || addr == 0x4015 || addr == 0x4017) { //  NES APU
+                apu.cpuWrite(addr, data);
             } else if (addr == 0x4014) { //Write to DMA Register
                 dma_page = data;
                 dma_addr = 0;
@@ -114,6 +133,8 @@ public class NES {
                 data.value = ram[addr & 0x07FF];
             else if (addr <= 0x3FFF)  //Read PPU Register (8 values mirrored over the range)
                 data.value = ppu.cpuRead(addr & 0x0007, readOnly);
+            else if (addr == 0x4015)
+                data.value = apu.cpuRead(addr);
             else if (addr >= 0x4016 && addr <= 0x4017) { //Read the controllers
                 //Controller read is Serial, when read from, the value is shifted left
                 data.value = ((controller_state[addr & 0x0001] & 0x80) > 0) ? 0x1 : 0x0;
@@ -139,6 +160,7 @@ public class NES {
     public synchronized void reset() {
         cpu.reset();
         ppu.reset();
+        apu.reset();
         cartridge.reset();
         systemTicks = 0;
         dma_page = 0x00;
@@ -172,9 +194,10 @@ public class NES {
      * the PPU is clocked every times
      * the CPU is clocked one every 3 times
      */
-    public void clock() {
+    public boolean clock() {
         //The PPU is clocked every tick
         ppu.clock();
+        apu.clock();
         //The CPU clock is 3 time slower than the PPU clock, so it is clocked every 3 ticks
         if (systemTicks % 3 == 0) {
             //If a Direct Memory Access is occurring
@@ -215,6 +238,15 @@ public class NES {
                 cpu.clock();
         }
 
+        boolean bAudioSampleReady = false;
+        dAudioTime += dAudioTimePerNESClock;
+        if (dAudioTime >= dAudioTimePerSystemSample)
+        {
+            dAudioTime -= dAudioTimePerSystemSample;
+            dAudioSample = apu.getSample();
+            bAudioSampleReady = true;
+        }
+
         //If the PPU triggers an Non Maskable Interrupt, it is propagated to the CPU (Vertical Blank)
         if (ppu.nmi())
             cpu.nmi();
@@ -227,6 +259,7 @@ public class NES {
             next_save = System.currentTimeMillis() + SAVE_INTERVAL;
         }
         systemTicks++;
+        return bAudioSampleReady;
     }
 
     public Cartridge getCartridge() {
