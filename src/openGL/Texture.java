@@ -150,4 +150,8 @@ public class Texture {
         bind();
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
     }
+
+    public void cleanUp() {
+        glDeleteTextures(id);
+    }
 }

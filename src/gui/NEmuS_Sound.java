@@ -9,6 +9,8 @@ import net.beadsproject.beads.core.AudioContext;
 import net.beadsproject.beads.core.io.JavaSoundAudioIO;
 import net.beadsproject.beads.ugens.Function;
 import net.beadsproject.beads.ugens.WaveShaper;
+import openGL.Quad;
+import openGL.ShaderProgram;
 import openGL.Texture;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
@@ -17,14 +19,16 @@ import org.lwjgl.glfw.GLFWWindowSizeCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
-import utils.NumberUtils;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.EOFException;
 import java.nio.IntBuffer;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
+import static gui.PostProcessingFilters.*;
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -36,34 +40,30 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  */
 public class NEmuS_Sound {
 
-    private static final int FRAME_DURATION = 1000 / 50;
 
     private static String game_name;
-
+    private final NES nes;
     private long game_window;
     private GLFWKeyCallback gameKeyCallBack;
     private InputMapper inputMapper;
-
     private int game_width = PPU_2C02.SCREEN_WIDTH * 2;
     private int game_height = PPU_2C02.SCREEN_HEIGHT * 2;
     private float game_aspect = (float) game_width / game_height;
-
-    private final NES nes;
     private AudioContext ac;
 
     private Texture screen_texture;
-
+    private Quad screen_quad;
     private boolean emulationRunning = true;
 
-    public static void main(String[] args) {
-        new NEmuS_Sound();
-    }
+    private Map<PostProcessingFilters, ShaderProgram> filters;
+
+    private PostProcessingFilters currentFilter = NO_FILTER;
 
     public NEmuS_Sound() {
         JavaSoundAudioIO jsaIO = new JavaSoundAudioIO();
         jsaIO.selectMixer(3);
         ac = new AudioContext(jsaIO);
-
+        filters = new HashMap<>();
         nes = new NES();
 
         //Load a Game ROM
@@ -81,7 +81,6 @@ public class NEmuS_Sound {
         } else {
             System.exit(-1);
         }
-
 
         //Create KeyHandler
         gameKeyCallBack = new GLFWKeyCallback() {
@@ -102,11 +101,13 @@ public class NEmuS_Sound {
                             }
                         }
                         emulationRunning = true;
-                    } else if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
+                    }
+                    else if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
                         emulationRunning = false;
                         nes.reset();
                         emulationRunning = true;
-                    } else if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
+                    }
+                    else if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
                         emulationRunning = false;
                         do {
                             nes.clock();
@@ -116,8 +117,21 @@ public class NEmuS_Sound {
                         nes.getPpu().frameComplete = false;
                         nes.getCartridge().save();
                         emulationRunning = true;
-                    } else if (key == GLFW_KEY_F12 && action == GLFW_PRESS) {
+                    }
+                    else if (key == GLFW_KEY_F12 && action == GLFW_PRESS) {
                         JOptionPane.showMessageDialog(null, "F1 : Load ROM\nF2 : Reset NES\nF3 : Force Savegame", "Keyboard Shortcut Help", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    else if (key == GLFW_KEY_F5 && action == GLFW_PRESS) {
+                        currentFilter = NO_FILTER;
+                    }
+                    else if (key == GLFW_KEY_F6 && action == GLFW_PRESS) {
+                        currentFilter = GAUSSIAN_BLUR_BIDIRECTIONAL;
+                    }
+                    else if (key == GLFW_KEY_F7 && action == GLFW_PRESS) {
+                        currentFilter = GAUSSIAN_BLUR_HORIZONTAL;
+                    }
+                    else if (key == GLFW_KEY_F8 && action == GLFW_PRESS) {
+                        currentFilter = GAUSSIAN_BLUR_VERTICAL;
                     }
                 }
             }
@@ -128,6 +142,23 @@ public class NEmuS_Sound {
 
         //Start the NES
         loopGameWindow();
+        cleanUp();
+    }
+
+    public static void main(String[] args) {
+        new NEmuS_Sound();
+    }
+
+    public static void main() {
+        new NEmuS_Sound();
+    }
+
+    public void cleanUp() {
+
+        for (ShaderProgram shader : filters.values())
+            shader.cleanUp();
+        screen_quad.cleanUp();
+        screen_texture.cleanUp();
 
         //Destroy the Game Window
         glfwFreeCallbacks(game_window);
@@ -135,15 +166,9 @@ public class NEmuS_Sound {
 
         ac.stop();
 
-
         //Terminate the application
         glfwTerminate();
         Objects.requireNonNull(glfwSetErrorCallback(null)).free();
-    }
-    // ========================================================= //
-
-    public static void main() {
-        new NEmuS_Sound();
     }
 
     /**
@@ -163,15 +188,24 @@ public class NEmuS_Sound {
      */
     private void initGameWindow() {
         //Initialize GLFW on the current Thread
-        game_window = createContextSepraratedWindow(game_width, game_height, "Game Window");
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+        game_window = createContextSepraratedWindow(game_width, game_height);
         inputMapper = new InputMapper(game_window);
         //Set the window's resize event
+        glfwSetWindowAspectRatio(game_window, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
         glfwSetWindowSizeCallback(game_window, new GLFWWindowSizeCallback() {
             @Override
             public void invoke(long windows, int w, int h) {
                 game_aspect = (float) w / h;
                 game_width = w;
                 game_height = h;
+                glViewport(0, 0, game_width, game_height);
+                glMatrixMode(GL_PROJECTION);
+                glLoadIdentity();
+                glOrtho(-game_aspect, game_aspect, -1, 1, -1, 1);
             }
         });
         //Show the window
@@ -201,18 +235,35 @@ public class NEmuS_Sound {
             }
         };
         ac.out.addInput(function);
+
+        try {
+            filters.put(NO_FILTER, new ShaderProgram("shaders/vertex.glsl", "shaders/filters/no_filter.glsl"));
+            filters.put(GAUSSIAN_BLUR_BIDIRECTIONAL, new ShaderProgram("shaders/vertex.glsl", "shaders/filters/gaussian.glsl"));
+            filters.put(GAUSSIAN_BLUR_VERTICAL, new ShaderProgram("shaders/vertex.glsl", "shaders/filters/gaussian_vertical.glsl"));
+            filters.put(GAUSSIAN_BLUR_HORIZONTAL, new ShaderProgram("shaders/vertex.glsl", "shaders/filters/gaussian_horizontal.glsl"));
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage(), "Error during Shader loading", JOptionPane.ERROR_MESSAGE);
+            cleanUp();
+            System.exit(-1);
+        }
+
+        screen_quad = new Quad(
+                new float[]{-1, 1, 1, 1, 1, -1, -1, -1},
+                new float[]{0, 0, 1, 0, 1, 1, 0, 1},
+                filters.values()
+        );
+
     }
 
     /**
      * Create a new GLFW Window with its own context
      * Used to create windows on multiple Threads
      *
-     * @param width  the window hwidth
+     * @param width  the window width
      * @param height the window height
-     * @param title  the window title
      * @return the id of the windows as returned by GLFW
      */
-    private long createContextSepraratedWindow(int width, int height, String title) {
+    private long createContextSepraratedWindow(int width, int height) {
         GLFWErrorCallback.createPrint(System.err).set();
         if (!glfwInit())
             throw new IllegalStateException("GLFW Init failed");
@@ -223,7 +274,7 @@ public class NEmuS_Sound {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
         //Create the window
-        long window = glfwCreateWindow(width, height, title, NULL, NULL);
+        long window = glfwCreateWindow(width, height, "", NULL, NULL);
         if (window == NULL)
             throw new RuntimeException("Failed to create window");
         try (MemoryStack stack = stackPush()) {
@@ -249,9 +300,9 @@ public class NEmuS_Sound {
             glfwMakeContextCurrent(game_window);
             glClearColor(.6f, .6f, .6f, 0f);
             GL11.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            //We load the screen pixels into VRAM and display them
-            //We update the controller registers
             if (emulationRunning) {
+                //We load the screen pixels into VRAM and display them
+                //We update the controller registers
                 InputHandling();
                 screen_texture.load(nes.getPpu().getScreenBuffer());
                 renderGameScreen();
@@ -312,28 +363,6 @@ public class NEmuS_Sound {
      * the Quad is centered and scale to fit the window without stretching
      */
     private void renderGameScreen() {
-        glViewport(0, 0, game_width, game_height);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glOrtho(-game_aspect, game_aspect, -1, 1, -1, 1);
-        screen_texture.bind();
-
-        float view_aspect = (float) PPU_2C02.SCREEN_WIDTH / PPU_2C02.SCREEN_HEIGHT, quad_end_x = game_aspect, quad_end_y = -1;
-        if (game_height / view_aspect > game_width)
-            quad_end_y = NumberUtils.map(game_width * view_aspect, 0, game_height, 1, -1);
-        else
-            quad_end_x = NumberUtils.map(game_height * view_aspect, 0, game_width, -game_aspect, game_aspect);
-        float quad_width = (2 * game_aspect - (quad_end_x + game_aspect)) / 2;
-        float quad_height = (2 - (1 - quad_end_y)) / 2;
-        glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        glVertex2f(-game_aspect + quad_width, 1 - quad_height);
-        glTexCoord2f(1, 0);
-        glVertex2f(quad_end_x + quad_width, 1 - quad_height);
-        glTexCoord2f(1, 1);
-        glVertex2f(quad_end_x + quad_width, quad_end_y - quad_height);
-        glTexCoord2f(0, 1);
-        glVertex2f(-game_aspect + quad_width, quad_end_y - quad_height);
-        glEnd();
+        screen_quad.render(filters.get(currentFilter), screen_texture);
     }
 }
