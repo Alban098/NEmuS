@@ -4,6 +4,8 @@ import core.cartridge.mappers.*;
 import core.ppu.Mirror;
 import exceptions.InvalidFileException;
 import exceptions.UnsupportedMapperException;
+import javafx.application.Platform;
+import utils.Dialogs;
 import utils.FileReader;
 import utils.IntegerWrapper;
 
@@ -211,7 +213,10 @@ public class Cartridge {
             try {
                 Files.write(Paths.get(filename + ".sav"), mapper.getRAM(), new StandardOpenOption[]{StandardOpenOption.CREATE});
             } catch (IOException e) {
-                JOptionPane.showMessageDialog(null, e.getMessage(), "Error saving game", JOptionPane.ERROR_MESSAGE);
+                if (Platform.isAccessibilityActive())
+                    Dialogs.showException("ROM Save Error", "An error occur during ROM Saving", e);
+                else
+                    JOptionPane.showMessageDialog(null, "An Error occur while saving\n" + e.getMessage(), "ROM Save Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }

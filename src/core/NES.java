@@ -12,7 +12,7 @@ import utils.IntegerWrapper;
  */
 public class NES {
 
-    private static final long SAVE_INTERVAL = 30000;
+    private static final long SAVE_INTERVAL = 20000;
 
     private long next_save = 0;
 
@@ -32,10 +32,9 @@ public class NES {
     private boolean dma_transfer = false;
     private boolean dma_dummy = true;
 
-    double dAudioTime = 0.0;
-    double dAudioGlobalTime = 0.0;
-    double dAudioTimePerNESClock = 0.0;
-    double dAudioTimePerSystemSample = 0.0f;
+    private double dAudioTime = 0.0;
+    private double dAudioTimePerNESClock = 0.0;
+    private double dAudioTimePerSystemSample = 0.0;
 
     public double dAudioSample = 0.0;
 
@@ -57,7 +56,7 @@ public class NES {
 
     public void setSampleFreq(int sampleRate) {
         dAudioTimePerSystemSample = 1.0 / (double)sampleRate;
-        dAudioTimePerNESClock = 1.0 / 5369318.0; // PPU Clock Frequency
+        dAudioTimePerNESClock = 1.0 / 5369318.0;
     }
 
     /**
@@ -238,13 +237,13 @@ public class NES {
                 cpu.clock();
         }
 
-        boolean bAudioSampleReady = false;
+        boolean audioSampleReady = false;
         dAudioTime += dAudioTimePerNESClock;
         if (dAudioTime >= dAudioTimePerSystemSample)
         {
             dAudioTime -= dAudioTimePerSystemSample;
             dAudioSample = apu.getSample();
-            bAudioSampleReady = true;
+            audioSampleReady = true;
         }
 
         //If the PPU triggers an Non Maskable Interrupt, it is propagated to the CPU (Vertical Blank)
@@ -259,7 +258,7 @@ public class NES {
             next_save = System.currentTimeMillis() + SAVE_INTERVAL;
         }
         systemTicks++;
-        return bAudioSampleReady;
+        return audioSampleReady;
     }
 
     public Cartridge getCartridge() {

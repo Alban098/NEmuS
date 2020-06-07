@@ -12,7 +12,7 @@ public class APU_2A03 {
     private NoiseChannel noise;
 
     private int clock_counter = 0;
-    private double dGlobalTime = 0.0;
+    private double totalTime = 0.0;
     private int frame_counter = 0;
 
     public APU_2A03() {
@@ -56,8 +56,6 @@ public class APU_2A03 {
                 pulse_2.writeTimerHigh(data);
                 pulse_2.writeLengthCounterLoad(data);
                 break;
-            case 0x4008:
-                break;
             case 0x400C:
                 noise.updateReload(data);
                 break;
@@ -80,9 +78,9 @@ public class APU_2A03 {
     public int cpuRead(int addr) {
         int data = 0x00;
         if (addr == 0x4015) {
-            //	data |= (pulse1_lc.counter > 0) ? 0x01 : 0x00;
-            //	data |= (pulse2_lc.counter > 0) ? 0x02 : 0x00;
-            //	data |= (noise_lc.counter > 0) ? 0x04 : 0x00;
+            data |= (pulse_1.lengthCounter.counter > 0) ? 0x01 : 0x00;
+            data |= (pulse_1.lengthCounter.counter > 0) ? 0x02 : 0x00;
+            data |= (noise.lengthCounter.counter > 0) ? 0x04 : 0x00;
         }
         return data;
     }
@@ -91,7 +89,7 @@ public class APU_2A03 {
         boolean quarterFrameClock = false;
         boolean halfFrameClock = false;
 
-        dGlobalTime += .333333333 / 1789773.0;
+        totalTime += .333333333 / 1789773.0;
 
         if (clock_counter % 6 == 0) {
             frame_counter++;
@@ -126,8 +124,8 @@ public class APU_2A03 {
                 pulse_1.sweeper.clock(pulse_1.sequencer.reload, false);
                 pulse_2.sweeper.clock(pulse_2.sequencer.reload, true);
             }
-            pulse_1.compute(dGlobalTime);
-            pulse_2.compute(dGlobalTime);
+            pulse_1.compute(totalTime);
+            pulse_2.compute(totalTime);
             noise.compute();
         }
         pulse_1.sweeper.track(pulse_1.sequencer.reload);
@@ -135,7 +133,5 @@ public class APU_2A03 {
         clock_counter++;
     }
 
-    public void reset() {
-
-    }
+    public void reset() {}
 }

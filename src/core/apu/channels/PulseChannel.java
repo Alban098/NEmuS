@@ -27,12 +27,11 @@ public class PulseChannel {
 
     public void writeDutyCycle(int data) {
         switch ((data & 0xC0) >> 6) {
-            case 0x00: sequencer.sequence_2 = 0b00000001; oscillator.duty_cycle = 0.125f; break;
-            case 0x01: sequencer.sequence_2 = 0b00000011; oscillator.duty_cycle = 0.250f; break;
-            case 0x02: sequencer.sequence_2 = 0b00001111; oscillator.duty_cycle = 0.500f; break;
-            case 0x03: sequencer.sequence_2 = 0b11111100; oscillator.duty_cycle = 0.750f; break;
+            case 0x00: sequencer.sequence = 0b00000001; oscillator.duty_cycle = 0.125f; break;
+            case 0x01: sequencer.sequence = 0b00000011; oscillator.duty_cycle = 0.250f; break;
+            case 0x02: sequencer.sequence = 0b00001111; oscillator.duty_cycle = 0.500f; break;
+            case 0x03: sequencer.sequence = 0b11111100; oscillator.duty_cycle = 0.750f; break;
         }
-        sequencer.sequence = sequencer.sequence_2;
         halted = (data & 0x20) == 0x20;
         envelope.volume = (data & 0x0F);
         envelope.disabled = (data & 0x10) == 0x10;
@@ -53,7 +52,6 @@ public class PulseChannel {
     public void writeTimerHigh(int data) {
         sequencer.reload.value = (sequencer.reload.value & 0x00FF) | ((data & 0x7) << 8);
         sequencer.timer = sequencer.reload.value;
-        sequencer.sequence = sequencer.sequence_2;
     }
 
     public void writeLengthCounterLoad(int data) {

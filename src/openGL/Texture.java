@@ -1,6 +1,8 @@
 package openGL;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
@@ -12,7 +14,7 @@ import static org.lwjgl.opengl.GL11.*;
  */
 public class Texture {
 
-    private final int id;
+    public final int id;
     private final int width;
     private final int height;
     private BufferedImage img;
@@ -33,6 +35,8 @@ public class Texture {
         //Set the filtering mode
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
         //Load the buffer in VRAM
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
     }
@@ -68,6 +72,8 @@ public class Texture {
         //Set the filtering mode
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
         //Load the buffer in VRAM
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
     }
@@ -153,5 +159,9 @@ public class Texture {
 
     public void cleanUp() {
         glDeleteTextures(id);
+    }
+
+    public void unbind() {
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 }

@@ -7,7 +7,6 @@ import java.util.function.Function;
 public class Sequencer {
 
     public int sequence = 0;
-    public int sequence_2 = 0;
     public int timer = 0;
     public int output = 0;
     public IntegerWrapper reload = new IntegerWrapper();

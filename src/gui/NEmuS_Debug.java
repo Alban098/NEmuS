@@ -6,6 +6,8 @@ import core.cpu.Flags;
 import core.ppu.PPU_2C02;
 import exceptions.InvalidFileException;
 import exceptions.UnsupportedMapperException;
+import javafx.application.Platform;
+import javafx.stage.FileChooser;
 import openGL.Texture;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
@@ -14,6 +16,7 @@ import org.lwjgl.glfw.GLFWWindowSizeCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
+import utils.Dialogs;
 import utils.NumberUtils;
 
 import javax.swing.*;
@@ -21,6 +24,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.EOFException;
+import java.io.File;
 import java.nio.IntBuffer;
 import java.util.LinkedList;
 import java.util.Map;
@@ -34,7 +38,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
- * This class is the entry point of the Emulator
+ * This class is the entry point of the Emulator's Debug mode, there is no Post Processing and no Sound
  */
 public class NEmuS_Debug {
 
@@ -81,14 +85,10 @@ public class NEmuS_Debug {
     private Texture oam_texture;
     // ========================================================= //
 
-    public static void main(String[] args) {
-        new NEmuS_Debug();
-    }
-
     /**
      * Launch the Emulator and the Debug Window
      */
-    private NEmuS_Debug() {
+    public NEmuS_Debug() {
         //Load a Game ROM
         JFileChooser romSelector = new JFileChooser("./");
         romSelector.setFileFilter(new FileNameExtensionFilter("iNES file (.nes)", "nes"));
@@ -113,16 +113,24 @@ public class NEmuS_Debug {
                 if (window == game_window) {
                     if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
                         emulationRunning = false;
-                        JFileChooser romSelector = new JFileChooser("./");
-                        romSelector.setFileFilter(new FileNameExtensionFilter("iNES file (.nes)", "nes"));
-                        if (romSelector.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                            String filename = romSelector.getSelectedFile().getAbsolutePath();
-                            game_name = romSelector.getSelectedFile().getName();
+
+                        FileChooser romLoader = new FileChooser();
+                        romLoader.setInitialDirectory(new File("./"));
+                        romLoader.getExtensionFilters().add(new FileChooser.ExtensionFilter("iNES file", "*.nes"));
+                        File file = romLoader.showOpenDialog(null);
+                        if (file != null) {
+                            String filename = file.getAbsolutePath();
+                            game_name = file.getName();
                             try {
                                 initEmulator(filename);
                             } catch (EOFException | InvalidFileException | UnsupportedMapperException e) {
                                 JOptionPane.showMessageDialog(null, e.getMessage() + "\nGame not loaded", "ROM Loading Error", JOptionPane.ERROR_MESSAGE);
                             }
+                        }
+                        JFileChooser romSelector = new JFileChooser("./");
+                        romSelector.setFileFilter(new FileNameExtensionFilter("iNES file (.nes)", "nes"));
+                        if (romSelector.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+
                         }
                         emulationRunning = true;
                     } else if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
@@ -261,13 +269,13 @@ public class NEmuS_Debug {
      */
     private void initGameWindow() {
         //Initialize GLFW on the current Thread
-        game_window = createContextSepraratedWindow(game_width, game_height, "Game Window");
+        game_window = createContextSepraratedWindow(game_width, game_height, "Game Window", true);
         inputMapper = new InputMapper(game_window);
         //Set the window's resize event
+        glfwSetWindowAspectRatio(game_window, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
         glfwSetWindowSizeCallback(game_window, new GLFWWindowSizeCallback() {
             @Override
             public void invoke(long windows, int w, int h) {
-                game_aspect = (float) w / h;
                 game_width = w;
                 game_height = h;
             }
@@ -293,7 +301,7 @@ public class NEmuS_Debug {
      */
     private void initInfoWindow() {
         //Initialize GLFW on the current Thread
-        info_window = createContextSepraratedWindow(info_width, info_height, "Debug Window");
+        info_window = createContextSepraratedWindow(info_width, info_height, "Debug Window", false);
 
         //Set the window's resize event
         glfwSetWindowSizeCallback(info_window, new GLFWWindowSizeCallback() {
@@ -336,7 +344,7 @@ public class NEmuS_Debug {
      * @param title  the window title
      * @return the id of the windows as returned by GLFW
      */
-    private long createContextSepraratedWindow(int width, int height, String title) {
+    private long createContextSepraratedWindow(int width, int height, String title, boolean resizeable) {
         GLFWErrorCallback.createPrint(System.err).set();
         if (!glfwInit())
             throw new IllegalStateException("GLFW Init failed");
@@ -344,7 +352,7 @@ public class NEmuS_Debug {
         //Set the window's properties
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_RESIZABLE, resizeable ? GLFW_TRUE : GLFW_FALSE);
 
         //Create the window
         long window = glfwCreateWindow(width, height, title, NULL, NULL);
