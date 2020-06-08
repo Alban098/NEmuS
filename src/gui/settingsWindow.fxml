@@ -7,80 +7,219 @@
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.effect.Blend?>
+<?import javafx.scene.effect.DropShadow?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="391.0" prefWidth="777.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.SettingsWindow">
+<AnchorPane maxHeight="385.0" maxWidth="825.0" minHeight="385.0" minWidth="825.0" prefHeight="385.0" prefWidth="825.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.SettingsWindow">
    <children>
       <AnchorPane layoutX="10.0" layoutY="10.0" minHeight="0.0" minWidth="0.0" prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
             <SplitPane dividerPositions="0.5" orientation="VERTICAL" prefHeight="369.6" prefWidth="418.4" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                <items>
-                  <SplitPane dividerPositions="0.5, 0.5" prefHeight="200.0" prefWidth="200.0">
+                  <SplitPane dividerPositions="0.5, 0.5" maxHeight="250.0" maxWidth="825.0" minHeight="250.0" minWidth="825.0" prefHeight="250.0" prefWidth="825.0">
                      <items>
-                        <AnchorPane prefHeight="225.0" prefWidth="243.0">
+                        <AnchorPane maxHeight="250.0" maxWidth="310.0" minHeight="250.0" minWidth="310.0" prefHeight="250.0" prefWidth="310.0">
                            <children>
-                              <Button layoutX="32.0" layoutY="47.0" mnemonicParsing="false" onAction="#fireLoadROMEvent" text="Load" />
-                              <Button layoutX="186.0" layoutY="47.0" mnemonicParsing="false" onAction="#fireResetEvent" text="Reset" />
-                              <Button layoutX="106.0" layoutY="47.0" mnemonicParsing="false" onAction="#triggerPauseEvent" text="Pause" />
+                              <Button layoutX="10.0" layoutY="10.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#fireLoadROMEvent" text="Load" />
+                              <Button layoutX="210.0" layoutY="10.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#fireResetEvent" text="Reset" />
+                              <Button fx:id="pauseButton" layoutX="110.0" layoutY="10.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#triggerPauseEvent" text="Pause" />
+                              <Button fx:id="ramLeftButton" layoutX="10.0" layoutY="100.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageLeftEvent" text="&lt; RAM" />
+                              <Button fx:id="cpuStepButton" layoutX="110.0" layoutY="125.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#cpuStepEvent" text="CPU Step" />
+                              <Button fx:id="ramRightButton" layoutX="210.0" layoutY="100.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageRightEvent" text="RAM &gt;" />
+                              <Button fx:id="ramLeftPlusButton" layoutX="10.0" layoutY="150.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageLeftPlusEvent" text="&lt;&lt; RAM" />
+                              <Button fx:id="ramRightPlusButton" layoutX="210.0" layoutY="150.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageRightPlusEvent" text="RAM &gt;&gt;" />
+                              <Button fx:id="frameStepButton" layoutX="60.0" layoutY="205.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#frameStepEvent" text="One Frame">
+                                 <effect>
+                                    <Blend />
+                                 </effect></Button>
+                              <Button fx:id="paletteSwapButton" layoutX="165.0" layoutY="205.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#paletteSwapEvent" text="Palette Swap">
+                                 <effect>
+                                    <Blend />
+                                 </effect></Button>
                            </children>
+                           <effect>
+                              <Blend />
+                           </effect>
                         </AnchorPane>
-                        <AnchorPane maxWidth="250.0" minWidth="250.0" prefHeight="200.0" prefWidth="250.0">
+                        <AnchorPane maxHeight="250.0" maxWidth="250.0" minHeight="250.0" minWidth="250.0" prefHeight="250.0" prefWidth="250.0">
                            <children>
-                              <TextField accessibleRole="BUTTON" layoutX="64.0" layoutY="191.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="64.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="64.0" layoutY="139.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="64.0" layoutY="113.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="64.0" layoutY="87.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="64.0" layoutY="61.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="64.0" layoutY="35.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="64.0" layoutY="9.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="158.0" layoutY="191.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="158.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="158.0" layoutY="139.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="158.0" layoutY="113.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="158.0" layoutY="87.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="158.0" layoutY="61.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="158.0" layoutY="35.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="158.0" layoutY="9.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <Label layoutX="21.0" layoutY="13.0" text="UP" />
-                              <Label layoutX="17.0" layoutY="39.0" text="LEFT" />
-                              <Label layoutX="10.0" layoutY="65.0" text="DOWN" />
-                              <Label layoutX="12.0" layoutY="91.0" text="RIGHT" />
-                              <Label layoutX="11.0" layoutY="117.0" text="START" />
-                              <Label layoutX="10.0" layoutY="143.0" text="SELECT" textAlignment="RIGHT" />
-                              <Label layoutX="25.0" layoutY="169.0" text="A" />
-                              <Label layoutX="25.0" layoutY="195.0" text="B" />
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="215.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <opaqueInsets>
+                                    <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                 </opaqueInsets>
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="190.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <opaqueInsets>
+                                    <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                 </opaqueInsets>
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <opaqueInsets>
+                                    <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                 </opaqueInsets>
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <opaqueInsets>
+                                    <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                 </opaqueInsets>
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="115.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <opaqueInsets>
+                                    <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                 </opaqueInsets>
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="90.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <opaqueInsets>
+                                    <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                 </opaqueInsets>
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="65.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <opaqueInsets>
+                                    <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                 </opaqueInsets>
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="40.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <opaqueInsets>
+                                    <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                 </opaqueInsets>
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="215.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="190.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="115.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="90.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="65.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="40.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <Label layoutX="21.0" layoutY="40.0" text="UP" />
+                              <Label layoutX="17.0" layoutY="65.0" text="LEFT" />
+                              <Label layoutX="10.0" layoutY="90.0" text="DOWN" />
+                              <Label layoutX="12.0" layoutY="115.0" text="RIGHT" />
+                              <Label layoutX="11.0" layoutY="140.0" text="START" />
+                              <Label layoutX="10.0" layoutY="165.0" text="SELECT" textAlignment="RIGHT" />
+                              <Label layoutX="25.0" layoutY="190.0" text="A" />
+                              <Label layoutX="25.0" layoutY="215.0" text="B" />
                            </children>
                            <opaqueInsets>
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                            </opaqueInsets>
                         </AnchorPane>
-                        <AnchorPane maxWidth="250.0" minWidth="250.0" prefHeight="200.0" prefWidth="250.0">
+                        <AnchorPane maxHeight="250.0" maxWidth="250.0" minHeight="250.0" minWidth="250.0" prefHeight="250.0" prefWidth="250.0">
                            <children>
-                              <TextField accessibleRole="BUTTON" layoutX="63.0" layoutY="10.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="63.0" layoutY="36.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="63.0" layoutY="62.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="63.0" layoutY="88.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="63.0" layoutY="114.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="63.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="63.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="63.0" layoutY="189.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="156.0" layoutY="10.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="156.0" layoutY="36.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="156.0" layoutY="62.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="156.0" layoutY="88.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="156.0" layoutY="114.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="156.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="156.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <TextField accessibleRole="BUTTON" layoutX="156.0" layoutY="189.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" />
-                              <Label layoutX="22.0" layoutY="17.0" text="UP" />
-                              <Label layoutX="18.0" layoutY="43.0" text="LEFT" />
-                              <Label layoutX="10.0" layoutY="69.0" text="DOWN" />
-                              <Label alignment="CENTER" layoutX="13.0" layoutY="95.0" text="RIGHT" />
-                              <Label layoutX="12.0" layoutY="121.0" text="START" />
-                              <Label layoutX="10.0" layoutY="147.0" text="SELECT" textAlignment="RIGHT" />
-                              <Label layoutX="26.0" layoutY="172.0" text="A" />
-                              <Label layoutX="26.0" layoutY="196.0" text="B" />
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="40.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="65.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="90.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="115.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="190.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="215.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="40.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="65.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="90.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="115.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="190.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="215.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding></TextField>
+                              <Label layoutX="22.0" layoutY="40.0" text="UP" />
+                              <Label layoutX="18.0" layoutY="65.0" text="LEFT" />
+                              <Label layoutX="10.0" layoutY="90.0" text="DOWN" />
+                              <Label alignment="CENTER" layoutX="13.0" layoutY="115.0" text="RIGHT" />
+                              <Label layoutX="12.0" layoutY="140.0" text="START" />
+                              <Label layoutX="10.0" layoutY="165.0" text="SELECT" textAlignment="RIGHT" />
+                              <Label layoutX="26.0" layoutY="190.0" text="A" />
+                              <Label layoutX="26.0" layoutY="215.0" text="B" />
                            </children>
                            <padding>
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -91,11 +230,29 @@
                   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                      <children>
                         <ListView fx:id="postProcessingList" layoutX="92.0" layoutY="-18.0" orientation="HORIZONTAL" prefHeight="167.0" prefWidth="700.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="35.0" />
-                        <Button layoutX="182.0" layoutY="5.0" mnemonicParsing="false" onAction="#addProcessingStep" text="Add Filter" AnchorPane.topAnchor="5.0" />
-                        <ComboBox fx:id="postProcessingComboBox" layoutX="14.0" layoutY="1.0" prefWidth="150.0" promptText="Post Processing Filter" AnchorPane.topAnchor="5.0" />
-                        <Button layoutX="701.0" layoutY="5.0" mnemonicParsing="false" onAction="#shiftLeftPostProcessingStep" text="&lt;" />
-                        <Button layoutX="736.0" layoutY="5.0" mnemonicParsing="false" onAction="#shiftRightPostProcessingStep" text="&gt;" />
-                        <Button layoutX="264.0" layoutY="5.0" mnemonicParsing="false" onAction="#removeSelectedFilter" text="Remove Selected Filter" />
+                        <Button layoutX="217.0" layoutY="5.0" mnemonicParsing="false" onAction="#addProcessingStep" text="Add Filter" AnchorPane.topAnchor="5.0">
+                           <effect>
+                              <Blend />
+                           </effect>
+                           <tooltip>
+                              <Tooltip text="Empty Tooltip" />
+                           </tooltip></Button>
+                        <ComboBox fx:id="postProcessingComboBox" layoutX="14.0" layoutY="1.0" prefHeight="25.0" prefWidth="186.0" promptText="Post Processing Filter" AnchorPane.topAnchor="5.0">
+                           <effect>
+                              <Blend />
+                           </effect></ComboBox>
+                        <Button layoutX="701.0" layoutY="5.0" mnemonicParsing="false" onAction="#shiftLeftPostProcessingStep" text="&lt;">
+                           <effect>
+                              <Blend />
+                           </effect></Button>
+                        <Button layoutX="736.0" layoutY="5.0" mnemonicParsing="false" onAction="#shiftRightPostProcessingStep" text="&gt;">
+                           <effect>
+                              <Blend />
+                           </effect></Button>
+                        <Button layoutX="297.0" layoutY="5.0" mnemonicParsing="false" onAction="#removeSelectedFilter" text="Remove Selected Filter">
+                           <effect>
+                              <Blend />
+                           </effect></Button>
                      </children>
                      <opaqueInsets>
                         <Insets />
@@ -106,4 +263,7 @@
          </children>
       </AnchorPane>
    </children>
+   <effect>
+      <DropShadow />
+   </effect>
 </AnchorPane>

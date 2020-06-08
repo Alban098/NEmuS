@@ -1,7 +1,7 @@
 package openGL.postProcessing;
 
 import core.ppu.PPU_2C02;
-import gui.NEmuS_Release;
+import gui.interfaces.NEmuS_Runnable;
 import openGL.Quad;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
@@ -45,12 +45,12 @@ public class PostProcessingPipeline {
 
         //If the pipeline has been modified, we lock the buffer and recompile the pipeline
         if (requestedSteps != null) {
+            for (PostProcessingStep step : steps)
+                step.cleanUp();
             steps.clear();
             locked = true;
             for (PostProcessingStep step : requestedSteps) {
-                step.cleanUp();
-                steps.add(step.clone());
-            }
+                steps.add(step.clone()); }
             requestedSteps = null;
             locked = false;
         }
@@ -61,9 +61,9 @@ public class PostProcessingPipeline {
             steps.get(0).render(texture, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
             for (int i = 1; i < steps.size(); i++)
                 steps.get(i).render(steps.get(i - 1).getOutputTexture(), PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
-            default_filter.render(steps.get(steps.size() - 1).getOutputTexture(), NEmuS_Release.getInstance().getWidth(), NEmuS_Release.getInstance().getHeight());
+            default_filter.render(steps.get(steps.size() - 1).getOutputTexture(), NEmuS_Runnable.getInstance().getGameWidth(), NEmuS_Runnable.getInstance().getGameHeight());
         } else
-            default_filter.render(texture, NEmuS_Release.getInstance().getWidth(), NEmuS_Release.getInstance().getHeight());
+            default_filter.render(texture, NEmuS_Runnable.getInstance().getGameWidth(), NEmuS_Runnable.getInstance().getGameHeight());
         end();
     }
 

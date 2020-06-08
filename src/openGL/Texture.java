@@ -113,13 +113,6 @@ public class Texture {
     }
 
     /**
-     * Delete the texture from VRAM
-     */
-    public void delete() {
-        glDeleteTextures(id);
-    }
-
-    /**
      * Return the Texture as a BufferedImage
      * if it was created using one
      *
