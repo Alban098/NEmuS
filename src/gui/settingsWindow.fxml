@@ -2,9 +2,11 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Tooltip?>
@@ -25,19 +27,24 @@
                               <Button layoutX="10.0" layoutY="10.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#fireLoadROMEvent" text="Load" />
                               <Button layoutX="210.0" layoutY="10.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#fireResetEvent" text="Reset" />
                               <Button fx:id="pauseButton" layoutX="110.0" layoutY="10.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#triggerPauseEvent" text="Pause" />
-                              <Button fx:id="ramLeftButton" layoutX="10.0" layoutY="100.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageLeftEvent" text="&lt; RAM" />
-                              <Button fx:id="cpuStepButton" layoutX="110.0" layoutY="125.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#cpuStepEvent" text="CPU Step" />
-                              <Button fx:id="ramRightButton" layoutX="210.0" layoutY="100.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageRightEvent" text="RAM &gt;" />
-                              <Button fx:id="ramLeftPlusButton" layoutX="10.0" layoutY="150.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageLeftPlusEvent" text="&lt;&lt; RAM" />
-                              <Button fx:id="ramRightPlusButton" layoutX="210.0" layoutY="150.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageRightPlusEvent" text="RAM &gt;&gt;" />
-                              <Button fx:id="frameStepButton" layoutX="60.0" layoutY="205.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#frameStepEvent" text="One Frame">
+                              <Button fx:id="ramLeftButton" layoutX="10.0" layoutY="129.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageLeftEvent" text="&lt; RAM" />
+                              <Button fx:id="cpuStepButton" layoutX="110.0" layoutY="154.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#cpuStepEvent" text="CPU Step" />
+                              <Button fx:id="ramRightButton" layoutX="210.0" layoutY="129.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageRightEvent" text="RAM &gt;" />
+                              <Button fx:id="ramLeftPlusButton" layoutX="10.0" layoutY="179.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageLeftPlusEvent" text="&lt;&lt; RAM" />
+                              <Button fx:id="ramRightPlusButton" layoutX="210.0" layoutY="179.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageRightPlusEvent" text="RAM &gt;&gt;" />
+                              <Button fx:id="frameStepButton" layoutX="60.0" layoutY="219.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#frameStepEvent" text="One Frame">
                                  <effect>
                                     <Blend />
                                  </effect></Button>
-                              <Button fx:id="paletteSwapButton" layoutX="165.0" layoutY="205.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#paletteSwapEvent" text="Palette Swap">
+                              <Button fx:id="paletteSwapButton" layoutX="165.0" layoutY="219.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#paletteSwapEvent" text="Palette Swap">
                                  <effect>
                                     <Blend />
                                  </effect></Button>
+                              <Slider fx:id="volumeSlider" blockIncrement="1.0" layoutX="95.0" layoutY="45.0" majorTickUnit="50.0" minorTickCount="4" prefHeight="38.0" prefWidth="211.0" showTickLabels="true" showTickMarks="true" value="100.0" />
+                              <Slider fx:id="soundQualitySlider" blockIncrement="1.0" layoutX="95.0" layoutY="78.0" majorTickUnit="15.0" max="15.0" minorTickCount="14" prefHeight="14.0" prefWidth="211.0" showTickMarks="true" snapToTicks="true" value="8.0" />
+                              <Label layoutX="32.0" layoutY="43.0" text="Volume" />
+                              <Label layoutX="16.0" layoutY="76.0" text="Audio Quality" />
+                              <CheckBox fx:id="audioRenderingCheck" layoutX="100.0" layoutY="106.0" mnemonicParsing="false" onAction="#fireAudioRenderingEvent" text="Audio Rendering" />
                            </children>
                            <effect>
                               <Blend />

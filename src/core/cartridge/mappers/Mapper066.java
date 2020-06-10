@@ -27,7 +27,7 @@ public class Mapper066 extends Mapper {
      *
      * @param addr   the CPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
-     * @param data if there is data to be read, it will be written there
+     * @param data   if there is data to be read, it will be written there
      * @return Whether or not the Address was mapped
      */
     @Override
@@ -66,7 +66,7 @@ public class Mapper066 extends Mapper {
      *
      * @param addr   the PPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
-     * @param data if there is data to be read, it will be written there
+     * @param data   if there is data to be read, it will be written there
      * @return Whether or not the Address was mapped
      */
     @Override

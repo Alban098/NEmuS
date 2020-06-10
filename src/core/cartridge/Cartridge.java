@@ -165,7 +165,7 @@ public class Cartridge {
      * @param data the data to write
      * @return was the data for the Cartridge
      */
-    public boolean ppuWrite(int addr, int  data) {
+    public boolean ppuWrite(int addr, int data) {
         addr &= 0xFFFF;
         data &= 0xFF;
         IntegerWrapper mapped = new IntegerWrapper();

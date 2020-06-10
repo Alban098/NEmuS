@@ -1,8 +1,8 @@
 package utils;
 
-import javafx.scene.control.*;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
@@ -16,7 +16,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Just an utility class to show JavaFX dialog box
+ */
 public class Dialogs {
+
+    public static final String YES = "Yes";
+    public static final String NO = "No";
+    public static final String OK = "OK";
+    public static final String CANCEL = "Cancel";
 
     public static void showInformation(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -80,11 +88,6 @@ public class Dialogs {
 
         alert.showAndWait();
     }
-
-    public static final String YES = "Yes";
-    public static final String NO = "No";
-    public static final String OK = "OK";
-    public static final String CANCEL = "Cancel";
 
     public static String showConfirm(String title, String message, String... options) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);

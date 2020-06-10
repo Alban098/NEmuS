@@ -4,7 +4,6 @@ import exceptions.InvalidFileException;
 import utils.FileReader;
 
 import java.io.EOFException;
-import java.io.IOException;
 
 /**
  * This class represent the header of a iNES file

@@ -150,10 +150,16 @@ public class Texture {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
     }
 
+    /**
+     * Delete the texture from memory
+     */
     public void cleanUp() {
         glDeleteTextures(id);
     }
 
+    /**
+     * Unbind the current texture
+     */
     public void unbind() {
         glBindTexture(GL_TEXTURE_2D, 0);
     }

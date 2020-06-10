@@ -2,7 +2,7 @@ package core.ppu.registers;
 
 /**
  * This class represent an abstraction of a PPU address used to render background
- * Based on the great work of Loopy
+ * Credit for this goes to Loopy from the NESDev wiki
  */
 public class LoopyRegister {
 

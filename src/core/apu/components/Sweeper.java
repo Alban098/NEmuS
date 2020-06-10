@@ -2,6 +2,9 @@ package core.apu.components;
 
 import utils.IntegerWrapper;
 
+/**
+ * This class represents a sweeper used to change the frequency of the audio signal
+ */
 public class Sweeper {
 
     public boolean enabled = false;
@@ -14,7 +17,11 @@ public class Sweeper {
     private int change = 0;
     private int timer = 0x00;
 
-
+    /**
+     * Update the state of the frequency sweeper
+     *
+     * @param target the data to extract the from
+     */
     public void track(IntegerWrapper target) {
         if (enabled) {
             change = target.value >> shift;
@@ -22,26 +29,28 @@ public class Sweeper {
         }
     }
 
-    public boolean clock(IntegerWrapper target, boolean channel) {
-        boolean changed = false;
+    /**
+     * Compute a tick of the frequency sweeper
+     *
+     * @param target  the sequencer reload value (will be modified)
+     * @param channel which channel is selected (false = 0, true = 1)
+     */
+    public void clock(IntegerWrapper target, boolean channel) {
         if (timer == 0 && enabled && shift > 0 && !muted) {
             if (target.value >= 8 && change < 0x07FF) {
                 if (down)
                     target.value -= change - (channel ? 1 : 0);
                 else
                     target.value += change;
-                changed = true;
             }
         }
         if (enabled) {
             if (timer == 0 || reload) {
                 timer = period;
                 reload = false;
-            }
-            else
+            } else
                 timer--;
             muted = (target.value < 8) || (target.value > 0x7FF);
         }
-        return changed;
     }
 }

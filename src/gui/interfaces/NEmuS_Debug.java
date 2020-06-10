@@ -10,11 +10,10 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.text.FontWeight;
-import javafx.stage.Stage;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-
+import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
 import utils.Dialogs;
 
 import java.io.EOFException;
@@ -32,7 +31,7 @@ import static org.lwjgl.opengl.GL11.*;
  */
 public class NEmuS_Debug extends NEmuS_Runnable {
 
-    private static final int FRAME_DURATION = 1000 / 65;
+    private static final int FRAME_DURATION = 1000 / 60;
 
     private Stage debugWindow;
 
@@ -77,6 +76,9 @@ public class NEmuS_Debug extends NEmuS_Runnable {
         instance = this;
     }
 
+    /**
+     * Clean up the memory, kill the windows stop the threads
+     */
     @Override
     public void cleanUp() {
         pipeline.cleanUp();
@@ -172,7 +174,6 @@ public class NEmuS_Debug extends NEmuS_Runnable {
 
             //If we need to render the screen
             if ((emulationRunning || redraw) && System.currentTimeMillis() > next_frame) {
-                glfwMakeContextCurrent(game_window);
                 glClearColor(.6f, .6f, .6f, 0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 InputHandling();
@@ -188,7 +189,7 @@ public class NEmuS_Debug extends NEmuS_Runnable {
                 }
                 screen_texture.load(nes.getPpu().getScreenBuffer());
                 renderGameScreen();
-                glfwSetWindowTitle(game_window, 1000 / ((System.currentTimeMillis() - last_frame) + 1) + " fps");
+                glfwSetWindowTitle(game_window, game_name + " | " + 100000 / ((System.currentTimeMillis() - last_frame) * 100 + 1) + " fps");
                 last_frame = System.currentTimeMillis();
                 glfwSwapBuffers(game_window);
                 if (!emulationRunning)
@@ -218,7 +219,7 @@ public class NEmuS_Debug extends NEmuS_Runnable {
                 if (ram_page > 0xFF) ram_page -= 0x100;
                 //Set when the next frame should occur
                 if (System.currentTimeMillis() >= next_frame) {
-                    next_frame = System.currentTimeMillis() + FRAME_DURATION*2;
+                    next_frame = System.currentTimeMillis() + FRAME_DURATION * 2;
                     //Compute and update the debug textures (CPU, OAM, PatternTables and Nametables)
                     Platform.runLater(this::updateCanvas);
                 }
@@ -231,6 +232,9 @@ public class NEmuS_Debug extends NEmuS_Runnable {
         glfwSetWindowShouldClose(game_window, true);
     }
 
+    /**
+     * Update and redraw the Debug View
+     */
     private void updateCanvas() {
         // ================================= PPU Memory Visualization =================================
         nes.getPpu().getNametable(0, (WritableImage) nametable1_img);
@@ -335,13 +339,13 @@ public class NEmuS_Debug extends NEmuS_Runnable {
         // ================================= Object Attribute Memory =================================
         g.setFont(Font.font("monospaced", FontWeight.BOLD, 35));
         g.setFill(Color.LIMEGREEN);
-        g.fillText("OAM Memory",  540-40, 40);
+        g.fillText("OAM Memory", 540 - 40, 40);
         g.setFont(Font.font("monospaced", FontWeight.BOLD, 12));
         g.setFill(Color.WHITE);
         synchronized (nes.getPpu()) {
             for (int i = 0; i < 32; i++) {
                 String s = String.format("%02X:", i) + " (" + String.format("%03d", nes.getPpu().getOams()[i].getX()) + ", " + String.format("%03d", nes.getPpu().getOams()[i].getY()) + ") ID: " + String.format("%02X", nes.getPpu().getOams()[i].getId()) + " AT: " + String.format("%02X", nes.getPpu().getOams()[i].getAttribute());
-                g.fillText(s,  410, 60 + 11 * i);
+                g.fillText(s, 410, 60 + 11 * i);
             }
             for (int i = 0; i < 32; i++) {
                 String s = String.format("%02X:", i + 32) + " (" + String.format("%03d", nes.getPpu().getOams()[i + 32].getX()) + ", " + String.format("%03d", nes.getPpu().getOams()[i + 32].getY()) + ") ID: " + String.format("%02X", nes.getPpu().getOams()[i + 32].getId()) + " AT: " + String.format("%02X", nes.getPpu().getOams()[i + 32].getAttribute());
@@ -367,35 +371,54 @@ public class NEmuS_Debug extends NEmuS_Runnable {
 
         int palette_size = 14;
         g.setFill(Color.RED);
-        g.fillRect(855 + selectedPalette*(4*palette_size+10) - 5, 551, palette_size*4 + 10, 4*palette_size + 10);
+        g.fillRect(855 + selectedPalette * (4 * palette_size + 10) - 5, 551, palette_size * 4 + 10, 4 * palette_size + 10);
         for (int p = 0; p < 8; p++) {
             for (int s = 0; s < 4; s++) {
                 g.setFill(nes.getPpu().threadSafeGetColorFromPalette(p, s));
-                g.fillRect(855 + s*palette_size + p*(4*palette_size+10), 556, palette_size, 4*palette_size);
+                g.fillRect(855 + s * palette_size + p * (4 * palette_size + 10), 556, palette_size, 4 * palette_size);
             }
         }
     }
 
+    /**
+     * Set the current RAM Page to be the 16th previous one
+     * (loop when overflow)
+     */
     public synchronized void ramPageLeftPlusEvent() {
         ram_page -= 0x10;
         redraw = true;
     }
 
+    /**
+     * Set the current RAM Page to be the 16th next one
+     * (loop when overflow)
+     */
     public synchronized void ramPageRightPlusEvent() {
         ram_page += 0x10;
         redraw = true;
     }
 
+    /**
+     * Set the current RAM Page to be the previous one
+     * (loop when overflow)
+     */
     public synchronized void ramPageLeftEvent() {
         ram_page--;
         redraw = true;
     }
 
+    /**
+     * Set the current RAM Page to be the next one
+     * (loop when overflow)
+     */
     public synchronized void ramPageRightEvent() {
         ram_page++;
         redraw = true;
     }
 
+    /**
+     * Advance by one CPU Instruction
+     */
     public synchronized void cpuStepEvent() {
         if (!emulationRunning) {
             do {
@@ -412,11 +435,18 @@ public class NEmuS_Debug extends NEmuS_Runnable {
         redraw = true;
     }
 
+    /**
+     * Swap the currently selected palette
+     * (loop when overflow)
+     */
     public synchronized void paletteSwapEvent() {
         selectedPalette = (selectedPalette + 1) & 0x7;
         redraw = true;
     }
 
+    /**
+     * Advance the emulation by one frame
+     */
     public synchronized void frameStepEvent() {
         super.frameStepEvent();
         frameCount++;

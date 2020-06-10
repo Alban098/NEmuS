@@ -3,9 +3,15 @@ package core.apu;
 import core.apu.channels.NoiseChannel;
 import core.apu.channels.PulseChannel;
 
+/**
+ * This class represent the APU of the NES
+ * it handle everything sound related
+ */
 public class APU_2A03 {
 
-    public static int[] length_table = {10, 254, 20,  2, 40,  4, 80,  6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30 };
+    private static final double clockTime = .333333333 / 1789773.0;
+    public static int[] length_table = {10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30};
+    private static double volume = 1;
 
     private PulseChannel pulse_1;
     private PulseChannel pulse_2;
@@ -15,21 +21,51 @@ public class APU_2A03 {
     private double totalTime = 0.0;
     private int frame_counter = 0;
 
+    /**
+     * Create a new instance of an APU
+     */
     public APU_2A03() {
         pulse_1 = new PulseChannel();
         pulse_2 = new PulseChannel();
         noise = new NoiseChannel();
     }
 
-    public double getSample() {
-        return (pulse_1.output - 0.8) * 0.1 + (pulse_2.output - 0.8) * 0.1 + (2.0 * noise.output - 0.5) * 0.1;
+    /**
+     * Return the current volume
+     *
+     * @return the current APU volume
+     */
+    public static double getVolume() {
+        return volume;
     }
 
+    /**
+     * Set the master volume of the APU
+     *
+     * @param volume the volume to set between 0 and 1
+     */
+    public static synchronized void setVolume(double volume) {
+        APU_2A03.volume = volume;
+    }
+
+    /**
+     * Return the current audio sample as a value between -1 and 1
+     *
+     * @return the current audio sample as a value between -1 and 1
+     */
+    public double getSample() {
+        return ((pulse_1.output - 0.8) * 0.1 + (pulse_2.output - 0.8) * 0.1 + (2.0 * noise.output - 0.5) * 0.1) * volume;
+    }
+
+    /**
+     * Called when the CPU try to write to the APU
+     *
+     * @param addr the address to write to
+     */
     public void cpuWrite(int addr, int data) {
         addr &= 0xFFFF;
         data &= 0xFF;
-        switch (addr)
-        {
+        switch (addr) {
             case 0x4000:
                 pulse_1.writeDutyCycle(data);
                 break;
@@ -60,7 +96,7 @@ public class APU_2A03 {
                 noise.updateReload(data);
                 break;
             case 0x400E:
-               break;
+                break;
             case 0x4015:
                 pulse_1.enabled = (data & 0x1) == 1;
                 pulse_2.enabled = (data & 0x2) == 2;
@@ -75,6 +111,13 @@ public class APU_2A03 {
         }
     }
 
+    /**
+     * Called when the CPU try to read from the APU
+     * Only address 0x4015 is relevant for the CPU
+     *
+     * @param addr the address to read from
+     * @return the value represent the state of the counters of every implemented channels
+     */
     public int cpuRead(int addr) {
         int data = 0x00;
         if (addr == 0x4015) {
@@ -85,11 +128,18 @@ public class APU_2A03 {
         return data;
     }
 
-    public void clock() {
+    /**
+     * A system clock of the APU, sampling can be deactivated for better performance
+     * but there will be no sound
+     * when sampling is disabled we only update what is susceptible to be read (the length counters)
+     *
+     * @param enable_sampling if sampling is enabled
+     */
+    public void clock(boolean enable_sampling) {
         boolean quarterFrameClock = false;
         boolean halfFrameClock = false;
 
-        totalTime += .333333333 / 1789773.0;
+        totalTime += clockTime;
 
         if (clock_counter % 6 == 0) {
             frame_counter++;
@@ -112,7 +162,7 @@ public class APU_2A03 {
                 frame_counter = 0;
             }
 
-            if (quarterFrameClock) {
+            if (quarterFrameClock && enable_sampling) {
                 pulse_1.envelope.clock(pulse_1.halted);
                 pulse_2.envelope.clock(pulse_2.halted);
                 noise.envelope.clock(noise.halted);
@@ -121,17 +171,21 @@ public class APU_2A03 {
                 pulse_1.lengthCounter.clock(pulse_1.enabled, pulse_1.halted);
                 pulse_2.lengthCounter.clock(pulse_2.enabled, pulse_2.halted);
                 noise.lengthCounter.clock(noise.enabled, noise.halted);
-                pulse_1.sweeper.clock(pulse_1.sequencer.reload, false);
-                pulse_2.sweeper.clock(pulse_2.sequencer.reload, true);
+                if (enable_sampling) {
+                    pulse_1.sweeper.clock(pulse_1.sequencer.reload, false);
+                    pulse_2.sweeper.clock(pulse_2.sequencer.reload, true);
+                }
             }
-            pulse_1.compute(totalTime);
-            pulse_2.compute(totalTime);
-            noise.compute();
+            if (enable_sampling) {
+                pulse_1.compute(totalTime);
+                pulse_2.compute(totalTime);
+                noise.compute();
+            }
         }
-        pulse_1.sweeper.track(pulse_1.sequencer.reload);
-        pulse_2.sweeper.track(pulse_2.sequencer.reload);
+        if (enable_sampling) {
+            pulse_1.sweeper.track(pulse_1.sequencer.reload);
+            pulse_2.sweeper.track(pulse_2.sequencer.reload);
+        }
         clock_counter++;
     }
-
-    public void reset() {}
 }

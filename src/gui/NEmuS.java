@@ -11,7 +11,11 @@ import javafx.stage.Stage;
 
 public class NEmuS extends Application {
 
-    public static final boolean DEBUG_MODE = true;
+    public static final boolean DEBUG_MODE = false;
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -23,15 +27,11 @@ public class NEmuS extends Application {
                 nes = new NEmuS_Release();
             nes.loopGameWindow();
         }).start();
-        while (NEmuS_Runnable.getInstance() == null);
+        while (NEmuS_Runnable.getInstance() == null) ;
         Parent root = FXMLLoader.load(getClass().getResource("settingsWindow.fxml"));
         stage.setTitle("Settings");
         stage.setScene(new Scene(root));
         stage.setResizable(false);
         stage.show();
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }

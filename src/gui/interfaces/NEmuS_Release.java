@@ -23,6 +23,9 @@ public class NEmuS_Release extends NEmuS_Runnable {
 
     private AudioContext ac;
 
+    /**
+     * Create a new Instance of the emulator in release mode
+     */
     public NEmuS_Release() {
         super();
         JavaSoundAudioIO jsaIO = new JavaSoundAudioIO();
@@ -34,6 +37,9 @@ public class NEmuS_Release extends NEmuS_Runnable {
         instance = this;
     }
 
+    /**
+     * Clean up the memory, kill the windows and stop the audio context
+     */
     @Override
     public void cleanUp() {
         pipeline.cleanUp();
@@ -74,7 +80,7 @@ public class NEmuS_Release extends NEmuS_Runnable {
             public float calculate() {
                 synchronized (nes) {
                     if (emulationRunning)
-                        while (!nes.clock());
+                        while (!nes.clock()) ;
                     return emulationRunning ? (float) nes.dAudioSample : 0;
                 }
             }
@@ -84,7 +90,7 @@ public class NEmuS_Release extends NEmuS_Runnable {
 
     /**
      * Run the emulator
-     * this is essentially where the emulation occur
+     * handle input and redraw the screen
      */
     @Override
     public void loopGameWindow() {
@@ -116,14 +122,14 @@ public class NEmuS_Release extends NEmuS_Runnable {
             }
 
             //If we need to render the screen
-            if ((emulationRunning && System.currentTimeMillis() > next_frame) || redraw) {
+            if ((emulationRunning && nes.getPpu().frameComplete) || redraw) {
+                nes.getPpu().frameComplete = false;
                 glClearColor(.6f, .6f, .6f, 0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 InputHandling();
                 screen_texture.load(nes.getPpu().getScreenBuffer());
                 renderGameScreen();
-                next_frame = System.currentTimeMillis() + 13;
-                glfwSetWindowTitle(game_window, 1000 / ((System.currentTimeMillis() - last_frame) + 1) + " fps");
+                glfwSetWindowTitle(game_window, game_name + " | " + 100000 / ((System.currentTimeMillis() - last_frame) * 100 + 1) + " fps");
                 last_frame = System.currentTimeMillis();
                 glfwSwapBuffers(game_window);
                 if (redraw)

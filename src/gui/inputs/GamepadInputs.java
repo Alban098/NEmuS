@@ -1,5 +1,8 @@
 package gui.inputs;
 
+/**
+ * This class represents all possible inputs of the emulator
+ */
 public enum GamepadInputs {
     CONTROLLER_1_A,
     CONTROLLER_1_B,

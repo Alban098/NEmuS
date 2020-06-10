@@ -3,9 +3,9 @@ package openGL.postProcessing;
 import openGL.Quad;
 
 /**
- * This class represents a filter that will apply a horizontal Gaussian Blur
+ * This class represents a filter that flip the screen along the diagonal starting from the top left
  */
-public class GaussianHorizontal extends PostProcessingStep {
+public class DiagonalFlipTL extends PostProcessingStep {
 
     /**
      * Create a new Filter from specific shaders that will be rendered in an FBO of a specific size
@@ -14,8 +14,8 @@ public class GaussianHorizontal extends PostProcessingStep {
      * @param width  the width of the FBO
      * @param height the height of the FBO
      */
-    public GaussianHorizontal(Quad quad, int width, int height) {
-        super(quad, "shaders/vertex.glsl", "shaders/filters/gaussian_horizontal.glsl", width, height);
+    public DiagonalFlipTL(Quad quad, int width, int height) {
+        super(quad, "shaders/d1_flip_vertex.glsl", "shaders/filters/no_filter.glsl", width, height);
     }
 
     /**
@@ -25,11 +25,11 @@ public class GaussianHorizontal extends PostProcessingStep {
      */
     @Override
     public PostProcessingStep clone() {
-        return new GaussianHorizontal(quad, fbo.getWidth(), fbo.getHeight());
+        return new DiagonalFlipTL(quad, fbo.getWidth(), fbo.getHeight());
     }
 
     @Override
     public String toString() {
-        return "Gaussian Horizontal";
+        return "Diagonal Flip Top Left";
     }
 }

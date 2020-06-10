@@ -4,6 +4,7 @@ import core.apu.APU_2A03;
 import core.cartridge.Cartridge;
 import core.cpu.CPU_6502;
 import core.ppu.PPU_2C02;
+import gui.NEmuS;
 import utils.IntegerWrapper;
 
 /**
@@ -13,30 +14,26 @@ import utils.IntegerWrapper;
 public class NES {
 
     private static final long SAVE_INTERVAL = 20000;
-
-    private long next_save = 0;
-
     public final int[] controller;
-
-    private long systemTicks = 0;
     private final byte[] ram;
     private final CPU_6502 cpu;
     private final PPU_2C02 ppu;
     private final APU_2A03 apu;
-    private Cartridge cartridge;
     private final int[] controller_state;
-
+    public double dAudioSample = 0.0;
+    private long next_save = 0;
+    private long systemTicks = 0;
+    private Cartridge cartridge;
     private int dma_page = 0x00;
     private int dma_addr = 0x00;
     private int dma_data = 0x00;
     private boolean dma_transfer = false;
     private boolean dma_dummy = true;
-
     private double dAudioTime = 0.0;
     private double dAudioTimePerNESClock = 0.0;
     private double dAudioTimePerSystemSample = 0.0;
-
-    public double dAudioSample = 0.0;
+    private boolean audioSampleReady = false;
+    private boolean sound_rendering = true;
 
 
     /**
@@ -55,7 +52,7 @@ public class NES {
     }
 
     public void setSampleFreq(int sampleRate) {
-        dAudioTimePerSystemSample = 1.0 / (double)sampleRate;
+        dAudioTimePerSystemSample = 1.0 / (double) sampleRate;
         dAudioTimePerNESClock = 1.0 / 5369318.0;
     }
 
@@ -92,14 +89,13 @@ public class NES {
                 ram[addr & 0x07FF] = (byte) data;
             } else if (addr <= 0x3FFF) { //Write PPU Register (8 values mirrored over the range)
                 ppu.cpuWrite(addr & 0x0007, data);
-
             } else if (addr <= 0x4013 || addr == 0x4015 || addr == 0x4017) { //  NES APU
                 apu.cpuWrite(addr, data);
             } else if (addr == 0x4014) { //Write to DMA Register
                 dma_page = data;
                 dma_addr = 0;
                 dma_transfer = true;
-            } else if (addr >= 0x4016 && addr <= 0x4017) //When trying to write to controller register, we snapshot the current controller state
+            } else if (addr <= 0x4017) //When trying to write to controller register, we snapshot the current controller state
                 controller_state[addr & 0x01] = controller[addr & 0x01];
         }
     }
@@ -159,7 +155,6 @@ public class NES {
     public synchronized void reset() {
         cpu.reset();
         ppu.reset();
-        apu.reset();
         cartridge.reset();
         systemTicks = 0;
         dma_page = 0x00;
@@ -169,6 +164,9 @@ public class NES {
         dma_transfer = false;
     }
 
+    /**
+     * Set the console to its default boot up state
+     */
     public void startup() {
         cpu.startup();
         ppu.reset();
@@ -194,9 +192,9 @@ public class NES {
      * the CPU is clocked one every 3 times
      */
     public boolean clock() {
-        //The PPU is clocked every tick
+        //The PPU and APU are clocked every tick
         ppu.clock();
-        apu.clock();
+        apu.clock(!NEmuS.DEBUG_MODE && sound_rendering);
         //The CPU clock is 3 time slower than the PPU clock, so it is clocked every 3 ticks
         if (systemTicks % 3 == 0) {
             //If a Direct Memory Access is occurring
@@ -237,10 +235,11 @@ public class NES {
                 cpu.clock();
         }
 
-        boolean audioSampleReady = false;
+        audioSampleReady = false;
         dAudioTime += dAudioTimePerNESClock;
-        if (dAudioTime >= dAudioTimePerSystemSample)
-        {
+        //We verify if it is time to calculate an audio sample
+        if (dAudioTime >= dAudioTimePerSystemSample) {
+            //If so we set the time for the next audio sample and compute the current one
             dAudioTime -= dAudioTimePerSystemSample;
             dAudioSample = apu.getSample();
             audioSampleReady = true;
@@ -253,15 +252,32 @@ public class NES {
             cartridge.getMapper().irqClear();
             cpu.irq();
         }
+
+        //If it is time to save the Cartridge, we trigger that event
         if (System.currentTimeMillis() >= next_save) {
             cartridge.save();
             next_save = System.currentTimeMillis() + SAVE_INTERVAL;
         }
         systemTicks++;
+
         return audioSampleReady;
     }
 
+    /**
+     * Return a reference to the currently inserted Cartridge
+     *
+     * @return the currently inserted Cartridge
+     */
     public Cartridge getCartridge() {
         return cartridge;
+    }
+
+    /**
+     * Enable or disable audio rendering
+     *
+     * @param enabled should the audio rendering be enabled
+     */
+    public void enableSoundRendering(boolean enabled) {
+        this.sound_rendering = enabled;
     }
 }

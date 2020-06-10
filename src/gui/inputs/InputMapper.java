@@ -274,14 +274,14 @@ public class InputMapper {
             File fileXML = new File("input_mapping.xml");
             Document xml;
             xml = builder.parse(fileXML);
-            Element controls = (Element)xml.getElementsByTagName("controls").item(0);
+            Element controls = (Element) xml.getElementsByTagName("controls").item(0);
             if (controls == null)
                 throw new InvalidFileException("input_mapping.xml file corrupted (controls node not found)");
-            Element keyboard = (Element)controls.getElementsByTagName("keyboard").item(0);
+            Element keyboard = (Element) controls.getElementsByTagName("keyboard").item(0);
             if (keyboard == null)
                 throw new InvalidFileException("input_mapping.xml file corrupted (keyboard node not found)");
             NodeList keys = keyboard.getElementsByTagName("key");
-            Element joystick = (Element)controls.getElementsByTagName("joystick").item(0);
+            Element joystick = (Element) controls.getElementsByTagName("joystick").item(0);
             if (joystick == null)
                 throw new InvalidFileException("input_mapping.xml file corrupted (joystick node not found)");
             NodeList buttons = joystick.getElementsByTagName("button");

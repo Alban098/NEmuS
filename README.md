@@ -39,9 +39,12 @@
   - Pause/Resume emulation
   - Advance by a Frame (when emulation is paused)
   - Add/Remove/Move Post Processing Filter from the pipeline
+  - Change Volume
+  - Change Audio Quality (Big impact on performance)
+  - Disable Audio Rendering (Big impact on performance)
   - (DEBUG MODE) Advance by a CPU Instruction (Assembly step)
   - (DEBUG MODE) Switch the Palette used by the Pattern Table Viewer
-  - (DEBUG MODE) Change the current RAM Page (± 0x1 ou ± 0x10)
+  - (DEBUG MODE) Change the current RAM Page (± 0x1 or ± 0x10)
 * A Debug window showing the following information :
   - The state of the CPU (Registers, Stack Pointer and Program Counter)
   - One page of RAM (as seen by the CPU) navigable

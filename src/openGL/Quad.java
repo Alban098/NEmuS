@@ -6,16 +6,23 @@ import org.lwjgl.system.MemoryUtil;
 import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.glGetUniformLocation;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.system.MemoryUtil.memFree;
 
+/**
+ * This class represents a Quad where we can render a texture
+ */
 public class Quad {
 
     public int vaoId;
     private int vboId;
 
+    /**
+     * Create a new Quad from a set of vertices
+     *
+     * @param vertices an array containing the vertices (in OpenGL coordinates)
+     */
     public Quad(float[] vertices) {
 
         FloatBuffer verticesBuffer = MemoryUtil.memAllocFloat(vertices.length);
@@ -34,6 +41,13 @@ public class Quad {
         glBindVertexArray(0);
     }
 
+    /**
+     * Render the Quad, the desired Shader and Texture should hav been bound previously
+     * This quad will fill up the screen
+     *
+     * @param width  the width of the rendering target
+     * @param height the height of the rendered target
+     */
     public void render(int width, int height) {
         glViewport(0, 0, width, height);
         glMatrixMode(GL_PROJECTION);
@@ -53,6 +67,9 @@ public class Quad {
         glDisable(GL11.GL_DEPTH_TEST);
     }
 
+    /**
+     * Delete all VAOs and VBOs used by the quad
+     */
     public void cleanUp() {
         glDeleteBuffers(vboId);
         glDeleteVertexArrays(vaoId);

@@ -122,14 +122,22 @@ public class Mapper001 extends Mapper {
                         //The mirroring mode is being changed
                         controlRegister = loadRegister & 0x1F;
                         switch (controlRegister & 0x03) {
-                            case 0: mirroring_mode = Mirror.ONESCREEN_LOW; break;
-                            case 1: mirroring_mode = Mirror.ONESCREEN_HIGH; break;
-                            case 2: mirroring_mode = Mirror.VERTICAL; break;
-                            case 3: mirroring_mode = Mirror.HORIZONTAL; break;
+                            case 0:
+                                mirroring_mode = Mirror.ONESCREEN_LOW;
+                                break;
+                            case 1:
+                                mirroring_mode = Mirror.ONESCREEN_HIGH;
+                                break;
+                            case 2:
+                                mirroring_mode = Mirror.VERTICAL;
+                                break;
+                            case 3:
+                                mirroring_mode = Mirror.HORIZONTAL;
+                                break;
                         }
                     } else if (targetRegister == 1) { // 0xA000 - 0xBFFF
                         if ((controlRegister & 0b10000) == 0b10000) //We change the lower half of the CHR Memory range
-                            selectedCHRBank4Low =  loadRegister & 0x1F;
+                            selectedCHRBank4Low = loadRegister & 0x1F;
                         else //We change the entire CHR Memory range
                             selectedCHRBank8 = (loadRegister & 0x1E) >> 1;
                     } else if (targetRegister == 2) { // 0xC000 - 0xDFFF

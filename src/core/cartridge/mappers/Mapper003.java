@@ -5,7 +5,7 @@ import utils.IntegerWrapper;
 /**
  * This class implements the iNES Mapper 003 (CNROM)
  */
-public class Mapper003 extends Mapper{
+public class Mapper003 extends Mapper {
 
     private int selectedCHRBank = 0x00;
 
@@ -26,7 +26,7 @@ public class Mapper003 extends Mapper{
      *
      * @param addr   the CPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
-     * @param data if there is data to be read, it will be written there
+     * @param data   if there is data to be read, it will be written there
      * @return Whether or not the Address was mapped
      */
     @Override
@@ -69,7 +69,7 @@ public class Mapper003 extends Mapper{
      *
      * @param addr   the PPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
-     * @param data if there is data to be read, it will be written there
+     * @param data   if there is data to be read, it will be written there
      * @return Whether or not the Address was mapped
      */
     @Override
@@ -94,7 +94,6 @@ public class Mapper003 extends Mapper{
     public boolean ppuMapWrite(int addr, IntegerWrapper mapped, int data) {
         return false;
     }
-
 
 
     /**

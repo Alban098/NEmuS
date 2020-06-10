@@ -24,20 +24,22 @@ import java.io.EOFException;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.glEnable;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
+/**
+ * This class is an abstraction of the entry point of the Emulator
+ */
 public abstract class NEmuS_Runnable {
 
     protected static NEmuS_Runnable instance;
 
     protected final NES nes;
 
+    protected String game_name;
     protected InputMapper inputMapper;
-
     protected int game_width = PPU_2C02.SCREEN_WIDTH * 2;
     protected int game_height = PPU_2C02.SCREEN_HEIGHT * 2;
     protected long game_window;
@@ -54,16 +56,30 @@ public abstract class NEmuS_Runnable {
     protected boolean redraw = false;
 
 
-    public synchronized static NEmuS_Runnable getInstance() {
-        return instance;
-    }
-
+    /**
+     * Create a new Instance of the emulator
+     */
     public NEmuS_Runnable() {
         nes = new NES();
     }
 
+    /**
+     * Get the current Instance a the emulator
+     *
+     * @return the current instance of the emulator
+     */
+    public synchronized static NEmuS_Runnable getInstance() {
+        return instance;
+    }
+
+    /**
+     * Clean up the memory, kill the windows and stop the audio context
+     */
     public abstract void cleanUp();
 
+    /**
+     * Run the emulator
+     */
     public abstract void loopGameWindow();
 
     /**
@@ -210,28 +226,58 @@ public abstract class NEmuS_Runnable {
         pipeline.applyFilters(fbo.getTexture());
     }
 
-    public synchronized void fireLoadROMEvent(String filename) {
+    /**
+     * Notify the emulator that it needs to load a ROM on the next game loop
+     *
+     * @param filename the file to load
+     * @param name     the name of the game
+     */
+    public synchronized void fireLoadROMEvent(String filename, String name) {
         requestedRom = filename;
+        game_name = name;
         loadROMRequested = true;
     }
 
+    /**
+     * Notify the emulator that it needs to reset on the next game loop
+     */
     public synchronized void fireResetEvent() {
         if (nes.getCartridge() != null)
             resetRequested = true;
     }
 
+    /**
+     * Return the width of the game window
+     *
+     * @return the width of the game window
+     */
     public int getGameWidth() {
         return game_width;
     }
 
+    /**
+     * Return the height of the game window
+     *
+     * @return the height of the game window
+     */
     public int getGameHeight() {
         return game_height;
     }
 
+    /**
+     * Return the current post processing pipeline
+     *
+     * @return the post processing pipeline
+     */
     public PostProcessingPipeline getPipeline() {
         return pipeline;
     }
 
+    /**
+     * Pause the emulation if it has started
+     *
+     * @return was the pause event successful
+     */
     public synchronized boolean pause() {
         if (nes.getCartridge() != null) {
             emulationRunning = !emulationRunning;
@@ -240,6 +286,9 @@ public abstract class NEmuS_Runnable {
         return false;
     }
 
+    /**
+     * Advance the emulation by one frame
+     */
     public synchronized void frameStepEvent() {
         if (!emulationRunning) {
             do {
@@ -253,19 +302,62 @@ public abstract class NEmuS_Runnable {
         }
     }
 
-    public synchronized void ramPageLeftPlusEvent() {}
+    /**
+     * Set the current RAM Page to be the 16th previous one
+     * (loop when overflow)
+     */
+    public synchronized void ramPageLeftPlusEvent() {
+    }
 
-    public synchronized void ramPageRightPlusEvent() {}
+    /**
+     * Set the current RAM Page to be the 16th next one
+     * (loop when overflow)
+     */
+    public synchronized void ramPageRightPlusEvent() {
+    }
 
-    public synchronized void ramPageLeftEvent() {}
+    /**
+     * Set the current RAM Page to be the previous one
+     * (loop when overflow)
+     */
+    public synchronized void ramPageLeftEvent() {
+    }
 
-    public synchronized void ramPageRightEvent() {}
+    /**
+     * Set the current RAM Page to be the next one
+     * (loop when overflow)
+     */
+    public synchronized void ramPageRightEvent() {
+    }
 
-    public synchronized void cpuStepEvent() {}
+    /**
+     * Advance by one CPU Instruction
+     */
+    public synchronized void cpuStepEvent() {
+    }
 
-    public synchronized void paletteSwapEvent() {}
+    /**
+     * Swap the currently selected palette
+     * (loop when overflow)
+     */
+    public synchronized void paletteSwapEvent() {
+    }
 
-    public boolean isEmulationRunning() {
+    /**
+     * Return whether or not the emulation is currently running
+     *
+     * @return is the emulation running
+     */
+    public synchronized boolean isEmulationRunning() {
         return emulationRunning;
+    }
+
+    /**
+     * Enable or Disable sampling int the APU
+     *
+     * @param enabled should sampling be activated
+     */
+    public synchronized void fireAudioRenderingEvent(boolean enabled) {
+        nes.enableSoundRendering(enabled);
     }
 }
