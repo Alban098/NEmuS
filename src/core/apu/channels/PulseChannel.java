@@ -39,22 +39,23 @@ public class PulseChannel {
     public void writeDutyCycle(int data) {
         switch ((data & 0xC0) >> 6) {
             case 0x00:
-                sequencer.sequence = 0b00000001;
+                sequencer.next_sequence = 0b00000001;
                 oscillator.duty_cycle = 0.125f;
                 break;
             case 0x01:
-                sequencer.sequence = 0b00000011;
+                sequencer.next_sequence = 0b00000011;
                 oscillator.duty_cycle = 0.250f;
                 break;
             case 0x02:
-                sequencer.sequence = 0b00001111;
+                sequencer.next_sequence = 0b00001111;
                 oscillator.duty_cycle = 0.500f;
                 break;
             case 0x03:
-                sequencer.sequence = 0b11111100;
+                sequencer.next_sequence = 0b11111100;
                 oscillator.duty_cycle = 0.750f;
                 break;
         }
+        sequencer.sequence = sequencer.next_sequence;
         halted = (data & 0x20) == 0x20;
         envelope.volume = (data & 0x0F);
         envelope.disabled = (data & 0x10) == 0x10;
@@ -91,6 +92,7 @@ public class PulseChannel {
     public void writeTimerHigh(int data) {
         sequencer.reload.value = (sequencer.reload.value & 0x00FF) | ((data & 0x7) << 8);
         sequencer.timer = sequencer.reload.value;
+        sequencer.sequence = sequencer.next_sequence;
     }
 
     /**
@@ -108,18 +110,16 @@ public class PulseChannel {
      */
     public void compute(double time, boolean raw) {
         sequencer.clock(enabled, s -> (((s & 0x01) << 7) | ((s & 0xFE) >> 1)));
-        if (raw) {
-            sample = sequencer.output;
+        if (raw && enabled && lengthCounter.counter > 0 && sequencer.timer >= 8 && !sweeper.muted && envelope.output > 2) {
+            output = sequencer.output * ((envelope.output - 1) / 16.0);
         } else {
-            oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload.value + 1));
-            oscillator.amplitude = (envelope.output - 1) / 16.0f;
-            sample = oscillator.sample(time);
-
-            if (lengthCounter.counter > 0 && sequencer.timer >= 8 && !sweeper.muted && envelope.output > 2)
-                output = (sample - output) * 0.5;
-            else
+            if (enabled && lengthCounter.counter > 0 && sequencer.timer >= 8 && !sweeper.muted && envelope.output > 2) {
+                oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload.value + 1));
+                oscillator.amplitude = (envelope.output - 1) / 16.0f;
+                sample = oscillator.sample(time);
+                output = sample;
+            } else
                 output = 0;
-            if (!enabled) output = 0;
         }
     }
 }

@@ -22,6 +22,9 @@ import static org.lwjgl.opengl.GL11.*;
 public class NEmuS_Release extends NEmuS_Runnable {
 
     private AudioContext ac;
+    private long clock_count;
+    private int frame_duration = 0;
+    private int fps = 0;
 
     /**
      * Create a new Instance of the emulator in release mode
@@ -78,11 +81,10 @@ public class NEmuS_Release extends NEmuS_Runnable {
         //Create the audio context responsible of everything time and sound related
         Function function = new Function(new WaveShaper(ac)) {
             public float calculate() {
-                synchronized (nes) {
-                    if (emulationRunning)
-                        while (!nes.clock()) ;
-                    return emulationRunning ? (float) nes.dAudioSample : 0;
-                }
+                if (emulationRunning)
+                    while (!nes.clock())
+                        clock_count++;
+                return emulationRunning ? (float) nes.dAudioSample : 0;
             }
         };
         ac.out.addInput(function);
@@ -95,7 +97,7 @@ public class NEmuS_Release extends NEmuS_Runnable {
     @Override
     public void loopGameWindow() {
         ac.start();
-        long last_frame = 0, next_frame = 0;
+        long last_frame = 0;
         while (!glfwWindowShouldClose(game_window)) {
             //If a ROM Loading has been requested
             if (loadROMRequested) {
@@ -123,16 +125,17 @@ public class NEmuS_Release extends NEmuS_Runnable {
 
             //If we need to render the screen
             if ((emulationRunning && nes.getPpu().frameComplete) || redraw) {
+                frame_duration = (int) (System.currentTimeMillis() - last_frame);
+                fps = (int) (10000f / frame_duration / 10);
+                last_frame = System.currentTimeMillis();
                 frameCount++;
                 nes.getPpu().frameComplete = false;
-                glClearColor(.6f, .6f, .6f, 0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 InputHandling();
                 screen_texture.load(nes.getPpu().getScreenBuffer());
                 renderGameScreen();
                 if (frameCount % 10 == 0) {
-                    glfwSetWindowTitle(game_window, game_name + " | " + (System.currentTimeMillis() - last_frame) / 10 + " ms (" + (int)(100000f/(System.currentTimeMillis() - last_frame)/10f) + "fps)");
-                    last_frame = System.currentTimeMillis();
+                    glfwSetWindowTitle(game_window, game_name + " | " + frame_duration + " ms (" + fps + "fps)");
                 }
                 glfwSwapBuffers(game_window);
                 if (redraw)

@@ -13,6 +13,7 @@ public class NoiseChannel {
 
     public boolean enabled = false;
     public boolean halted = false;
+    public boolean mode = false;
     public Envelope envelope;
     public LengthCounter lengthCounter;
     public Sequencer sequencer;
@@ -38,6 +39,7 @@ public class NoiseChannel {
      * @param data represent which bit to set to the 16bit reload register
      */
     public void updateReload(int data) {
+        mode = (data & 0x80) == 0x80;
         switch (data & 0x0F) {
             case 0x00:
                 sequencer.reload.value = 0;
@@ -94,9 +96,10 @@ public class NoiseChannel {
      * Compute the sample of the channel
      */
     public void compute() {
-        sequencer.clock(enabled, s -> (((s & 0x0001) ^ ((s & 0x0002) >> 1)) << 14) | ((s & 0x7FFF) >> 1));
+        sequencer.clock(enabled, s -> (((s & 0x0001) ^ ((s & (mode ? 0x0040 : 0x0002)) >> 1)) << 14) | ((s & 0x7FFF) >> 1));
+        output = 0;
 
-        if (lengthCounter.counter > 0 && sequencer.timer >= 8) {
+        if (lengthCounter.counter > 0 && (sequencer.sequence & 0x01) != 0) {
             output = (double) sequencer.output * ((double) (envelope.output - 1) / 16.0);
         }
         if (!enabled)

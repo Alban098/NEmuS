@@ -247,6 +247,9 @@ public class NES {
         //If the PPU triggers an Non Maskable Interrupt, it is propagated to the CPU (Vertical Blank)
         if (ppu.nmi())
             cpu.nmi();
+        //If the APU or Cartridge need to trigger an IRQ, we propagate it
+        if (apu.irq())
+            cpu.irq();
         if (cartridge.getMapper().irqState()) {
             cartridge.getMapper().irqClear();
             cpu.irq();

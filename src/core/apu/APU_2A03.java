@@ -20,6 +20,11 @@ public class APU_2A03 {
     private int clock_counter = 0;
     private double totalTime = 0.0;
     private int frame_counter = 0;
+    private boolean b5StepMode = false;
+    private int writeTo4017 = -1;
+
+    public boolean frameIRQ = false;
+
     private boolean raw_audio = false;
 
     /**
@@ -29,6 +34,7 @@ public class APU_2A03 {
         pulse_1 = new PulseChannel();
         pulse_2 = new PulseChannel();
         noise = new NoiseChannel();
+        noise.sequencer.sequence = 0xDBDB;
     }
 
     /**
@@ -55,9 +61,7 @@ public class APU_2A03 {
      * @return the current audio sample as a value between -1 and 1
      */
     public double getSample() {
-        if (raw_audio)
-            return ((pulse_1.sample - 0.5) * 0.2 + (pulse_2.sample - 0.5) * 0.2 + (2.0 * noise.output - 0.5) * 0.2) * volume;
-        return ((pulse_1.output - 0.5) * 0.4 + (pulse_2.output - 0.5) * 0.4 + (2.0 * noise.output - 0.5) * 0.4) * volume;
+        return 0.00752 * ((pulse_1.output + 0.5) * 15 + (pulse_2.output + 0.5) * 15) + 0.00494 * noise.output * 15;
     }
 
     /**
@@ -96,20 +100,35 @@ public class APU_2A03 {
                 pulse_2.writeLengthCounterLoad(data);
                 break;
             case 0x400C:
-                noise.updateReload(data);
+                noise.updateEnvelope(data);
                 break;
             case 0x400E:
-                break;
-            case 0x4015:
-                pulse_1.enabled = (data & 0x1) == 1;
-                pulse_2.enabled = (data & 0x2) == 2;
-                noise.enabled = (data & 0x4) == 4;
+                noise.updateReload(data);
                 break;
             case 0x400F:
                 pulse_1.envelope.started = true;
                 pulse_2.envelope.started = true;
                 noise.envelope.started = true;
                 noise.lengthCounter.counter = length_table[(data & 0xF8) >> 3];
+                break;
+            case 0x4015:
+                pulse_1.enabled = false;
+                pulse_2.enabled = false;
+                noise.enabled = false;
+                if ((data & 0x1) == 0x1) pulse_1.enabled = true;
+                else pulse_1.lengthCounter.counter = 0;
+
+                if ((data & 0x2) == 0x2) pulse_2.enabled = true;
+                else pulse_2.lengthCounter.counter = 0;
+
+                if ((data & 0x8) == 0x8) noise.enabled = true;
+                else noise.lengthCounter.counter = 0;
+
+                break;
+            case 0x4017:
+                b5StepMode = (data & 0x80) == 0x80;
+                if ((data & 0x40) == 0x40) frameIRQ = false;
+                writeTo4017 = 4;
                 break;
         }
     }
@@ -126,7 +145,7 @@ public class APU_2A03 {
         if (addr == 0x4015) {
             data |= (pulse_1.lengthCounter.counter > 0) ? 0x01 : 0x00;
             data |= (pulse_1.lengthCounter.counter > 0) ? 0x02 : 0x00;
-            data |= (noise.lengthCounter.counter > 0) ? 0x04 : 0x00;
+            data |= (noise.lengthCounter.counter > 0) ? 0x08 : 0x00;
         }
         return data;
     }
@@ -139,38 +158,68 @@ public class APU_2A03 {
      * @param enable_sampling if sampling is enabled
      */
     public void clock(boolean enable_sampling) {
-        boolean quarterFrameClock = false;
-        boolean halfFrameClock = false;
+        boolean clockEnvelope = false;
+        boolean clockLengthCounter = false;
 
         totalTime += clockTime;
-
         if (clock_counter % 6 == 0) {
-            frame_counter++;
-            if (frame_counter == 3729) {
-                quarterFrameClock = true;
-            }
-
-            if (frame_counter == 7457) {
-                quarterFrameClock = true;
-                halfFrameClock = true;
-            }
-
-            if (frame_counter == 11186) {
-                quarterFrameClock = true;
-            }
-
-            if (frame_counter == 14916) {
-                quarterFrameClock = true;
-                halfFrameClock = true;
+            //A write to 0x4017 will cause the frame counter to be reset after 4 CPU cycles (2 APU cycles)
+            if (writeTo4017 == 0) {
                 frame_counter = 0;
+                writeTo4017 = -1;
+                if (b5StepMode) {
+                    pulse_1.lengthCounter.clock(pulse_1.enabled, pulse_1.halted);
+                    pulse_2.lengthCounter.clock(pulse_2.enabled, pulse_2.halted);
+                    noise.lengthCounter.clock(noise.enabled, noise.halted);
+                    if (enable_sampling) {
+                        pulse_1.envelope.clock(pulse_1.halted);
+                        pulse_2.envelope.clock(pulse_2.halted);
+                        noise.envelope.clock(noise.halted);
+                        pulse_1.sweeper.clock(pulse_1.sequencer.reload, false);
+                        pulse_2.sweeper.clock(pulse_2.sequencer.reload, true);
+                    }
+                }
             }
+            if (writeTo4017 >= 0)
+                writeTo4017 -= 2;
 
-            if (quarterFrameClock && enable_sampling) {
+            frame_counter++;
+            if (b5StepMode) {
+                if (frame_counter == 3729)
+                    clockEnvelope = true;
+                if (frame_counter == 7457) {
+                    clockEnvelope = true;
+                    clockLengthCounter = true;
+                }
+                if (frame_counter == 11186)
+                    clockEnvelope = true;
+                if (frame_counter == 18641) {
+                    clockEnvelope = true;
+                    clockLengthCounter = true;
+                    frame_counter = 0;
+                }
+            } else {
+                if (frame_counter == 3729)
+                    clockEnvelope = true;
+                if (frame_counter == 7457) {
+                    clockEnvelope = true;
+                    clockLengthCounter = true;
+                }
+                if (frame_counter == 11186)
+                    clockEnvelope = true;
+                if (frame_counter == 14916) {
+                    clockEnvelope = true;
+                    clockLengthCounter = true;
+                    frame_counter = 0;
+                    frameIRQ = true;
+                }
+            }
+            if (clockEnvelope && enable_sampling) {
                 pulse_1.envelope.clock(pulse_1.halted);
                 pulse_2.envelope.clock(pulse_2.halted);
                 noise.envelope.clock(noise.halted);
             }
-            if (halfFrameClock) {
+            if (clockLengthCounter) {
                 pulse_1.lengthCounter.clock(pulse_1.enabled, pulse_1.halted);
                 pulse_2.lengthCounter.clock(pulse_2.enabled, pulse_2.halted);
                 noise.lengthCounter.clock(noise.enabled, noise.halted);
@@ -199,5 +248,13 @@ public class APU_2A03 {
      */
     public void enabledRawMode(boolean raw) {
         raw_audio = raw;
+    }
+
+    public boolean irq() {
+        if (frameIRQ) {
+            frameIRQ = false;
+            return true;
+        }
+        return false;
     }
 }
