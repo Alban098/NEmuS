@@ -32,7 +32,6 @@ public class NES {
     private double dAudioTime = 0.0;
     private double dAudioTimePerNESClock = 0.0;
     private double dAudioTimePerSystemSample = 0.0;
-    private boolean audioSampleReady = false;
     private boolean sound_rendering = true;
 
 
@@ -235,7 +234,7 @@ public class NES {
                 cpu.clock();
         }
 
-        audioSampleReady = false;
+        boolean audioSampleReady = false;
         dAudioTime += dAudioTimePerNESClock;
         //We verify if it is time to calculate an audio sample
         if (dAudioTime >= dAudioTimePerSystemSample) {
@@ -279,5 +278,14 @@ public class NES {
      */
     public void enableSoundRendering(boolean enabled) {
         this.sound_rendering = enabled;
+    }
+
+    /**
+     * Enable or Disable RAW Audio mode
+     *
+     * @param raw should RAW Audio be triggered or not
+     */
+    public void toggleRawAudio(boolean raw) {
+        apu.enabledRawMode(raw);
     }
 }

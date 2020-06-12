@@ -8,12 +8,12 @@
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.SplitPane?>
-<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.effect.Blend?>
 <?import javafx.scene.effect.DropShadow?>
 <?import javafx.scene.layout.AnchorPane?>
 
+<?import gui.inputs.TextFieldInput?>
 <AnchorPane maxHeight="385.0" maxWidth="825.0" minHeight="385.0" minWidth="825.0" prefHeight="385.0" prefWidth="825.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.SettingsWindow">
    <children>
       <AnchorPane layoutX="10.0" layoutY="10.0" minHeight="0.0" minWidth="0.0" prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
@@ -44,7 +44,8 @@
                               <Slider fx:id="soundQualitySlider" blockIncrement="1.0" layoutX="95.0" layoutY="78.0" majorTickUnit="15.0" max="15.0" minorTickCount="14" prefHeight="14.0" prefWidth="211.0" showTickMarks="true" snapToTicks="true" value="8.0" />
                               <Label layoutX="32.0" layoutY="43.0" text="Volume" />
                               <Label layoutX="16.0" layoutY="76.0" text="Audio Quality" />
-                              <CheckBox fx:id="audioRenderingCheck" layoutX="100.0" layoutY="106.0" mnemonicParsing="false" onAction="#fireAudioRenderingEvent" text="Audio Rendering" />
+                              <CheckBox fx:id="audioRenderingCheck" layoutX="50.0" layoutY="108.0" mnemonicParsing="false" onAction="#fireAudioRenderingEvent" text="Audio Rendering" />
+                              <CheckBox fx:id="rawAudioCheck" layoutX="183.0" layoutY="108.0" mnemonicParsing="false" onAction="#fireRawAudioEvent" text="RAW Audio" />
                            </children>
                            <effect>
                               <Blend />
@@ -52,94 +53,94 @@
                         </AnchorPane>
                         <AnchorPane maxHeight="250.0" maxWidth="250.0" minHeight="250.0" minWidth="250.0" prefHeight="250.0" prefWidth="250.0">
                            <children>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="215.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                              <TextFieldInput fx:id="p1_keyboard_b" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="65.0" layoutY="215.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControls" prefWidth="70.0">
                                  <opaqueInsets>
                                     <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
                                  </opaqueInsets>
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="190.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_keyboard_a" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="65.0" layoutY="190.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControls" prefWidth="70.0">
                                  <opaqueInsets>
                                     <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
                                  </opaqueInsets>
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_keyboard_select" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="65.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControls" prefWidth="70.0">
                                  <opaqueInsets>
                                     <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
                                  </opaqueInsets>
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_keyboard_start" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="65.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControls" prefWidth="70.0">
                                  <opaqueInsets>
                                     <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
                                  </opaqueInsets>
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="115.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_keyboard_right" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="65.0" layoutY="115.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControls" prefWidth="70.0">
                                  <opaqueInsets>
                                     <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
                                  </opaqueInsets>
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="90.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_keyboard_down" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="65.0" layoutY="90.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControls" prefWidth="70.0">
                                  <opaqueInsets>
                                     <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
                                  </opaqueInsets>
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="65.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_keyboard_left" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="65.0" layoutY="65.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControls" prefWidth="70.0">
                                  <opaqueInsets>
                                     <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
                                  </opaqueInsets>
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="40.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_keyboard_up" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="65.0" layoutY="40.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControls" prefWidth="70.0">
                                  <opaqueInsets>
                                     <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
                                  </opaqueInsets>
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="215.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_gamepad_b" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="160.0" layoutY="215.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="190.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_gamepad_a" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="160.0" layoutY="190.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_gamepad_select" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="160.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_gamepad_start" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="160.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="115.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_gamepad_right" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="160.0" layoutY="115.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="90.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_gamepad_down" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="160.0" layoutY="90.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="65.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_gamepad_left" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="160.0" layoutY="65.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="40.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p1_gamepad_up" accessibleRole="BUTTON" alignment="TOP_CENTER" editable="false" layoutX="160.0" layoutY="40.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
+                                 </padding></TextFieldInput>
                               <Label layoutX="21.0" layoutY="40.0" text="UP" />
                               <Label layoutX="17.0" layoutY="65.0" text="LEFT" />
                               <Label layoutX="10.0" layoutY="90.0" text="DOWN" />
@@ -148,6 +149,8 @@
                               <Label layoutX="10.0" layoutY="165.0" text="SELECT" textAlignment="RIGHT" />
                               <Label layoutX="25.0" layoutY="190.0" text="A" />
                               <Label layoutX="25.0" layoutY="215.0" text="B" />
+                              <Label layoutX="75.0" layoutY="14.0" text="Keyboard" />
+                              <Label layoutX="168.0" layoutY="14.0" text="Gamepad" />
                            </children>
                            <opaqueInsets>
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -155,70 +158,70 @@
                         </AnchorPane>
                         <AnchorPane maxHeight="250.0" maxWidth="250.0" minHeight="250.0" minWidth="250.0" prefHeight="250.0" prefWidth="250.0">
                            <children>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="40.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                              <TextFieldInput fx:id="p2_keyboard_up" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="65.0" layoutY="40.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="65.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_keyboard_left" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="65.0" layoutY="65.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="90.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_keyboard_down" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="65.0" layoutY="90.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="115.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_keyboard_right" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="65.0" layoutY="115.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_keyboard_start" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="65.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_keyboard_select" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="65.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="190.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_keyboard_a" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="65.0" layoutY="190.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="65.0" layoutY="215.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_keyboard_b" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="65.0" layoutY="215.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="40.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_gamepad_up" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="160.0" layoutY="40.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="65.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_gamepad_left" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="160.0" layoutY="65.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="90.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_gamepad_down" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="160.0" layoutY="90.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="115.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_gamepad_right" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="160.0" layoutY="115.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_gamepad_start" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="160.0" layoutY="140.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_gamepad_select" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="160.0" layoutY="165.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="190.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_gamepad_a" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="160.0" layoutY="190.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
-                              <TextField accessibleRole="BUTTON" layoutX="160.0" layoutY="215.0" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                 </padding></TextFieldInput>
+                              <TextFieldInput fx:id="p2_gamepad_b" accessibleRole="BUTTON" alignment="TOP_CENTER" layoutX="160.0" layoutY="215.0" maxWidth="70.0" minWidth="70.0" onMouseClicked="#editControlsGamepad" prefWidth="70.0">
                                  <padding>
                                     <Insets top="5.0" />
-                                 </padding></TextField>
+                                 </padding></TextFieldInput>
                               <Label layoutX="22.0" layoutY="40.0" text="UP" />
                               <Label layoutX="18.0" layoutY="65.0" text="LEFT" />
                               <Label layoutX="10.0" layoutY="90.0" text="DOWN" />
@@ -227,6 +230,8 @@
                               <Label layoutX="10.0" layoutY="165.0" text="SELECT" textAlignment="RIGHT" />
                               <Label layoutX="26.0" layoutY="190.0" text="A" />
                               <Label layoutX="26.0" layoutY="215.0" text="B" />
+                              <Label layoutX="75.0" layoutY="14.0" text="Keyboard" />
+                              <Label layoutX="166.0" layoutY="14.0" text="Gamepad" />
                            </children>
                            <padding>
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

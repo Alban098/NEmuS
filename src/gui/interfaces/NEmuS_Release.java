@@ -123,14 +123,17 @@ public class NEmuS_Release extends NEmuS_Runnable {
 
             //If we need to render the screen
             if ((emulationRunning && nes.getPpu().frameComplete) || redraw) {
+                frameCount++;
                 nes.getPpu().frameComplete = false;
                 glClearColor(.6f, .6f, .6f, 0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 InputHandling();
                 screen_texture.load(nes.getPpu().getScreenBuffer());
                 renderGameScreen();
-                glfwSetWindowTitle(game_window, game_name + " | " + 100000 / ((System.currentTimeMillis() - last_frame) * 100 + 1) + " fps");
-                last_frame = System.currentTimeMillis();
+                if (frameCount % 10 == 0) {
+                    glfwSetWindowTitle(game_window, game_name + " | " + (System.currentTimeMillis() - last_frame) / 10 + " ms (" + (int)(100000f/(System.currentTimeMillis() - last_frame)/10f) + "fps)");
+                    last_frame = System.currentTimeMillis();
+                }
                 glfwSwapBuffers(game_window);
                 if (redraw)
                     redraw = false;

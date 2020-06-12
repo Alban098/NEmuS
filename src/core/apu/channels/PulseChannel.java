@@ -106,15 +106,20 @@ public class PulseChannel {
     /**
      * Compute the sample of the channel
      */
-    public void compute(double time) {
-        oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload.value + 1));
-        oscillator.amplitude = (envelope.output - 1) / 16.0f;
-        sample = oscillator.sample(time);
+    public void compute(double time, boolean raw) {
+        sequencer.clock(enabled, s -> (((s & 0x01) << 7) | ((s & 0xFE) >> 1)));
+        if (raw) {
+            sample = sequencer.output;
+        } else {
+            oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload.value + 1));
+            oscillator.amplitude = (envelope.output - 1) / 16.0f;
+            sample = oscillator.sample(time);
 
-        if (lengthCounter.counter > 0 && sequencer.timer >= 8 && !sweeper.muted && envelope.output > 2)
-            output = sample;
-        else
-            output = 0;
-        if (!enabled) output = 0;
+            if (lengthCounter.counter > 0 && sequencer.timer >= 8 && !sweeper.muted && envelope.output > 2)
+                output = (sample - output) * 0.5;
+            else
+                output = 0;
+            if (!enabled) output = 0;
+        }
     }
 }

@@ -39,7 +39,6 @@ public class NEmuS_Debug extends NEmuS_Runnable {
     private int info_width = 1385;
     private int info_height = 640;
 
-    private long frameCount = 0;
 
     private int selectedPalette = 0x00;
     private int ram_page = 0x00;
@@ -136,6 +135,7 @@ public class NEmuS_Debug extends NEmuS_Runnable {
             debugWindow = new Stage();
             debugWindow.setScene(debugScene);
             debugWindow.setOnCloseRequest(windowEvent -> glfwSetWindowShouldClose(game_window, true));
+            debugWindow.setTitle("Debug Window");
             debugWindow.show();
         });
     }
@@ -181,16 +181,19 @@ public class NEmuS_Debug extends NEmuS_Runnable {
                 if (emulationRunning) {
                     //We compute an entire frame in one go and wait for the next one
                     //this isn't hardware accurate, but is close enough to have most game run properly
+                    long start = System.currentTimeMillis();
                     do {
                         nes.clock();
                     } while (!nes.getPpu().frameComplete);
                     nes.getPpu().frameComplete = false;
                     frameCount++;
+                    if (frameCount % 10 == 0) {
+                        glfwSetWindowTitle(game_window, game_name + " | " + (System.currentTimeMillis() - start) + " ms (" + (int)(100000f/(System.currentTimeMillis() - last_frame)/10f) + "fps)");
+                        last_frame = System.currentTimeMillis();
+                    }
                 }
                 screen_texture.load(nes.getPpu().getScreenBuffer());
                 renderGameScreen();
-                glfwSetWindowTitle(game_window, game_name + " | " + 100000 / ((System.currentTimeMillis() - last_frame) * 100 + 1) + " fps");
-                last_frame = System.currentTimeMillis();
                 glfwSwapBuffers(game_window);
                 if (!emulationRunning)
                     redraw = false;
@@ -208,7 +211,6 @@ public class NEmuS_Debug extends NEmuS_Runnable {
      */
     private void launchInfoWindow() {
         initInfoWindow();
-        System.out.println("init");
         long next_frame = 0;
         while (!glfwWindowShouldClose(game_window)) {
             //Only redraw if the emulation is running or a debug step has been made
@@ -219,7 +221,7 @@ public class NEmuS_Debug extends NEmuS_Runnable {
                 if (ram_page > 0xFF) ram_page -= 0x100;
                 //Set when the next frame should occur
                 if (System.currentTimeMillis() >= next_frame) {
-                    next_frame = System.currentTimeMillis() + FRAME_DURATION * 2;
+                    next_frame = System.currentTimeMillis() + FRAME_DURATION * 3;
                     //Compute and update the debug textures (CPU, OAM, PatternTables and Nametables)
                     Platform.runLater(this::updateCanvas);
                 }

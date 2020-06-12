@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <controls>
     <keyboard>
-        <key id="CONTROLLER_1_A">KEY_O</key>
-        <key id="CONTROLLER_1_B">KEY_I</key>
-        <key id="CONTROLLER_1_SELECT">KEY_K</key>
-        <key id="CONTROLLER_1_START">KEY_L</key>
-        <key id="CONTROLLER_1_UP">KEY_UP</key>
-        <key id="CONTROLLER_1_DOWN">KEY_DOWN</key>
-        <key id="CONTROLLER_1_LEFT">KEY_LEFT</key>
-        <key id="CONTROLLER_1_RIGHT">KEY_RIGHT</key>
-        <key id="CONTROLLER_2_A">KEY_Y</key>
-        <key id="CONTROLLER_2_B">KEY_T</key>
-        <key id="CONTROLLER_2_SELECT">KEY_G</key>
-        <key id="CONTROLLER_2_START">KEY_H</key>
-        <key id="CONTROLLER_2_UP">KEY_W</key>
-        <key id="CONTROLLER_2_DOWN">KEY_S</key>
-        <key id="CONTROLLER_2_LEFT">KEY_A</key>
-        <key id="CONTROLLER_2_RIGHT">KEY_D</key>
+        <key id="CONTROLLER_1_LEFT">263</key>
+        <key id="CONTROLLER_1_UP">265</key>
+        <key id="CONTROLLER_2_DOWN">83</key>
+        <key id="CONTROLLER_2_START">72</key>
+        <key id="CONTROLLER_1_RIGHT">262</key>
+        <key id="CONTROLLER_1_A">73</key>
+        <key id="CONTROLLER_2_A">89</key>
+        <key id="CONTROLLER_2_UP">87</key>
+        <key id="CONTROLLER_2_LEFT">65</key>
+        <key id="CONTROLLER_1_DOWN">264</key>
+        <key id="CONTROLLER_2_RIGHT">68</key>
+        <key id="CONTROLLER_1_B">85</key>
+        <key id="CONTROLLER_1_START">75</key>
+        <key id="CONTROLLER_1_SELECT">74</key>
+        <key id="CONTROLLER_2_SELECT">71</key>
+        <key id="CONTROLLER_2_B">84</key>
     </keyboard>
     <joystick>
-        <button id="CONTROLLER_1_A">BUTTON_A</button>
-        <button id="CONTROLLER_1_B">BUTTON_B</button>
-        <button id="CONTROLLER_1_SELECT">BUTTON_BACK</button>
-        <button id="CONTROLLER_1_START">BUTTON_START</button>
-        <button id="CONTROLLER_1_UP">BUTTON_DPAD_UP</button>
-        <button id="CONTROLLER_1_DOWN">BUTTON_DPAD_DOWN</button>
-        <button id="CONTROLLER_1_LEFT">BUTTON_DPAD_LEFT</button>
-        <button id="CONTROLLER_1_RIGHT">BUTTON_DPAD_RIGHT</button>
-        <button id="CONTROLLER_2_A">BUTTON_A</button>
-        <button id="CONTROLLER_2_B">BUTTON_B</button>
-        <button id="CONTROLLER_2_SELECT">BUTTON_BACK</button>
-        <button id="CONTROLLER_2_START">BUTTON_START</button>
-        <button id="CONTROLLER_2_UP">BUTTON_DPAD_UP</button>
-        <button id="CONTROLLER_2_DOWN">BUTTON_DPAD_DOWN</button>
-        <button id="CONTROLLER_2_LEFT">BUTTON_DPAD_LEFT</button>
-        <button id="CONTROLLER_2_RIGHT">BUTTON_DPAD_RIGHT</button>
+        <button id="CONTROLLER_1_LEFT">13</button>
+        <button id="CONTROLLER_1_UP">10</button>
+        <button id="CONTROLLER_2_DOWN">12</button>
+        <button id="CONTROLLER_2_START">7</button>
+        <button id="CONTROLLER_1_RIGHT">11</button>
+        <button id="CONTROLLER_1_A">0</button>
+        <button id="CONTROLLER_2_A">0</button>
+        <button id="CONTROLLER_2_UP">10</button>
+        <button id="CONTROLLER_2_LEFT">13</button>
+        <button id="CONTROLLER_1_DOWN">12</button>
+        <button id="CONTROLLER_2_RIGHT">11</button>
+        <button id="CONTROLLER_1_B">1</button>
+        <button id="CONTROLLER_1_START">7</button>
+        <button id="CONTROLLER_1_SELECT">6</button>
+        <button id="CONTROLLER_2_SELECT">6</button>
+        <button id="CONTROLLER_2_B">1</button>
     </joystick>
 </controls>

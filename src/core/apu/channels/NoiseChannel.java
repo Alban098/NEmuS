@@ -26,6 +26,12 @@ public class NoiseChannel {
         sequencer = new Sequencer();
     }
 
+    public void updateEnvelope(int data) {
+        envelope.volume = data & 0x0F;
+        envelope.disabled = (data & 0x10) == 0x10;
+        halted = (data & 0x20) == 0x20;
+    }
+
     /**
      * Update the reload value of the sequencer
      *
@@ -93,5 +99,7 @@ public class NoiseChannel {
         if (lengthCounter.counter > 0 && sequencer.timer >= 8) {
             output = (double) sequencer.output * ((double) (envelope.output - 1) / 16.0);
         }
+        if (!enabled)
+            output = 0;
     }
 }

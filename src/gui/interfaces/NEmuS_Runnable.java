@@ -5,7 +5,7 @@ import core.cartridge.Cartridge;
 import core.ppu.PPU_2C02;
 import exceptions.InvalidFileException;
 import exceptions.UnsupportedMapperException;
-import gui.inputs.GamepadInputs;
+import gui.inputs.NESInputs;
 import gui.inputs.InputMapper;
 import javafx.application.Platform;
 import openGL.Fbo;
@@ -54,6 +54,9 @@ public abstract class NEmuS_Runnable {
     protected boolean resetRequested = false;
     protected boolean emulationRunning = false;
     protected boolean redraw = false;
+
+    protected long frameCount = 0;
+
 
 
     /**
@@ -175,39 +178,39 @@ public abstract class NEmuS_Runnable {
      * Get the current user inputs (Keyboard and Gamepad 1 and 2) and write it to NES
      */
     protected void InputHandling() {
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_1_UP, 1)) nes.controller[0] |= 0x08;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_1_UP, 1)) nes.controller[0] |= 0x08;
         else nes.controller[0] &= ~0x08;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_1_DOWN, 1)) nes.controller[0] |= 0x04;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_1_DOWN, 1)) nes.controller[0] |= 0x04;
         else nes.controller[0] &= ~0x04;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_1_LEFT, 1)) nes.controller[0] |= 0x02;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_1_LEFT, 1)) nes.controller[0] |= 0x02;
         else nes.controller[0] &= ~0x02;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_1_RIGHT, 1)) nes.controller[0] |= 0x01;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_1_RIGHT, 1)) nes.controller[0] |= 0x01;
         else nes.controller[0] &= ~0x01;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_1_A, 1)) nes.controller[0] |= 0x80;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_1_A, 1)) nes.controller[0] |= 0x80;
         else nes.controller[0] &= ~0x80;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_1_B, 1)) nes.controller[0] |= 0x40;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_1_B, 1)) nes.controller[0] |= 0x40;
         else nes.controller[0] &= ~0x40;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_1_SELECT, 1)) nes.controller[0] |= 0x20;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_1_SELECT, 1)) nes.controller[0] |= 0x20;
         else nes.controller[0] &= ~0x20;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_1_START, 1)) nes.controller[0] |= 0x10;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_1_START, 1)) nes.controller[0] |= 0x10;
         else nes.controller[0] &= ~0x10;
 
 
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_2_UP, 2)) nes.controller[1] |= 0x08;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_2_UP, 2)) nes.controller[1] |= 0x08;
         else nes.controller[1] &= ~0x08;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_2_DOWN, 2)) nes.controller[1] |= 0x04;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_2_DOWN, 2)) nes.controller[1] |= 0x04;
         else nes.controller[1] &= ~0x04;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_2_LEFT, 2)) nes.controller[1] |= 0x02;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_2_LEFT, 2)) nes.controller[1] |= 0x02;
         else nes.controller[1] &= ~0x02;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_2_RIGHT, 2)) nes.controller[1] |= 0x01;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_2_RIGHT, 2)) nes.controller[1] |= 0x01;
         else nes.controller[1] &= ~0x01;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_2_A, 2)) nes.controller[1] |= 0x80;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_2_A, 2)) nes.controller[1] |= 0x80;
         else nes.controller[1] &= ~0x80;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_2_B, 2)) nes.controller[1] |= 0x40;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_2_B, 2)) nes.controller[1] |= 0x40;
         else nes.controller[1] &= ~0x40;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_2_SELECT, 2)) nes.controller[1] |= 0x20;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_2_SELECT, 2)) nes.controller[1] |= 0x20;
         else nes.controller[1] &= ~0x20;
-        if (inputMapper.isPressed(GamepadInputs.CONTROLLER_2_START, 2)) nes.controller[1] |= 0x10;
+        if (inputMapper.isPressed(NESInputs.CONTROLLER_2_START, 2)) nes.controller[1] |= 0x10;
         else nes.controller[1] &= ~0x10;
     }
 
@@ -353,11 +356,29 @@ public abstract class NEmuS_Runnable {
     }
 
     /**
-     * Enable or Disable sampling int the APU
+     * Enable or Disable sampling in the APU
      *
      * @param enabled should sampling be activated
      */
     public synchronized void fireAudioRenderingEvent(boolean enabled) {
         nes.enableSoundRendering(enabled);
+    }
+
+    /**
+     * Enable or Disable RAW Audio mode in the APU
+     *
+     * @param raw should RAW Audio mode be activated
+     */
+    public synchronized void fireRawAudioEvent(boolean raw) {
+        nes.toggleRawAudio(raw);
+    }
+
+    /**
+     * Return the current InputMapper
+     *
+     * @return the current InputMapper
+     */
+    public InputMapper getInputMapper() {
+        return inputMapper;
     }
 }

@@ -20,6 +20,7 @@ public class APU_2A03 {
     private int clock_counter = 0;
     private double totalTime = 0.0;
     private int frame_counter = 0;
+    private boolean raw_audio = false;
 
     /**
      * Create a new instance of an APU
@@ -54,7 +55,9 @@ public class APU_2A03 {
      * @return the current audio sample as a value between -1 and 1
      */
     public double getSample() {
-        return ((pulse_1.output - 0.8) * 0.1 + (pulse_2.output - 0.8) * 0.1 + (2.0 * noise.output - 0.5) * 0.1) * volume;
+        if (raw_audio)
+            return ((pulse_1.sample - 0.5) * 0.2 + (pulse_2.sample - 0.5) * 0.2 + (2.0 * noise.output - 0.5) * 0.2) * volume;
+        return ((pulse_1.output - 0.5) * 0.4 + (pulse_2.output - 0.5) * 0.4 + (2.0 * noise.output - 0.5) * 0.4) * volume;
     }
 
     /**
@@ -177,8 +180,8 @@ public class APU_2A03 {
                 }
             }
             if (enable_sampling) {
-                pulse_1.compute(totalTime);
-                pulse_2.compute(totalTime);
+                pulse_1.compute(totalTime, raw_audio);
+                pulse_2.compute(totalTime, raw_audio);
                 noise.compute();
             }
         }
@@ -187,5 +190,14 @@ public class APU_2A03 {
             pulse_2.sweeper.track(pulse_2.sequencer.reload);
         }
         clock_counter++;
+    }
+
+    /**
+     * Enable or Disable RAW Audio mode
+     *
+     * @param raw should RAW Audio be triggered or not
+     */
+    public void enabledRawMode(boolean raw) {
+        raw_audio = raw;
     }
 }
