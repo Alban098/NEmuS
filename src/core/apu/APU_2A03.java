@@ -2,6 +2,7 @@ package core.apu;
 
 import core.apu.channels.NoiseChannel;
 import core.apu.channels.PulseChannel;
+import core.apu.channels.TriangleChannel;
 
 /**
  * This class represent the APU of the NES
@@ -15,6 +16,7 @@ public class APU_2A03 {
 
     private PulseChannel pulse_1;
     private PulseChannel pulse_2;
+    private TriangleChannel triangle;
     private NoiseChannel noise;
 
     private int clock_counter = 0;
@@ -23,7 +25,7 @@ public class APU_2A03 {
     private boolean b5StepMode = false;
     private int writeTo4017 = -1;
 
-    public boolean frameIRQ = false;
+    private boolean frameIRQ = false;
 
     private boolean raw_audio = false;
 
@@ -33,6 +35,7 @@ public class APU_2A03 {
     public APU_2A03() {
         pulse_1 = new PulseChannel();
         pulse_2 = new PulseChannel();
+        triangle = new TriangleChannel();
         noise = new NoiseChannel();
         noise.sequencer.sequence = 0xDBDB;
     }
@@ -61,7 +64,7 @@ public class APU_2A03 {
      * @return the current audio sample as a value between -1 and 1
      */
     public double getSample() {
-        return 0.00752 * ((pulse_1.output + 0.5) * 15 + (pulse_2.output + 0.5) * 15) + 0.00494 * noise.output * 15;
+        return ((0.00752 * ((pulse_1.output * 15) + (pulse_2.output * 15))) + (0.00851 * triangle.output * 15) + (0.00494 * noise.output * 15)) * 5 * volume;
     }
 
     /**
@@ -99,6 +102,16 @@ public class APU_2A03 {
                 pulse_2.writeTimerHigh(data);
                 pulse_2.writeLengthCounterLoad(data);
                 break;
+            case 0x4008:
+                triangle.writeLinearCounter(data);
+                break;
+            case 0x400A:
+                triangle.writeTimerLow(data);
+                break;
+            case 0x400B:
+                triangle.writeTimerHigh(data);
+                triangle.writeLengthCounterLoad(data);
+                break;
             case 0x400C:
                 noise.updateEnvelope(data);
                 break;
@@ -114,12 +127,19 @@ public class APU_2A03 {
             case 0x4015:
                 pulse_1.enabled = false;
                 pulse_2.enabled = false;
+                triangle.enabled = false;
                 noise.enabled = false;
                 if ((data & 0x1) == 0x1) pulse_1.enabled = true;
                 else pulse_1.lengthCounter.counter = 0;
 
                 if ((data & 0x2) == 0x2) pulse_2.enabled = true;
                 else pulse_2.lengthCounter.counter = 0;
+
+                if ((data & 0x2) == 0x2) triangle.enabled = true;
+                else {
+                    triangle.lengthCounter.counter = 0;
+                    triangle.linearCounter.counter = 0;
+                }
 
                 if ((data & 0x8) == 0x8) noise.enabled = true;
                 else noise.lengthCounter.counter = 0;
@@ -144,7 +164,8 @@ public class APU_2A03 {
         int data = 0x00;
         if (addr == 0x4015) {
             data |= (pulse_1.lengthCounter.counter > 0) ? 0x01 : 0x00;
-            data |= (pulse_1.lengthCounter.counter > 0) ? 0x02 : 0x00;
+            data |= (pulse_2.lengthCounter.counter > 0) ? 0x02 : 0x00;
+            data |= (triangle.lengthCounter.counter > 0) ? 0x04 : 0x00;
             data |= (noise.lengthCounter.counter > 0) ? 0x08 : 0x00;
         }
         return data;
@@ -170,6 +191,7 @@ public class APU_2A03 {
                 if (b5StepMode) {
                     pulse_1.lengthCounter.clock(pulse_1.enabled, pulse_1.halted);
                     pulse_2.lengthCounter.clock(pulse_2.enabled, pulse_2.halted);
+                    triangle.lengthCounter.clock(triangle.enabled, triangle.halted);
                     noise.lengthCounter.clock(noise.enabled, noise.halted);
                     if (enable_sampling) {
                         pulse_1.envelope.clock(pulse_1.halted);
@@ -214,14 +236,18 @@ public class APU_2A03 {
                     frameIRQ = true;
                 }
             }
-            if (clockEnvelope && enable_sampling) {
-                pulse_1.envelope.clock(pulse_1.halted);
-                pulse_2.envelope.clock(pulse_2.halted);
-                noise.envelope.clock(noise.halted);
+            if (clockEnvelope) {
+                triangle.linearCounter.clock(triangle.enabled, triangle.halted);
+                if (enable_sampling) {
+                    pulse_1.envelope.clock(pulse_1.halted);
+                    pulse_2.envelope.clock(pulse_2.halted);
+                    noise.envelope.clock(noise.halted);
+                }
             }
             if (clockLengthCounter) {
                 pulse_1.lengthCounter.clock(pulse_1.enabled, pulse_1.halted);
                 pulse_2.lengthCounter.clock(pulse_2.enabled, pulse_2.halted);
+                triangle.lengthCounter.clock(triangle.enabled, triangle.halted);
                 noise.lengthCounter.clock(noise.enabled, noise.halted);
                 if (enable_sampling) {
                     pulse_1.sweeper.clock(pulse_1.sequencer.reload, false);
@@ -231,6 +257,7 @@ public class APU_2A03 {
             if (enable_sampling) {
                 pulse_1.compute(totalTime, raw_audio);
                 pulse_2.compute(totalTime, raw_audio);
+                triangle.compute(totalTime, raw_audio);
                 noise.compute();
             }
         }

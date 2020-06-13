@@ -64,7 +64,7 @@ public class PulseChannel {
     /**
      * Update the frequency sweeper of the channel
      *
-     * @param data enabled(1bit) period (3bit) down(1bit) shift(3bit)
+     * @param data enabled(1bit) period(3bit) down(1bit) shift(3bit)
      */
     public void writeSweep(int data) {
         sweeper.enabled = (data & 0x80) == 0x80;
@@ -109,17 +109,19 @@ public class PulseChannel {
      * Compute the sample of the channel
      */
     public void compute(double time, boolean raw) {
-        sequencer.clock(enabled, s -> (((s & 0x01) << 7) | ((s & 0xFE) >> 1)));
-        if (raw && enabled && lengthCounter.counter > 0 && sequencer.timer >= 8 && !sweeper.muted && envelope.output > 2) {
-            output = sequencer.output * ((envelope.output - 1) / 16.0);
-        } else {
-            if (enabled && lengthCounter.counter > 0 && sequencer.timer >= 8 && !sweeper.muted && envelope.output > 2) {
-                oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload.value + 1));
-                oscillator.amplitude = (envelope.output - 1) / 16.0f;
-                sample = oscillator.sample(time);
-                output = sample;
-            } else
-                output = 0;
-        }
+        if (enabled && lengthCounter.counter > 0 && !sweeper.muted && envelope.output > 2) {
+            sequencer.clock(enabled, s -> (((s & 0x01) << 7) | ((s & 0xFE) >> 1)));
+            if (sequencer.timer >= 8){
+                if (raw) {
+                    output = sequencer.output * ((envelope.output - 1) / 16.0);
+                } else {
+                    oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload.value + 1));
+                    oscillator.amplitude = (envelope.output - 1) / 16.0f;
+                    sample = oscillator.sample(time);
+                    output = (sample + 1) * 0.6;
+                }
+            }
+        } else
+            output = 0;
     }
 }

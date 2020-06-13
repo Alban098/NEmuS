@@ -20,7 +20,7 @@
 ### Core
 * 6502 CPU Emulation with basic decompiler
 * 2C02 PPU Emulation
-* 2A03 APU Emulation with 2 Pulse Channels and Noise Channel
+* 2A03 APU Emulation with 2 Pulse Channels, a Triangle Channel and a Noise Channel (No DMC yet)
 * Emulation of saves for games supporting it (every 30s)
 * iNES Mappers (Non-exhaustive Game list):
   - [NROM](https://wiki.nesdev.com/w/index.php/INES_Mapper_000) (000) : Super Mario Bros, Donkey Kong, Duck Hunt 

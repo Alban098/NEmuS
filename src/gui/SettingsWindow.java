@@ -2,6 +2,7 @@ package gui;
 
 import core.apu.APU_2A03;
 import core.apu.components.Oscillator;
+import core.apu.components.TriangleOscillator;
 import gui.inputs.NESInputs;
 import gui.inputs.TextFieldInput;
 import gui.inputs.KeyTuple;
@@ -162,7 +163,9 @@ public class SettingsWindow implements Initializable {
         frameStepButton.setDisable(true);
         instance = this;
         volumeSlider.valueProperty().addListener((observableValue, oldValue, newValue) -> APU_2A03.setVolume(newValue.intValue() / 100.0));
-        soundQualitySlider.valueProperty().addListener((observableValue, oldValue, newValue) -> Oscillator.setHarmonics(newValue.intValue() + 5));
+        soundQualitySlider.valueProperty().addListener((observableValue, oldValue, newValue) ->  {Oscillator.setHarmonics(newValue.intValue() + 5);
+            TriangleOscillator.setHarmonics(newValue.intValue()/4);
+        });
 
         p1_keyboard_a.setInput(NESInputs.CONTROLLER_1_A).setText(NEmuS_Runnable.getInstance().getInputMapper().getMappedKey(NESInputs.CONTROLLER_1_A));
         p1_keyboard_b.setInput(NESInputs.CONTROLLER_1_B).setText(NEmuS_Runnable.getInstance().getInputMapper().getMappedKey(NESInputs.CONTROLLER_1_B));
@@ -313,6 +316,7 @@ public class SettingsWindow implements Initializable {
     /**
      * Will trigger an audio renderings state event to the Emulator
      */
+    @FXML
     public void fireAudioRenderingEvent() {
         NEmuS_Runnable.getInstance().fireAudioRenderingEvent(audioRenderingCheck.isSelected());
     }
@@ -320,6 +324,7 @@ public class SettingsWindow implements Initializable {
     /**
      * Will trigger an audio renderings state event to the Emulator
      */
+    @FXML
     public void fireRawAudioEvent() {
         NEmuS_Runnable.getInstance().fireRawAudioEvent(rawAudioCheck.isSelected());
     }
