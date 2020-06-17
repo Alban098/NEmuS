@@ -1,4 +1,4 @@
-package core.apu.components;
+package core.apu.components.pulse;
 
 /**
  * This class represents an Oscillator and is used to generate a Square Wave of a known frequency, amplitude and duty cycle

@@ -1,4 +1,4 @@
-package core.apu.components;
+package core.apu.components.pulse;
 
 import utils.IntegerWrapper;
 

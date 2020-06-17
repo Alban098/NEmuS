@@ -27,11 +27,11 @@
                               <Button layoutX="10.0" layoutY="10.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#fireLoadROMEvent" text="Load" />
                               <Button layoutX="210.0" layoutY="10.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#fireResetEvent" text="Reset" />
                               <Button fx:id="pauseButton" layoutX="110.0" layoutY="10.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#triggerPauseEvent" text="Pause" />
-                              <Button fx:id="ramLeftButton" layoutX="10.0" layoutY="129.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageLeftEvent" text="&lt; RAM" />
-                              <Button fx:id="cpuStepButton" layoutX="110.0" layoutY="154.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#cpuStepEvent" text="CPU Step" />
-                              <Button fx:id="ramRightButton" layoutX="210.0" layoutY="129.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageRightEvent" text="RAM &gt;" />
-                              <Button fx:id="ramLeftPlusButton" layoutX="10.0" layoutY="179.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageLeftPlusEvent" text="&lt;&lt; RAM" />
-                              <Button fx:id="ramRightPlusButton" layoutX="210.0" layoutY="179.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageRightPlusEvent" text="RAM &gt;&gt;" />
+                              <Button fx:id="ramLeftButton" layoutX="10.0" layoutY="159.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageLeftEvent" text="&lt; RAM" />
+                              <Button fx:id="cpuStepButton" layoutX="110.0" layoutY="174.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#cpuStepEvent" text="CPU Step" />
+                              <Button fx:id="ramRightButton" layoutX="210.0" layoutY="159.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageRightEvent" text="RAM &gt;" />
+                              <Button fx:id="ramLeftPlusButton" layoutX="10.0" layoutY="189.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageLeftPlusEvent" text="&lt;&lt; RAM" />
+                              <Button fx:id="ramRightPlusButton" layoutX="210.0" layoutY="189.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#ramPageRightPlusEvent" text="RAM &gt;&gt;" />
                               <Button fx:id="frameStepButton" layoutX="60.0" layoutY="219.0" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#frameStepEvent" text="One Frame">
                                  <effect>
                                     <Blend />
@@ -44,8 +44,13 @@
                               <Slider fx:id="soundQualitySlider" blockIncrement="1.0" layoutX="95.0" layoutY="78.0" majorTickUnit="15.0" max="15.0" minorTickCount="14" prefHeight="14.0" prefWidth="211.0" showTickMarks="true" snapToTicks="true" value="8.0" />
                               <Label layoutX="32.0" layoutY="43.0" text="Volume" />
                               <Label layoutX="16.0" layoutY="76.0" text="Audio Quality" />
-                              <CheckBox fx:id="audioRenderingCheck" layoutX="50.0" layoutY="108.0" mnemonicParsing="false" onAction="#fireAudioRenderingEvent" text="Audio Rendering" />
+                              <CheckBox fx:id="audioRenderingCheck" layoutX="50.0" layoutY="108.0" mnemonicParsing="false" onAction="#fireAudioRenderingEvent" selected="true" text="Audio Rendering" />
                               <CheckBox fx:id="rawAudioCheck" layoutX="183.0" layoutY="108.0" mnemonicParsing="false" onAction="#fireRawAudioEvent" text="RAW Audio" />
+                              <CheckBox fx:id="pulse1Checkbox" layoutX="3.0" layoutY="134.0" mnemonicParsing="false" onAction="#pulse1Event" selected="true" text="Pulse 1" />
+                              <CheckBox fx:id="pulse2Checkbox" layoutX="66.0" layoutY="134.0" mnemonicParsing="false" onAction="#pulse2Event" selected="true" text="Pulse 2" />
+                              <CheckBox fx:id="triangleCheckbox" layoutX="130.0" layoutY="134.0" mnemonicParsing="false" onAction="#triangleEvent" selected="true" text="Triangle" />
+                              <CheckBox fx:id="noiseCheckbox" layoutX="200.0" layoutY="134.0" mnemonicParsing="false" onAction="#noiseEvent" selected="true" text="Noise" />
+                              <CheckBox fx:id="dmcCheckbox" layoutX="255.0" layoutY="134.0" mnemonicParsing="false" onAction="#dmcEvent" selected="true" text="DMC" />
                            </children>
                            <effect>
                               <Blend />

@@ -1,5 +1,7 @@
 package core.apu;
 
+import core.NES;
+import core.apu.channels.DMCChannel;
 import core.apu.channels.NoiseChannel;
 import core.apu.channels.PulseChannel;
 import core.apu.channels.TriangleChannel;
@@ -18,6 +20,7 @@ public class APU_2A03 {
     private PulseChannel pulse_2;
     private TriangleChannel triangle;
     private NoiseChannel noise;
+    private DMCChannel dmc;
 
     private int clock_counter = 0;
     private double totalTime = 0.0;
@@ -29,15 +32,21 @@ public class APU_2A03 {
     private boolean irqInhibit = false;
 
     private boolean raw_audio = false;
+    private boolean pulse_1_rendered = true;
+    private boolean pulse_2_rendered = true;
+    private boolean noise_rendered = true;
+    private boolean triangle_rendered = true;
+    private boolean dmc_rendered = true;
 
     /**
      * Create a new instance of an APU
      */
-    public APU_2A03() {
+    public APU_2A03(NES nes) {
         pulse_1 = new PulseChannel();
         pulse_2 = new PulseChannel();
         triangle = new TriangleChannel();
         noise = new NoiseChannel();
+        dmc = new DMCChannel(nes);
     }
 
     /**
@@ -64,14 +73,31 @@ public class APU_2A03 {
      * @return the current audio sample as a value between -1 and 1
      */
     public double getSample() {
-        return ((0.00752 * ((pulse_1.output * 15) + (pulse_2.output * 15))) + (0.00851 * triangle.output * 15) + (0.00494 * noise.output * 15)) * 2 * volume;
+        return ((0.00752 * (((pulse_1_rendered ? pulse_1.output : 0) * 15) + ((pulse_2_rendered ? pulse_2.output : 0) * 15))) + (0.00851 * (triangle_rendered ? triangle.output : 0) * 15) + (0.00494 * (noise_rendered ? noise.output : 0) * 15) + 0.00335 * (dmc_rendered ? dmc.output * 128 : 0)) * 2 * volume;
+    }
+
+    public void setPulse_1_rendered(boolean pulse_1_rendered) {
+        this.pulse_1_rendered = pulse_1_rendered;
+    }
+
+    public void setPulse_2_rendered(boolean pulse_2_rendered) {
+        this.pulse_2_rendered = pulse_2_rendered;
+    }
+
+    public void setNoise_rendered(boolean noise_rendered) {
+        this.noise_rendered = noise_rendered;
+    }
+
+    public void setTriangle_rendered(boolean triangle_rendered) {
+        this.triangle_rendered = triangle_rendered;
+    }
+
+    public void setDmc_rendered(boolean dmc_rendered) {
+        this.dmc_rendered = dmc_rendered;
     }
 
     public void reset() {
         cpuWrite(0x4015, 0x00);
-        pulse_1.enabled = true;
-        pulse_2.enabled = true;
-        noise.enabled = true;
     }
 
     public void startup() {
@@ -136,16 +162,30 @@ public class APU_2A03 {
                 noise.updateReload(data);
                 break;
             case 0x400F:
-                pulse_1.envelope.started = true;
-                pulse_2.envelope.started = true;
                 noise.envelope.started = true;
                 noise.lengthCounter.counter = length_table[(data & 0xF8) >> 3];
+                break;
+            case 0x4010:
+                dmc.writeRate(data);
+                break;
+            case 0x4011:
+                dmc.directLoad(data);
+                break;
+            case 0x4012:
+                dmc.writeSampleAddr(data);
+                break;
+            case 0x4013:
+                dmc.writeSampleLength(data);
                 break;
             case 0x4015:
                 pulse_1.enabled = false;
                 pulse_2.enabled = false;
                 triangle.enabled = false;
                 noise.enabled = false;
+                dmc.interrupt = false;
+
+                if ((data & 0x10) == 0x00)
+                    dmc.memoryReader.bytes_remaining = 0;
                 if ((data & 0x1) == 0x1) pulse_1.enabled = true;
                 else pulse_1.lengthCounter.counter = 0;
 
@@ -167,6 +207,7 @@ public class APU_2A03 {
                 irqInhibit = (data & 0x40) == 0x40;
                 if (irqInhibit) frameIRQ = false;
                 writeTo4017 = 4;
+
                 break;
         }
     }
@@ -185,8 +226,11 @@ public class APU_2A03 {
             data |= (pulse_2.lengthCounter.counter > 0) ? 0x02 : 0x00;
             data |= (triangle.lengthCounter.counter > 0) ? 0x04 : 0x00;
             data |= (noise.lengthCounter.counter > 0) ? 0x08 : 0x00;
+            data |= (dmc.memoryReader.bytes_remaining > 0) ? 0x10 : 0x00;
+            data |= (dmc.interrupt) ? 0x80 : 0x00;
             data |= frameIRQ ? 0x40 : 0x00;
         }
+        frameIRQ = false;
         return data;
     }
 
@@ -207,19 +251,6 @@ public class APU_2A03 {
             if (writeTo4017 == 0) {
                 frame_counter = 0;
                 writeTo4017 = -1;
-                if (b5StepMode) {
-                    pulse_1.lengthCounter.clock(pulse_1.enabled, pulse_1.halted);
-                    pulse_2.lengthCounter.clock(pulse_2.enabled, pulse_2.halted);
-                    triangle.lengthCounter.clock(triangle.enabled, triangle.halted);
-                    noise.lengthCounter.clock(noise.enabled, noise.halted);
-                    if (enable_sampling) {
-                        pulse_1.envelope.clock(pulse_1.halted);
-                        pulse_2.envelope.clock(pulse_2.halted);
-                        noise.envelope.clock(noise.halted);
-                        pulse_1.sweeper.clock(pulse_1.sequencer.reload, false);
-                        pulse_2.sweeper.clock(pulse_2.sequencer.reload, true);
-                    }
-                }
             }
             if (writeTo4017 >= 0)
                 writeTo4017 -= 2;
@@ -279,6 +310,7 @@ public class APU_2A03 {
                 pulse_2.compute(totalTime, raw_audio);
                 triangle.compute(totalTime, raw_audio);
                 noise.compute();
+                dmc.clock();
             }
         }
         if (enable_sampling) {
@@ -298,10 +330,6 @@ public class APU_2A03 {
     }
 
     public boolean irq() {
-        if (frameIRQ) {
-            frameIRQ = false;
-            return true;
-        }
-        return false;
+        return frameIRQ || dmc.interrupt;
     }
 }

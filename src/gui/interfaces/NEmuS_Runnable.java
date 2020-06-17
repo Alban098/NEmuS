@@ -381,4 +381,24 @@ public abstract class NEmuS_Runnable {
     public InputMapper getInputMapper() {
         return inputMapper;
     }
+
+    public void pulse1Event(boolean selected) {
+        nes.getApu().setPulse_1_rendered(selected);
+    }
+
+    public void pulse2Event(boolean selected) {
+        nes.getApu().setPulse_2_rendered(selected);
+    }
+
+    public void triangleEvent(boolean selected) {
+        nes.getApu().setTriangle_rendered(selected);
+    }
+
+    public void noiseEvent(boolean selected) {
+        nes.getApu().setNoise_rendered(selected);
+    }
+
+    public void dmcEvent(boolean selected) {
+        nes.getApu().setDmc_rendered(selected);
+    }
 }

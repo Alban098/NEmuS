@@ -1,4 +1,4 @@
-package core.apu.components;
+package core.apu.components.triangle;
 
 /**
  * This class represents an Oscillator and is used to generate a Triangle Wave of a known frequency

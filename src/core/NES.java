@@ -33,6 +33,7 @@ public class NES {
     private double dAudioTimePerNESClock = 0.0;
     private double dAudioTimePerSystemSample = 0.0;
     private boolean sound_rendering = true;
+    private int dummy_cycle_left = 0;
 
 
     /**
@@ -44,7 +45,7 @@ public class NES {
             ram[i] = 0x0000;
         cpu = new CPU_6502();
         ppu = new PPU_2C02();
-        apu = new APU_2A03();
+        apu = new APU_2A03(this);
         controller = new int[2];
         controller_state = new int[2];
         cpu.connectBus(this);
@@ -71,6 +72,10 @@ public class NES {
      */
     public PPU_2C02 getPpu() {
         return ppu;
+    }
+
+    public APU_2A03 getApu() {
+        return apu;
     }
 
     /**
@@ -233,8 +238,10 @@ public class NES {
                     }
                 }
                 //If no Direct Memory Access is occurring, the CPU is clocked
-            } else
+            } else if (dummy_cycle_left == 0)
                 cpu.clock();
+            else
+                dummy_cycle_left--;
         }
 
         boolean audioSampleReady = false;
@@ -293,5 +300,9 @@ public class NES {
      */
     public void toggleRawAudio(boolean raw) {
         apu.enabledRawMode(raw);
+    }
+
+    public void haltCPU(int cycles) {
+        dummy_cycle_left = cycles;
     }
 }

@@ -1,4 +1,4 @@
-package core.apu.components;
+package core.apu.components.triangle;
 
 import utils.IntegerWrapper;
 

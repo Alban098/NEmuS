@@ -102,7 +102,7 @@ public class NoiseChannel {
         output = 0;
 
         if (lengthCounter.counter > 0 && (sequencer.sequence & 0x01) != 0) {
-            output = (double) sequencer.output * ((double) (envelope.output - 1) / 16.0);
+            output = ((double) sequencer.output * ((double) (envelope.output - 1) / 16.0) + output) / 2;
         }
         if (!enabled)
             output = 0;

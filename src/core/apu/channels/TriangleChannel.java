@@ -2,6 +2,9 @@ package core.apu.channels;
 
 import core.apu.APU_2A03;
 import core.apu.components.*;
+import core.apu.components.triangle.LinearCounter;
+import core.apu.components.triangle.TriangleOscillator;
+import core.apu.components.triangle.TriangleSequencer;
 
 /**
  * This class represent the Triangle Channel of the APU
@@ -83,7 +86,7 @@ public class TriangleChannel {
                 } else {
                     oscillator.frequency = 1789773.0f / (32.0f * (sequencer.reload.value + 1));
                     sample = oscillator.sample(time);
-                    output = (sample + 1) * 0.5;
+                    output = (output + sample) / 2;
                 }
             }
         } else

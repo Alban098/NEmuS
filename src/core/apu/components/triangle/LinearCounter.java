@@ -1,4 +1,4 @@
-package core.apu.components;
+package core.apu.components.triangle;
 
 /**
  * This class represents a Linear Counter that will be used to count the number of steps left for a note

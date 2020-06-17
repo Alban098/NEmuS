@@ -1,8 +1,8 @@
 package gui;
 
 import core.apu.APU_2A03;
-import core.apu.components.Oscillator;
-import core.apu.components.TriangleOscillator;
+import core.apu.components.pulse.Oscillator;
+import core.apu.components.triangle.TriangleOscillator;
 import gui.inputs.NESInputs;
 import gui.inputs.TextFieldInput;
 import gui.inputs.KeyTuple;
@@ -61,6 +61,16 @@ public class SettingsWindow implements Initializable {
     private CheckBox audioRenderingCheck;
     @FXML
     private CheckBox rawAudioCheck;
+    @FXML
+    private CheckBox pulse1Checkbox;
+    @FXML
+    private CheckBox pulse2Checkbox;
+    @FXML
+    private CheckBox triangleCheckbox;
+    @FXML
+    private CheckBox noiseCheckbox;
+    @FXML
+    private CheckBox dmcCheckbox;
 
     @FXML
     private TextFieldInput p1_keyboard_up;
@@ -375,6 +385,31 @@ public class SettingsWindow implements Initializable {
     @FXML
     public void paletteSwapEvent() {
         NEmuS_Runnable.getInstance().paletteSwapEvent();
+    }
+
+    @FXML
+    public void pulse1Event() {
+        NEmuS_Runnable.getInstance().pulse1Event(pulse1Checkbox.isSelected());
+    }
+
+    @FXML
+    public void pulse2Event() {
+        NEmuS_Runnable.getInstance().pulse2Event(pulse2Checkbox.isSelected());
+    }
+
+    @FXML
+    public void triangleEvent() {
+        NEmuS_Runnable.getInstance().triangleEvent(triangleCheckbox.isSelected());
+    }
+
+    @FXML
+    public void noiseEvent() {
+        NEmuS_Runnable.getInstance().noiseEvent(noiseCheckbox.isSelected());
+    }
+
+    @FXML
+    public void dmcEvent() {
+        NEmuS_Runnable.getInstance().dmcEvent(dmcCheckbox.isSelected());
     }
 
     /**

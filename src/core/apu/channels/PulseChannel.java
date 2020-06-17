@@ -2,6 +2,8 @@ package core.apu.channels;
 
 import core.apu.APU_2A03;
 import core.apu.components.*;
+import core.apu.components.pulse.Oscillator;
+import core.apu.components.pulse.Sweeper;
 
 /**
  * This class represent a Pulse Channel of the APU
@@ -113,14 +115,14 @@ public class PulseChannel {
     public void compute(double time, boolean raw) {
         if (enabled && lengthCounter.counter > 0 && !sweeper.muted && envelope.output > 2) {
             sequencer.clock(enabled, s -> (((s & 0x01) << 7) | ((s & 0xFE) >> 1)));
-            if (sequencer.timer >= 8){
+            if (sequencer.timer >= 8) {
                 if (raw) {
                     output = sequencer.output * ((envelope.output - 1) / 16.0);
                 } else {
                     oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload.value + 1));
                     oscillator.amplitude = (envelope.output - 1) / 16.0f;
                     sample = oscillator.sample(time);
-                    output = (sample + 1) * 0.6;
+                    output = (output + sample) / 2;
                 }
             }
         } else
