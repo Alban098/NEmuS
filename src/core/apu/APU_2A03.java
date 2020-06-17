@@ -26,6 +26,7 @@ public class APU_2A03 {
     private int writeTo4017 = -1;
 
     private boolean frameIRQ = false;
+    private boolean irqInhibit = false;
 
     private boolean raw_audio = false;
 
@@ -37,7 +38,6 @@ public class APU_2A03 {
         pulse_2 = new PulseChannel();
         triangle = new TriangleChannel();
         noise = new NoiseChannel();
-        noise.sequencer.sequence = 0xDBDB;
     }
 
     /**
@@ -64,7 +64,24 @@ public class APU_2A03 {
      * @return the current audio sample as a value between -1 and 1
      */
     public double getSample() {
-        return ((0.00752 * ((pulse_1.output * 15) + (pulse_2.output * 15))) + (0.00851 * triangle.output * 15) + (0.00494 * noise.output * 15)) * 5 * volume;
+        return ((0.00752 * ((pulse_1.output * 15) + (pulse_2.output * 15))) + (0.00851 * triangle.output * 15) + (0.00494 * noise.output * 15)) * 2 * volume;
+    }
+
+    public void reset() {
+        cpuWrite(0x4015, 0x00);
+        pulse_1.enabled = true;
+        pulse_2.enabled = true;
+        noise.enabled = true;
+    }
+
+    public void startup() {
+       for (int i = 0x4000; i < 0x4007; i++)
+           cpuWrite(i, 0x00);
+        for (int i = 0x4010; i < 0x4013; i++)
+            cpuWrite(i, 0x00);
+        noise.sequencer.sequence = 0x0000;
+        frame_counter = 15;
+        cpuWrite(0x4015, 0x00);
     }
 
     /**
@@ -147,7 +164,8 @@ public class APU_2A03 {
                 break;
             case 0x4017:
                 b5StepMode = (data & 0x80) == 0x80;
-                if ((data & 0x40) == 0x40) frameIRQ = false;
+                irqInhibit = (data & 0x40) == 0x40;
+                if (irqInhibit) frameIRQ = false;
                 writeTo4017 = 4;
                 break;
         }
@@ -167,6 +185,7 @@ public class APU_2A03 {
             data |= (pulse_2.lengthCounter.counter > 0) ? 0x02 : 0x00;
             data |= (triangle.lengthCounter.counter > 0) ? 0x04 : 0x00;
             data |= (noise.lengthCounter.counter > 0) ? 0x08 : 0x00;
+            data |= frameIRQ ? 0x40 : 0x00;
         }
         return data;
     }
@@ -233,7 +252,8 @@ public class APU_2A03 {
                     clockEnvelope = true;
                     clockLengthCounter = true;
                     frame_counter = 0;
-                    frameIRQ = true;
+                    if (!irqInhibit)
+                        frameIRQ = true;
                 }
             }
             if (clockEnvelope) {

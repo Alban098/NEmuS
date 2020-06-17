@@ -1,0 +1,189 @@
+^ NEmuS ^ ROM Path ^ Other Info ^
+| PASS | apu\apu_mixer\noise.nes | |
+| PASS | apu\apu_mixer\square.nes | |
+| PASS | apu\apu_mixer\triangle.nes | |
+| PASS | apu\apu_reset\irq_flag_cleared.nes | |
+| PASS | apu\blargg_apu_2005.07.30\02.len_table.nes | |
+| PASS | apu\dmc_dma_during_read4\dma_2007_write.nes | |
+| PASS | apu\dmc_dma_during_read4\double_2007_read.nes | |
+| FAIL | apu\blargg_apu_2005.07.30\01.len_ctr.nes | |
+| FAIL | apu\blargg_apu_2005.07.30\03.irq_flag.nes | |
+| FAIL | apu\blargg_apu_2005.07.30\04.clock_jitter.nes | |
+| FAIL | apu\blargg_apu_2005.07.30\05.len_timing_mode0.nes | |
+| FAIL | apu\blargg_apu_2005.07.30\06.len_timing_mode1.nes | |
+| FAIL | apu\blargg_apu_2005.07.30\07.irq_flag_timing.nes | |
+| FAIL | apu\blargg_apu_2005.07.30\08.irq_timing.nes | |
+| FAIL | apu\blargg_apu_2005.07.30\09.reset_timing.nes | |
+| FAIL | apu\blargg_apu_2005.07.30\10.len_halt_timing.nes | |
+| FAIL | apu\blargg_apu_2005.07.30\11.len_reload_timing.nes | |
+| FAIL | apu\dmc_dma_during_read4\dma_2007_read.nes | DMA to fast |
+| FAIL | apu\dmc_dma_during_read4\read_write_2007.nes | |
+| FAIL | apu\apu_reset\len_ctrs_enabled.nes | |
+| FAIL | apu\apu_reset\works_immediately.nes | |
+| FAIL | apu\apu_test\apu_test.nes | |
+| FAIL | apu\apu_test\rom_singles\1-len_ctr.nes | |
+| FAIL | apu\apu_test\rom_singles\2-len_table.nes | |
+| FAIL | apu\apu_test\rom_singles\3-irq_flag.nes | |
+| FAIL | apu\apu_test\rom_singles\4-jitter.nes | |
+| FAIL | apu\apu_test\rom_singles\5-len_timing.nes | need to clock at 7456.5 but is clocked at 7457 |
+| FAIL | apu\apu_test\rom_singles\6-irq_flag_timing.nes | |
+| FAIL | apu\apu_reset\4015_cleared.nes | |
+| FAIL | apu\apu_reset\4017_timing.nes | Delay: 0 clocks |
+| FAIL | apu\apu_reset\4017_written.nes | |
+| ???? | apu\apu_mixer\dmc.nes | No DMC yet |
+| ???? | apu\apu_test\rom_singles\7-dmc_basics.nes | No DMC yet |
+| ???? | apu\apu_test\rom_singles\8-dmc_rates.nes | No DMC yet |
+| ???? | apu\dmc_dma_during_read4\dma_4016_read.nes | |
+| ???? | apu\dmc_tests\buffer_retained.nes | No DMC yet |
+| ???? | apu\dmc_tests\latency.nes | No DMC yet |
+| ???? | apu\dmc_tests\status.nes | No DMC yet |
+| ???? | apu\dmc_tests\status_irq.nes | No DMC yet |
+| ???? | apu\sprdma_and_dmc_dma\sprdma_and_dmc_dma.nes | No DMC yet |
+| ???? | apu\sprdma_and_dmc_dma\sprdma_and_dmc_dma_512.nes | No DMC yet |
+
+| FAIL | cpu\blargg_nes_cpu_test5\cpu.nes | |
+| PASS | cpu\blargg_nes_cpu_test5\official.nes | |
+| PASS | cpu\branch_timing_tests\1.Branch_Basics.nes | |
+| PASS | cpu\branch_timing_tests\2.Backward_Branch.nes | |
+| PASS | cpu\branch_timing_tests\3.Forward_Branch.nes | |
+| PASS | cpu\cpu_dummy_reads\cpu_dummy_reads.nes | |
+| PASS | cpu\cpu_reset\ram_after_reset.nes | |
+| PASS | cpu\cpu_reset\registers.nes | |
+| PASS | cpu\cpu_timing_test6\cpu_timing_test.nes | |
+| PASS | cpu\instr_misc\rom_singles\01-abs_x_wrap.nes | |
+| PASS | cpu\instr_misc\rom_singles\02-branch_wrap.nes | |
+| PASS | cpu\instr_misc\rom_singles\03-dummy_reads.nes | |
+| PASS | cpu\instr_test-v3\official_only.nes | |
+| PASS | cpu\instr_timing\rom_singles\2-branch_timing.nes | |
+| FAIL | cpu\cpu_interrupts_v2\cpu_interrupts.nes | |
+| FAIL | cpu\cpu_interrupts_v2\rom_singles\1-cli_latency.nes | |
+| FAIL | cpu\cpu_interrupts_v2\rom_singles\2-nmi_and_brk.nes | |
+| FAIL | cpu\cpu_interrupts_v2\rom_singles\3-nmi_and_irq.nes | |
+| FAIL | cpu\cpu_interrupts_v2\rom_singles\4-irq_and_dma.nes | |
+| FAIL | cpu\cpu_interrupts_v2\rom_singles\5-branch_delays_irq.nes | |
+| FAIL | cpu\instr_misc\instr_misc.nes | 1D 19 11 3D 39 31 5D 59 51 7D 79 71 9D 99 91 BD B9 B1 DD D9 D1 FD F9 F1 1E 3E 5E 7E DE FE BC BE |
+| FAIL | cpu\instr_misc\rom_singles\04-dummy_reads_apu.nes | |
+| FAIL | cpu\instr_test-v3\all_instrs.nes | |
+| FAIL | cpu\instr_timing\instr_timing.nes | Fails on Unofficiel OPCodes |
+| FAIL | cpu\instr_timing\rom_singles\1-instr_timing.nes | |
+
+| PASS | ppu\full_palette\flowing_palette.nes | |
+| PASS | ppu\full_palette\full_palette.nes | |
+| PASS | ppu\full_palette\full_palette_smooth.nes | |
+| PASS | ppu\blargg_ppu_tests_2005.09.15b\palette_ram.nes | |
+| PASS | ppu\nmi_sync\demo_ntsc.nes | |
+| PASS | ppu\nmi_sync\demo_pal.nes | |
+| PASS | ppu\ppu_vbl_nmi\rom_singles\01-vbl_basics.nes | |
+| PASS | ppu\ppu_vbl_nmi\rom_singles\03-vbl_clear_time.nes | |
+| PASS | ppu\ppu_vbl_nmi\rom_singles\09-even_odd_frames.nes | |
+| PASS | ppu\scanline\scanline.nes | I'm not sure about this one ?? |
+| PASS | ppu\scrolltest\scroll.nes | |
+| PASS | ppu\sprite_hit_tests_2005.10.05\01.basics.nes | |
+| PASS | ppu\sprite_hit_tests_2005.10.05\02.alignment.nes	| |
+| PASS | ppu\sprite_hit_tests_2005.10.05\03.corners.nes | |
+| PASS | ppu\sprite_hit_tests_2005.10.05\04.flip.nes | |
+| PASS | ppu\sprite_hit_tests_2005.10.05\05.left_clip.nes	| |
+| PASS | ppu\sprite_hit_tests_2005.10.05\08.double_height.nes | |
+| PASS | ppu\sprite_hit_tests_2005.10.05\09.timing_basics.nes | |
+| PASS | ppu\sprite_hit_tests_2005.10.05\10.timing_order.nes | |
+| PASS | ppu\vbl_nmi_timing\1.frame_basics.nes | |
+| PASS | ppu\vbl_nmi_timing\4.vbl_clear_timing.nes | |
+| PASS | ppu\tv.nes | |
+| PASS | ppu\StarsSE.nes | |
+| PASS | ppu\spritecans.nes | |
+| FAIL | ppu\blargg_ppu_tests_2005.09.15b\power_up_palette.nes | No influence on emulation |
+| FAIL | ppu\blargg_ppu_tests_2005.09.15b\sprite_ram.nes | #7 |
+| FAIL | ppu\blargg_ppu_tests_2005.09.15b\vbl_clear_time.nes | #3 |
+| FAIL | ppu\blargg_ppu_tests_2005.09.15b\vram_access.nes | #6 |
+| FAIL | ppu\oam_read\oam_read.nes | 39A1B881 |
+| FAIL | ppu\oam_stress\oam_stress.nes | E9D41231 |
+| FAIL | ppu\ppu_open_bus\ppu_open_bus.nes | Open bus not set on write |
+| FAIL | ppu\ppu_vbl_nmi\rom_singles\02-vbl_set_time.nes | 4103C340 |
+| FAIL | ppu\ppu_vbl_nmi\rom_singles\04-nmi_control.nes | |
+| FAIL | ppu\ppu_vbl_nmi\rom_singles\05-nmi_timing.nes | B8720AAA |
+| FAIL | ppu\ppu_vbl_nmi\rom_singles\06-suppression.nes | 3FE15516 |
+| FAIL | ppu\ppu_vbl_nmi\rom_singles\07-nmi_on_timing.nes | FD9CDCC9 |
+| FAIL | ppu\ppu_vbl_nmi\rom_singles\08-nmi_off_timing.nes | 4CC88927 |
+| FAIL | ppu\ppu_vbl_nmi\rom_singles\10-even_odd_timing.nes | Clock skipped to late after BG enabling |
+| FAIL | ppu\ppu_vbl_nmi\ppu_vbl_nmi.nes | |
+| FAIL | ppu\sprite_hit_tests_2005.10.05\06.right_edge.nes | #2 |
+| FAIL | ppu\sprite_hit_tests_2005.10.05\07.screen_bottom.nes | #4 |
+| FAIL | ppu\sprite_hit_tests_2005.10.05\11.edge_timing.nes | #3 |
+| FAIL | ppu\sprite_overflow_tests\1.Basics.nes | #2 |
+| FAIL | ppu\sprite_overflow_tests\2.Details.nes | #2 |
+| FAIL | ppu\sprite_overflow_tests\3.Timing.nes | #3 |
+| FAIL | ppu\sprite_overflow_tests\4.Obscure.nes | #2 |
+| FAIL | ppu\sprite_overflow_tests\5.Emulator.nes | #2 |
+| FAIL | ppu\vbl_nmi_timing\2.vbl_timing.nes | #8 |
+| FAIL | ppu\vbl_nmi_timing\3.even_odd_frames.nes | #3 |
+| FAIL | ppu\vbl_nmi_timing\5.nmi_suppression.nes | #3 |
+| FAIL | ppu\vbl_nmi_timing\6.nmi_disable.nes | #2 |
+| FAIL | ppu\vbl_nmi_timing\7.nmi_timing.nes | #2 |
+
+
+| PASS | mappers\MMC1_A12\mmc1_a12.nes | |
+| PASS | mappers\nrom368\fail368.nes | |
+| FAIL | mappers\mmc3_irq_tests\1.Clocking.nes | |
+| FAIL | mappers\mmc3_irq_tests\2.Details.nes | |
+| FAIL | mappers\mmc3_irq_tests\3.A12_clocking.nes | |
+| FAIL | mappers\mmc3_irq_tests\4.Scanline_timing.nes | |
+| FAIL | mappers\mmc3_irq_tests\5.MMC3_rev_A.nes | |
+| FAIL | mappers\mmc3_irq_tests\6.MMC3_rev_B.nes | |
+| FAIL | mappers\mmc3_test\1-clocking.nes | |
+| FAIL | mappers\mmc3_test\2-details.nes | |
+| FAIL | mappers\mmc3_test\3-A12_clocking.nes | |
+| FAIL | mappers\mmc3_test\4-scanline_timing.nes | |
+| FAIL | mappers\mmc3_irq_tests\5-MMC3.nes | |
+| FAIL | mappers\mmc3_irq_tests\6.MMC6.nes | |
+
+| PASS | others\8bitpeoples_-_deadline_console_invitro.nes | |
+| PASS | others\apocalypse.nes | |
+| PASS | others\BladeBuster.nes | |
+| PASS | others\BladeBuster.nes | |
+| PASS | others\blargg_litewall-2.nes | |
+| PASS | others\BLOCKS.NES | |
+| PASS | others\CMC80s.NES | |
+| PASS | others\demo jitter.nes | |
+| PASS | others\demo.nes | |
+| PASS | others\FLAME.NES | |
+| PASS | others\GENIE.NES | |
+| PASS | others\GREYS.NES | |
+| PASS | others\litewall2.nes | |
+| PASS | others\litewall3.nes | |
+| PASS | others\litewall5.nes | |
+| PASS | others\max-300.nes | |
+| PASS | others\MOTION.NES | |
+| PASS | others\nes15-NTSC.nes | |
+| PASS | others\nes15-PAL.nes | |
+| PASS | others\nescafe.nes | |
+| PASS | others\nestest.nes | |
+| PASS | others\PCM.demo.wgraphics.nes | |
+| PASS | others\physics.0.1.nes | |
+| PASS | others\quantum_disco_brothers_by_wAMMA.nes | |
+| PASS | others\RasterChromaLuma.NES | |
+| PASS | others\RasterDemo.NES | |
+| PASS | others\RasterTest1.NES | |
+| PASS | others\RasterTest2.NES | |
+| PASS | others\RasterTest3.NES | |
+| PASS | others\RasterTest3a.NES | |
+| PASS | others\RasterTest3b.NES | |
+| PASS | others\RasterTest3c.NES | |
+| PASS | others\RasterTest3d.NES | |
+| PASS | others\RasterTest3e.NES | |
+| PASS | others\read2004.nes | |
+| PASS | others\S0.NES | |
+| PASS | others\Sayoonara!.NES | |
+| PASS | others\SimpleParallaxDemo.nes | |
+| PASS | others\smwstomp.nes | |
+| PASS | others\snow.nes | |
+| PASS | others\SPRITE.NES | |
+| PASS | others\TANESPOT.NES | |
+| PASS | others\TEST.nes | |
+| PASS | others\tutor.nes | |
+| PASS | others\window_old_ntsc.nes | |
+| PASS | others\window2_ntsc.nes | |
+| PASS | others\read_joy3\count_errors.nes | |
+| PASS | others\read_joy3\count_errors_fast.nes | |
+| PASS | others\read_joy3\test_buttons.nes | |
+| PASS | others\read_joy3\thorough_test.nes | |
+| PASS | others\stress\NEStress.nes | PPU : 12\14 APU : 0\0 CPU : 48\48 |

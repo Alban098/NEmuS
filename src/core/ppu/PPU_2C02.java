@@ -73,6 +73,10 @@ public class PPU_2C02 {
     private Runnable updateShifter;
     private Runnable loadBackgroundShifter;
 
+    public int getOamAddr() {
+        return oam_addr;
+    }
+
     /**
      * Create a new PPU, instantiate its components and fill up the palettes
      */
@@ -324,12 +328,15 @@ public class PPU_2C02 {
             case 0x0007: // PPU Data
                 //Nametable reads are delayed by one cycle
                 //When reading the last fetched data is returned and the next is fetched
+                int last_addr = vram_addr.get();
                 data = ppu_data_buffer;
                 ppu_data_buffer = ppuRead(vram_addr.get());
                 //Except palette, here their is no delay
                 if (vram_addr.get() >= 0x3F00) data = ppu_data_buffer;
                 //The vram address is incremented (horizontally or vertically depending on the Control Register)
                 vram_addr.set(vram_addr.get() + (controlRegister.isIncrementModeSet() ? 32 : 1));
+                if ((vram_addr.get() & 0x1000) == 0x1000 && (last_addr & 0x1000) == 0)
+                    cartridge.getMapper().scanline();
                 break;
         }
         return data & 0xFF;
@@ -580,6 +587,8 @@ public class PPU_2C02 {
     public void clock() {
         //If we are in the visible screen (regarding scanlines and omitting horizontal blank)
         if (scanline >= -1 && scanline < 240) {
+            if (cycle >= 257 && cycle <= 320)
+                oam_addr = 0;
             if (scanline == -1 && cycle == 0)
                 screen_buffer_tmp.clear();
             //If we are on the top left we increment the cycle count and clear the screen buffer
@@ -839,12 +848,13 @@ public class PPU_2C02 {
             screen_buffer_tmp.put((byte) ((int) (getColorFromPalette(palette, pixel).getOpacity() * 255) & 0xFF));
         }
 
-        cycle++;
         if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
             if (cycle == 260 && scanline < 240) {
                 cartridge.getMapper().scanline();
             }
         }
+
+        cycle++;
         //If we are at the end of a scanline
         if (cycle >= 341) {
             cycle = 0;

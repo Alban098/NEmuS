@@ -39,56 +39,58 @@ public class NoiseChannel {
      * @param data represent which bit to set to the 16bit reload register
      */
     public void updateReload(int data) {
-        mode = (data & 0x80) == 0x80;
-        switch (data & 0x0F) {
-            case 0x00:
-                sequencer.reload.value = 0;
-                break;
-            case 0x01:
-                sequencer.reload.value = 4;
-                break;
-            case 0x02:
-                sequencer.reload.value = 8;
-                break;
-            case 0x03:
-                sequencer.reload.value = 16;
-                break;
-            case 0x04:
-                sequencer.reload.value = 32;
-                break;
-            case 0x05:
-                sequencer.reload.value = 64;
-                break;
-            case 0x06:
-                sequencer.reload.value = 96;
-                break;
-            case 0x07:
-                sequencer.reload.value = 128;
-                break;
-            case 0x08:
-                sequencer.reload.value = 160;
-                break;
-            case 0x09:
-                sequencer.reload.value = 202;
-                break;
-            case 0x0A:
-                sequencer.reload.value = 254;
-                break;
-            case 0x0B:
-                sequencer.reload.value = 380;
-                break;
-            case 0x0C:
-                sequencer.reload.value = 508;
-                break;
-            case 0x0D:
-                sequencer.reload.value = 1016;
-                break;
-            case 0x0E:
-                sequencer.reload.value = 2034;
-                break;
-            case 0x0F:
-                sequencer.reload.value = 4068;
-                break;
+        if (enabled) {
+            mode = (data & 0x80) == 0x80;
+            switch (data & 0x0F) {
+                case 0x00:
+                    sequencer.reload.value = 0;
+                    break;
+                case 0x01:
+                    sequencer.reload.value = 4;
+                    break;
+                case 0x02:
+                    sequencer.reload.value = 8;
+                    break;
+                case 0x03:
+                    sequencer.reload.value = 16;
+                    break;
+                case 0x04:
+                    sequencer.reload.value = 32;
+                    break;
+                case 0x05:
+                    sequencer.reload.value = 64;
+                    break;
+                case 0x06:
+                    sequencer.reload.value = 96;
+                    break;
+                case 0x07:
+                    sequencer.reload.value = 128;
+                    break;
+                case 0x08:
+                    sequencer.reload.value = 160;
+                    break;
+                case 0x09:
+                    sequencer.reload.value = 202;
+                    break;
+                case 0x0A:
+                    sequencer.reload.value = 254;
+                    break;
+                case 0x0B:
+                    sequencer.reload.value = 380;
+                    break;
+                case 0x0C:
+                    sequencer.reload.value = 508;
+                    break;
+                case 0x0D:
+                    sequencer.reload.value = 1016;
+                    break;
+                case 0x0E:
+                    sequencer.reload.value = 2034;
+                    break;
+                case 0x0F:
+                    sequencer.reload.value = 4068;
+                    break;
+            }
         }
     }
 

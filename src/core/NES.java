@@ -94,8 +94,9 @@ public class NES {
                 dma_page = data;
                 dma_addr = 0;
                 dma_transfer = true;
-            } else if (addr <= 0x4017) //When trying to write to controller register, we snapshot the current controller state
-                controller_state[addr & 0x01] = controller[addr & 0x01];
+            } else if (addr == 0x4016) { //When trying to write to controller register, we snapshot the current controller state
+                controller_state[data & 0x1] = controller[data & 0x1];
+            }
         }
     }
 
@@ -168,6 +169,7 @@ public class NES {
      */
     public void startup() {
         cpu.startup();
+        apu.startup();
         ppu.reset();
         cartridge.reset();
         systemTicks = 0;
@@ -203,13 +205,14 @@ public class NES {
                     if (systemTicks % 2 == 1)
                         dma_dummy = false;
                 } else { //If the transfer is occurring
+                    int oam_addr = ppu.getOamAddr();
                     if (systemTicks % 2 == 0) //On even cycles, we read from the selected CPU Memory Page
                         dma_data = cpuRead(dma_page << 8 | dma_addr, false);
                     else { //On odd cycles, we write the read data to the PPU Memory (OAM Memory)
                         //One Object Attribute is represented as 4 8bit values [0x(x)FF (attr)FF  (tileId)FF (y)FF]
                         //We select which attribute is actually being written by taking the 2 lsb of the current DMA Address
                         //We select the OAM Entry index using the 5 lsb of the current DMA Address
-                        switch (dma_addr & 0x03) {
+                        switch ((dma_addr) & 0x03) {
                             case 0x0:
                                 ppu.getOams()[dma_addr >> 2].setY(dma_data);
                             case 0x1:

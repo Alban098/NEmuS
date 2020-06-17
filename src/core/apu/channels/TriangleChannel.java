@@ -64,8 +64,11 @@ public class TriangleChannel {
      * @param data length tabled index(5bit) unused(3bit)
      */
     public void writeLengthCounterLoad(int data) {
-        lengthCounter.counter = APU_2A03.length_table[(data & 0xF8) >> 3];
-        linearCounter.reload = true;
+        if (enabled) {
+
+            lengthCounter.counter = APU_2A03.length_table[(data & 0xF8) >> 3];
+            linearCounter.reload = true;
+        }
     }
 
     /**
