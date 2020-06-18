@@ -13,7 +13,7 @@ public class DMCChannel {
 
     private NES nes;
 
-    public int output = 0;
+    public double output = 0;
 
     public MemoryReader memoryReader;
     public OutputUnit outputUnit;
@@ -26,6 +26,7 @@ public class DMCChannel {
     public int sample_buffer = 0x00;
     public int timer = 0x00;
     public int rate = 0x00;
+    public int counter = 0x00;
 
     public DMCChannel(NES nes) {
         this.nes = nes;
@@ -37,6 +38,7 @@ public class DMCChannel {
         irqEnabled = (data & 0x80) == 0x80;
         loop = (data & 0x40) == 0x40;
         rate = rate_table[data & 0xF];
+        counter = rate - 1;
         if (!irqEnabled)
             interrupt = false;
     }
@@ -56,7 +58,7 @@ public class DMCChannel {
     /**
      * Compute the sample of the channel
      */
-    public void clock() {
+    public void compute() {
         if (sample_buffer == 0x00 && memoryReader.bytes_remaining > 0) {
             nes.haltCPU(4);
             sample_buffer = memoryReader.getSample();
@@ -69,14 +71,17 @@ public class DMCChannel {
             }
         }
 
-        if (!outputUnit.silence) {
-            if ((outputUnit.shift_register & 0x1) == 0x1 && outputUnit.output <= 125)
-                outputUnit.output += 2;
-            if ((outputUnit.shift_register & 0x1) == 0x0 && outputUnit.output >= 2)
-                outputUnit.output -= 2;
+        if (counter <= 0) {
+            counter = rate - 1;
+            if (!outputUnit.silence) {
+                if ((outputUnit.shift_register & 0x1) == 0x1 && outputUnit.output <= 125)
+                    outputUnit.output += 2;
+                if ((outputUnit.shift_register & 0x1) == 0x0 && outputUnit.output >= 2)
+                    outputUnit.output -= 2;
+            }
+            outputUnit.shift_register >>= 1;
+            outputUnit.bits_remaining--;
         }
-        outputUnit.shift_register >>= 1;
-        outputUnit.bits_remaining--;
 
         if (outputUnit.bits_remaining == 0) {
             outputUnit.bits_remaining = 8;
@@ -86,6 +91,6 @@ public class DMCChannel {
                 sample_buffer = 0x00;
             }
         }
-        output = (outputUnit.output/128 + output) / 2;
+        output = outputUnit.output;
     }
 }

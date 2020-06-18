@@ -73,7 +73,7 @@ public class APU_2A03 {
      * @return the current audio sample as a value between -1 and 1
      */
     public double getSample() {
-        return ((0.00752 * (((pulse_1_rendered ? pulse_1.output : 0) * 15) + ((pulse_2_rendered ? pulse_2.output : 0) * 15))) + (0.00851 * (triangle_rendered ? triangle.output : 0) * 15) + (0.00494 * (noise_rendered ? noise.output : 0) * 15) + 0.00335 * (dmc_rendered ? dmc.output * 128 : 0)) * 2 * volume;
+        return ((0.00752 * (((pulse_1_rendered ? pulse_1.output : 0) * 15) + ((pulse_2_rendered ? pulse_2.output : 0) * 15))) + (0.00851 * (triangle_rendered ? triangle.output : 0) * 15) + (0.00494 * (noise_rendered ? noise.output : 0) * 15) + 0.00335 * (dmc_rendered ? dmc.output : 0)) * 2 * volume;
     }
 
     public void setPulse_1_rendered(boolean pulse_1_rendered) {
@@ -246,6 +246,11 @@ public class APU_2A03 {
         boolean clockLengthCounter = false;
 
         totalTime += clockTime;
+        if (clock_counter % 3 == 0) {
+            dmc.counter--;
+            if (enable_sampling)
+                triangle.compute(totalTime, raw_audio);
+        }
         if (clock_counter % 6 == 0) {
             //A write to 0x4017 will cause the frame counter to be reset after 4 CPU cycles (2 APU cycles)
             if (writeTo4017 == 0) {
@@ -308,9 +313,8 @@ public class APU_2A03 {
             if (enable_sampling) {
                 pulse_1.compute(totalTime, raw_audio);
                 pulse_2.compute(totalTime, raw_audio);
-                triangle.compute(totalTime, raw_audio);
                 noise.compute();
-                dmc.clock();
+                dmc.compute();
             }
         }
         if (enable_sampling) {

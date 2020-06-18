@@ -86,7 +86,7 @@ public class TriangleChannel {
                 } else {
                     oscillator.frequency = 1789773.0f / (32.0f * (sequencer.reload.value + 1));
                     sample = oscillator.sample(time);
-                    output = (output + sample) / 2;
+                    output = sample;
                 }
             }
         } else

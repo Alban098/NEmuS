@@ -167,8 +167,12 @@ public class SettingsWindow implements Initializable {
             soundQualitySlider.setDisable(true);
             audioRenderingCheck.setDisable(true);
             rawAudioCheck.setDisable(true);
+            pulse1Checkbox.setDisable(true);
+            pulse2Checkbox.setDisable(true);
+            triangleCheckbox.setDisable(true);
+            noiseCheckbox.setDisable(true);
+            dmcCheckbox.setDisable(true);
         }
-        audioRenderingCheck.setSelected(true);
         cpuStepButton.setDisable(true);
         frameStepButton.setDisable(true);
         instance = this;
