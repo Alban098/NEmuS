@@ -23,10 +23,10 @@ public class Cartridge {
 
     private final String filename;
 
-    private int nPRGBanks;
-    private int nCHRBanks;
-    private byte[] sPRGMemory;
-    private byte[] sCHRMemory;
+    private int nb_PRG_banks;
+    private int nb_CHR_banks;
+    private byte[] prg_memory;
+    private byte[] chr_memory;
 
     private Mapper mapper;
     private Mirror mirror;
@@ -59,43 +59,43 @@ public class Cartridge {
         //If it's a iNES 1 file
         if (fileType == 1) {
             //Read Program Memory
-            nPRGBanks = header.prg_rom_chunks;
-            sPRGMemory = reader.readBytes(nPRGBanks * 16384);
+            nb_PRG_banks = header.prg_rom_chunks;
+            prg_memory = reader.readBytes(nb_PRG_banks * 16384);
             //Read Character Memory
-            nCHRBanks = header.chr_rom_chunks;
-            sCHRMemory = reader.readBytes(nCHRBanks * 8192);
-            if (nCHRBanks == 0)
-                sCHRMemory = new byte[8192];
+            nb_CHR_banks = header.chr_rom_chunks;
+            chr_memory = reader.readBytes(nb_CHR_banks * 8192);
+            if (nb_CHR_banks == 0)
+                chr_memory = new byte[8192];
         }
         if (fileType == 2) {
             //Read Program Memory
-            nPRGBanks = (header.prg_ram_size & 0x07) << 8 | (header.prg_rom_chunks & 0xFF);
-            sPRGMemory = reader.readBytes(nPRGBanks * 16384);
+            nb_PRG_banks = (header.prg_ram_size & 0x07) << 8 | (header.prg_rom_chunks & 0xFF);
+            prg_memory = reader.readBytes(nb_PRG_banks * 16384);
             //Read Character Memory
-            nCHRBanks = (header.prg_ram_size & 0x38) << 8 | (header.chr_rom_chunks & 0xFF);
-            sCHRMemory = reader.readBytes(nCHRBanks * 8192);
-            if (nCHRBanks == 0)
-                sCHRMemory = reader.readBytes(8192);
+            nb_CHR_banks = (header.prg_ram_size & 0x38) << 8 | (header.chr_rom_chunks & 0xFF);
+            chr_memory = reader.readBytes(nb_CHR_banks * 8192);
+            if (nb_CHR_banks == 0)
+                chr_memory = reader.readBytes(8192);
         }
         //Initialize the right Mapper
         switch (mapperId) {
             case 0:
-                mapper = new Mapper000(nPRGBanks, nCHRBanks);
+                mapper = new Mapper000(nb_PRG_banks, nb_CHR_banks);
                 break;
             case 1:
-                mapper = new Mapper001(nPRGBanks, nCHRBanks, filename + ".sav");
+                mapper = new Mapper001(nb_PRG_banks, nb_CHR_banks, filename + ".sav");
                 break;
             case 2:
-                mapper = new Mapper002(nPRGBanks, nCHRBanks);
+                mapper = new Mapper002(nb_PRG_banks, nb_CHR_banks);
                 break;
             case 3:
-                mapper = new Mapper003(nPRGBanks, nCHRBanks);
+                mapper = new Mapper003(nb_PRG_banks, nb_CHR_banks);
                 break;
             case 4:
-                mapper = new Mapper004(nPRGBanks, nCHRBanks, filename + ".sav");
+                mapper = new Mapper004(nb_PRG_banks, nb_CHR_banks, filename + ".sav");
                 break;
             case 66:
-                mapper = new Mapper066(nPRGBanks, nCHRBanks);
+                mapper = new Mapper066(nb_PRG_banks, nb_CHR_banks);
                 break;
             default:
                 throw new UnsupportedMapperException("Mapper " + mapperId + " not implemented yet");
@@ -114,7 +114,7 @@ public class Cartridge {
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.cpuMapRead(addr, mapped, data)) {
             if (mapped.value == -1) return true;
-            data.value = sPRGMemory[mapped.value] & 0xFF;
+            data.value = prg_memory[mapped.value] & 0xFF;
             return true;
         }
         return false;
@@ -134,7 +134,7 @@ public class Cartridge {
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.cpuMapWrite(addr, mapped, data)) {
             if (mapped.value == -1) return true;
-            sPRGMemory[mapped.value] = (byte) data;
+            prg_memory[mapped.value] = (byte) data;
             return true;
         }
         return false;
@@ -151,7 +151,7 @@ public class Cartridge {
         addr &= 0xFFFF;
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.ppuMapRead(addr, mapped, data)) {
-            data.value = sCHRMemory[mapped.value] & 0xFF;
+            data.value = chr_memory[mapped.value] & 0xFF;
             return true;
         }
         return false;
@@ -170,7 +170,7 @@ public class Cartridge {
         data &= 0xFF;
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.ppuMapWrite(addr, mapped, data)) {
-            sCHRMemory[mapped.value] = (byte) data;
+            chr_memory[mapped.value] = (byte) data;
             return true;
         }
         return false;

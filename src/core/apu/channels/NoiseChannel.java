@@ -1,36 +1,55 @@
 package core.apu.channels;
 
-import core.apu.components.Envelope;
-import core.apu.components.LengthCounter;
-import core.apu.components.Sequencer;
+import core.apu.APU_2A03;
+import core.apu.channels.components.Envelope;
+import core.apu.channels.components.LengthCounter;
+import core.apu.channels.components.Sequencer;
 
 /**
  * This class represent a Noise Channel of the APU
  */
 public class NoiseChannel {
 
-    public double output = 0;
+    public double sample = 0;
 
-    public boolean enabled = false;
-    public boolean halted = false;
-    public boolean mode = false;
-    public Envelope envelope;
-    public LengthCounter lengthCounter;
-    public Sequencer sequencer;
+    private Envelope envelope;
+    private LengthCounter length_counter;
+    private Sequencer sequencer;
+
+    private boolean enabled = false;
+    private boolean halted = false;
+    private boolean mode = false;
 
     /**
      * Create a new NoiseChannel
      */
     public NoiseChannel() {
         envelope = new Envelope();
-        lengthCounter = new LengthCounter();
+        length_counter = new LengthCounter();
         sequencer = new Sequencer();
     }
 
-    public void updateEnvelope(int data) {
+    /**
+     * Set the Envelope's volume and disabled flag
+     *
+     * @param data chanel halted(1bit) envelope disabled(1bit) envelope volume(4bit)
+     */
+    public void writeEnvelope(int data) {
         envelope.volume = data & 0x0F;
         envelope.disabled = (data & 0x10) == 0x10;
         halted = (data & 0x20) == 0x20;
+    }
+
+    /**
+     * Set the length counter to a specific value indexed from a length table
+     *
+     * @param data length tabled index(5bit) unused(3bit)
+     */
+    public void writeLengthCounter(int data) {
+        if (enabled) {
+            length_counter.counter = APU_2A03.length_table[(data & 0xF8) >> 3];
+            envelope.started = true;
+        }
     }
 
     /**
@@ -97,14 +116,63 @@ public class NoiseChannel {
     /**
      * Compute the sample of the channel
      */
-    public void compute() {
+    public void computeSample() {
         sequencer.clock(enabled, s -> (((s & 0x0001) ^ ((s & (mode ? 0x0040 : 0x0002)) >> 1)) << 14) | ((s & 0x7FFF) >> 1));
-        output = 0;
+        sample = 0;
 
-        if (lengthCounter.counter > 0 && (sequencer.sequence & 0x01) != 0) {
-            output = (double) sequencer.output * ((double) (envelope.output - 1) / 16.0);
+        if (length_counter.counter > 0 && (sequencer.sequence & 0x01) != 0) {
+            sample = (double) sequencer.output * ((double) (envelope.output - 1) / 16.0);
         }
         if (!enabled)
-            output = 0;
+            sample = 0;
     }
+
+    /**
+     * Enable/Disable the channel
+     *
+     * @param enabled should the channel be enabled
+     */
+    public void enable(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    /**
+     * Set the Length Counter to 0
+     */
+    public void resetLengthCounter() {
+        length_counter.counter = 0;
+    }
+
+    /**
+     * Clock the Length Counter
+     */
+    public void clockLengthCounter() {
+        length_counter.clock(enabled, halted);
+    }
+
+    /**
+     * Return the Length Counter value
+     *
+     * @return the Length Counter value
+     */
+    public int getLengthCounter() {
+        return length_counter.counter;
+    }
+
+    /**
+     * Clock the Envelope
+     */
+    public void clockEnvelope() {
+        envelope.clock(halted);
+    }
+
+    /**
+     * Set the Sequencer's sequence
+     *
+     * @param seq the new sequence
+     */
+    public void setSequence(int seq) {
+        sequencer.sequence = seq;
+    }
+
 }

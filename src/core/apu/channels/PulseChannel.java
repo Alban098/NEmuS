@@ -1,26 +1,25 @@
 package core.apu.channels;
 
 import core.apu.APU_2A03;
-import core.apu.components.*;
-import core.apu.components.pulse.Oscillator;
-import core.apu.components.pulse.Sweeper;
+import core.apu.channels.components.*;
+import core.apu.channels.components.pulse.Oscillator;
+import core.apu.channels.components.pulse.Sweeper;
 
 /**
  * This class represent a Pulse Channel of the APU
  */
 public class PulseChannel {
 
-    public double sample = 0;
-    public double output = 0.0;
+    public double sample = 0.0;
 
-    public boolean enabled = false;
-    public boolean halted = false;
+    private Sequencer sequencer;
+    private Envelope envelope;
+    private LengthCounter length_counter;
+    private Sweeper sweeper;
+    private Oscillator oscillator;
 
-    public Sequencer sequencer;
-    public Oscillator oscillator;
-    public Envelope envelope;
-    public LengthCounter lengthCounter;
-    public Sweeper sweeper;
+    private boolean enabled = false;
+    private boolean halted = false;
 
     /**
      * Create a new PulseChannel
@@ -29,7 +28,7 @@ public class PulseChannel {
         sequencer = new Sequencer();
         oscillator = new Oscillator();
         envelope = new Envelope();
-        lengthCounter = new LengthCounter();
+        length_counter = new LengthCounter();
         sweeper = new Sweeper();
     }
 
@@ -41,23 +40,22 @@ public class PulseChannel {
     public void writeDutyCycle(int data) {
         switch ((data & 0xC0) >> 6) {
             case 0x00:
-                sequencer.next_sequence = 0b00000001;
+                sequencer.sequence = 0b00000001;
                 oscillator.duty_cycle = 0.125f;
                 break;
             case 0x01:
-                sequencer.next_sequence = 0b00000011;
+                sequencer.sequence = 0b00000011;
                 oscillator.duty_cycle = 0.250f;
                 break;
             case 0x02:
-                sequencer.next_sequence = 0b00001111;
+                sequencer.sequence = 0b00001111;
                 oscillator.duty_cycle = 0.500f;
                 break;
             case 0x03:
-                sequencer.next_sequence = 0b11111100;
+                sequencer.sequence = 0b11111100;
                 oscillator.duty_cycle = 0.750f;
                 break;
         }
-        sequencer.sequence = sequencer.next_sequence;
         halted = (data & 0x20) == 0x20;
         envelope.volume = (data & 0x0F);
         envelope.disabled = (data & 0x10) == 0x10;
@@ -94,7 +92,6 @@ public class PulseChannel {
     public void writeTimerHigh(int data) {
         sequencer.reload.value = (sequencer.reload.value & 0x00FF) | ((data & 0x7) << 8);
         sequencer.timer = sequencer.reload.value;
-        sequencer.sequence = sequencer.next_sequence;
     }
 
     /**
@@ -102,9 +99,9 @@ public class PulseChannel {
      *
      * @param data length tabled index(5bit) unused(3bit)
      */
-    public void writeLengthCounterLoad(int data) {
+    public void writeLengthCounter(int data) {
         if (enabled) {
-            lengthCounter.counter = APU_2A03.length_table[(data & 0xF8) >> 3];
+            length_counter.counter = APU_2A03.length_table[(data & 0xF8) >> 3];
             envelope.started = true;
         }
     }
@@ -112,20 +109,72 @@ public class PulseChannel {
     /**
      * Compute the sample of the channel
      */
-    public void compute(double time, boolean raw) {
-        if (enabled && lengthCounter.counter > 0 && !sweeper.muted && envelope.output > 2) {
-            sequencer.clock(enabled, s -> (((s & 0x01) << 7) | ((s & 0xFE) >> 1)));
+    public void computeSample(double time, boolean raw) {
+        if (enabled && length_counter.counter > 0 && !sweeper.muted && envelope.output > 2) {
+            sequencer.clock(true, s -> (((s & 0x01) << 7) | ((s & 0xFE) >> 1)));
             if (sequencer.timer >= 8) {
                 if (raw) {
-                    output = sequencer.output * ((envelope.output - 1) / 16.0);
+                    sample = sequencer.output * ((envelope.output - 1) / 16.0);
                 } else {
                     oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload.value + 1));
                     oscillator.amplitude = (envelope.output - 1) / 16.0f;
-                    sample = oscillator.sample(time);
-                    output = (output + sample) / 2;
+                    sample = (sample + oscillator.sample(time)) / 2;
                 }
             }
         } else
-            output = 0;
+            sample = 0;
+    }
+
+    /**
+     * Enable/Disable the channel
+     *
+     * @param enabled should the channel be enabled
+     */
+    public void enable(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    /**
+     * Set the Length Counter to 0
+     */
+    public void resetLengthCounter() {
+        length_counter.counter = 0;
+    }
+
+    /**
+     * Clock the Length Counter
+     */
+    public void clockLengthCounter() {
+        length_counter.clock(enabled, halted);
+    }
+
+    /**
+     * Return the Length Counter value
+     *
+     * @return the Length Counter value
+     */
+    public int getLengthCounter() {
+        return length_counter.counter;
+    }
+
+    /**
+     * Clock the Envelope
+     */
+    public void clockEnvelope() {
+        envelope.clock(halted);
+    }
+
+    /**
+     * Clock the Frequency Sweeper
+     */
+    public void clockSweeper() {
+        sweeper.clock(sequencer.reload, true);
+    }
+
+    /**
+     * Update the state of the Frequency Sweeper
+     */
+    public void trackSweeper() {
+        sweeper.track(sequencer.reload);
     }
 }

@@ -14,7 +14,7 @@ public class GaussianHorizontal extends PostProcessingStep {
      * @param width  the width of the FBO
      * @param height the height of the FBO
      */
-    public GaussianHorizontal(Quad quad, int width, int height) {
+    GaussianHorizontal(Quad quad, int width, int height) {
         super(quad, "shaders/vertex.glsl", "shaders/filters/gaussian_horizontal.glsl", width, height);
     }
 
@@ -24,7 +24,7 @@ public class GaussianHorizontal extends PostProcessingStep {
      * @return a copy of the filter
      */
     @Override
-    public PostProcessingStep clone() {
+    PostProcessingStep cloneFilter() {
         return new GaussianHorizontal(quad, fbo.getWidth(), fbo.getHeight());
     }
 

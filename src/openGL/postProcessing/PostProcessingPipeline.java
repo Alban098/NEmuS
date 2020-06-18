@@ -16,7 +16,6 @@ import static org.lwjgl.opengl.GL11C.glEnable;
  */
 public class PostProcessingPipeline {
 
-    private Quad quad;
     private List<PostProcessingStep> allSteps;
     private List<PostProcessingStep> steps;
 
@@ -26,7 +25,7 @@ public class PostProcessingPipeline {
 
     private PostProcessingStep default_filter;
 
-    private boolean locked = false;
+    private volatile boolean locked = false;
 
     /**
      * Create a new pipeline
@@ -34,7 +33,6 @@ public class PostProcessingPipeline {
      * @param quad the quad where we will render the textures
      */
     public PostProcessingPipeline(Quad quad) {
-        this.quad = quad;
         steps = new ArrayList<>();
         allSteps = new ArrayList<>();
         allSteps.add(new GaussianHorizontal(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
@@ -55,17 +53,17 @@ public class PostProcessingPipeline {
      */
     public void applyFilters(int texture) {
         //If the pipeline has been modified, we lock the buffer and recompile the pipeline
+        locked = true;
         if (requestedSteps != null) {
             for (PostProcessingStep step : steps)
                 step.cleanUp();
             steps.clear();
-            locked = true;
             for (PostProcessingStep step : requestedSteps) {
-                steps.add(step.clone());
+                steps.add(step.cloneFilter());
             }
             requestedSteps = null;
-            locked = false;
         }
+        locked = false;
 
         //We apply each step of the pipeline
         start();
@@ -118,7 +116,7 @@ public class PostProcessingPipeline {
      */
     public void setSteps(List<PostProcessingStep> steps) {
         //We wait until the buffer is available before writing it from another Thread
-        while (locked) ;
+        while (locked) Thread.onSpinWait();
         requestedSteps = steps;
     }
 }

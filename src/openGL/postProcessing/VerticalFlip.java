@@ -13,7 +13,7 @@ public class VerticalFlip extends PostProcessingStep {
      *
      * @param quad the Quad where to render
      */
-    public VerticalFlip(Quad quad) {
+    VerticalFlip(Quad quad) {
         super(quad, "shaders/v_flip_vertex.glsl", "shaders/filters/no_filter.glsl");
     }
 
@@ -24,7 +24,7 @@ public class VerticalFlip extends PostProcessingStep {
      * @param width  the width of the FBO
      * @param height the height of the FBO
      */
-    public VerticalFlip(Quad quad, int width, int height) {
+    VerticalFlip(Quad quad, int width, int height) {
         super(quad, "shaders/v_flip_vertex.glsl", "shaders/filters/no_filter.glsl", width, height);
     }
 
@@ -34,7 +34,7 @@ public class VerticalFlip extends PostProcessingStep {
      * @return a copy of the filter
      */
     @Override
-    public PostProcessingStep clone() {
+    PostProcessingStep cloneFilter() {
         return new VerticalFlip(quad, fbo.getWidth(), fbo.getHeight());
     }
 

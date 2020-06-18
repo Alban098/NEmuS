@@ -1,8 +1,7 @@
 package gui;
 
 import core.apu.APU_2A03;
-import core.apu.components.pulse.Oscillator;
-import core.apu.components.triangle.TriangleOscillator;
+import core.apu.channels.components.pulse.Oscillator;
 import gui.inputs.NESInputs;
 import gui.inputs.TextFieldInput;
 import gui.inputs.KeyTuple;
@@ -177,9 +176,7 @@ public class SettingsWindow implements Initializable {
         frameStepButton.setDisable(true);
         instance = this;
         volumeSlider.valueProperty().addListener((observableValue, oldValue, newValue) -> APU_2A03.setVolume(newValue.intValue() / 100.0));
-        soundQualitySlider.valueProperty().addListener((observableValue, oldValue, newValue) ->  {Oscillator.setHarmonics(newValue.intValue() + 5);
-            TriangleOscillator.setHarmonics(newValue.intValue()/4);
-        });
+        soundQualitySlider.valueProperty().addListener((observableValue, oldValue, newValue) -> Oscillator.setHarmonics(newValue.intValue() + 5));
 
         p1_keyboard_a.setInput(NESInputs.CONTROLLER_1_A).setText(NEmuS_Runnable.getInstance().getInputMapper().getMappedKey(NESInputs.CONTROLLER_1_A));
         p1_keyboard_b.setInput(NESInputs.CONTROLLER_1_B).setText(NEmuS_Runnable.getInstance().getInputMapper().getMappedKey(NESInputs.CONTROLLER_1_B));
@@ -391,26 +388,41 @@ public class SettingsWindow implements Initializable {
         NEmuS_Runnable.getInstance().paletteSwapEvent();
     }
 
+    /**
+     * Will trigger a pulse 1 channel enable event to the Emulator
+     */
     @FXML
     public void pulse1Event() {
         NEmuS_Runnable.getInstance().pulse1Event(pulse1Checkbox.isSelected());
     }
 
+    /**
+     * Will trigger a pulse 2 channel channel enable event to the Emulator
+     */
     @FXML
     public void pulse2Event() {
         NEmuS_Runnable.getInstance().pulse2Event(pulse2Checkbox.isSelected());
     }
 
+    /**
+     * Will trigger a triangle channel enable event to the Emulator
+     */
     @FXML
     public void triangleEvent() {
         NEmuS_Runnable.getInstance().triangleEvent(triangleCheckbox.isSelected());
     }
 
+    /**
+     * Will trigger a noise channel enable event to the Emulator
+     */
     @FXML
     public void noiseEvent() {
         NEmuS_Runnable.getInstance().noiseEvent(noiseCheckbox.isSelected());
     }
 
+    /**
+     * Will trigger a DMC channel enable event to the Emulator
+     */
     @FXML
     public void dmcEvent() {
         NEmuS_Runnable.getInstance().dmcEvent(dmcCheckbox.isSelected());

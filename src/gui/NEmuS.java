@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 
 public class NEmuS extends Application {
 
-    public static final boolean DEBUG_MODE = false;
+    public static final boolean DEBUG_MODE = true;
 
     public static void main(String[] args) {
         launch(args);
@@ -27,7 +27,8 @@ public class NEmuS extends Application {
                 nes = new NEmuS_Release();
             nes.loopGameWindow();
         }).start();
-        while (NEmuS_Runnable.getInstance() == null) ;
+        while (NEmuS_Runnable.getInstance() == null)
+            Thread.onSpinWait();
         Parent root = FXMLLoader.load(getClass().getResource("settingsWindow.fxml"));
         stage.setTitle("Settings");
         stage.setScene(new Scene(root));

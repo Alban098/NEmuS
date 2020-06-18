@@ -59,11 +59,11 @@
 - To launch the Emulator in Debug Mode simply set the DEBUG_MODE attribute to true in the ```NEmuS.java``` file
 
 ## Screenshots
-<img src="img/debug.gif" width="100%" alt="Debug Window">
+<img src="img/settings.png" width="100%" alt="Settings Window">
 
 <img src="img/smb3.gif" width="50%" alt="Super Mario Bros 3"><img src="img/t&f.gif" width="50%" alt="Track & Field">
 
-<img src="img/settings.png" width="100%" alt="Settings Window">
+<img src="img/debug.gif" width="100%" alt="Debug Window">
 
 ## Libraries
 - **[LWJGL 3](https://www.lwjgl.org/)** Used to handle Rendering 

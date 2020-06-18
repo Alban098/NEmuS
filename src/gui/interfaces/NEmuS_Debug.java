@@ -33,24 +33,24 @@ public class NEmuS_Debug extends NEmuS_Runnable {
 
     private static final int FRAME_DURATION = 1000 / 60;
 
-    private Stage debugWindow;
+    private Stage debug_stage;
 
     // ==================== Debug Variables ==================== //
     private int info_width = 1385;
     private int info_height = 640;
 
 
-    private int selectedPalette = 0x00;
+    private int selected_palette = 0x00;
     private int ram_page = 0x00;
 
     private Map<Integer, String> decompiled;
 
-    private Image nametable1_img;
-    private Image nametable2_img;
-    private Image nametable3_img;
-    private Image nametable4_img;
-    private Image patterntable1_img;
-    private Image patterntable2_img;
+    private Image nametable1_render_target;
+    private Image nametable2_render_target;
+    private Image nametable3_render_target;
+    private Image nametable4_render_target;
+    private Image patterntable1_render_target;
+    private Image patterntable2_render_target;
     private Canvas debug_canvas;
 
     private Thread info_thread;
@@ -62,12 +62,12 @@ public class NEmuS_Debug extends NEmuS_Runnable {
     public NEmuS_Debug() {
         super();
 
-        patterntable1_img = new WritableImage(128, 128);
-        patterntable2_img = new WritableImage(128, 128);
-        nametable1_img = new WritableImage(256, 240);
-        nametable2_img = new WritableImage(256, 240);
-        nametable3_img = new WritableImage(256, 240);
-        nametable4_img = new WritableImage(256, 240);
+        patterntable1_render_target = new WritableImage(128, 128);
+        patterntable2_render_target = new WritableImage(128, 128);
+        nametable1_render_target = new WritableImage(256, 240);
+        nametable2_render_target = new WritableImage(256, 240);
+        nametable3_render_target = new WritableImage(256, 240);
+        nametable4_render_target = new WritableImage(256, 240);
 
         //Initialize the Game Window
         initGameWindow();
@@ -86,12 +86,12 @@ public class NEmuS_Debug extends NEmuS_Runnable {
         screen_texture.cleanUp();
 
         //Destroy the Game Window
-        glfwFreeCallbacks(game_window);
-        glfwDestroyWindow(game_window);
+        glfwFreeCallbacks(game_window_id);
+        glfwDestroyWindow(game_window_id);
 
         //If the Debug Window is active, close it
         if (info_thread != null && info_thread.isAlive())
-            debugWindow.close();
+            debug_stage.close();
 
         //Wait for the Debug Thread to terminate
         if (info_thread != null)
@@ -113,7 +113,6 @@ public class NEmuS_Debug extends NEmuS_Runnable {
     protected void initEmulator(String rom) throws UnsupportedMapperException, EOFException, InvalidFileException {
         super.initEmulator(rom);
 
-        decompiled = nes.getCpu().disassemble(0x7F00, 0xFFFF);
         nes.setSampleFreq(44100);
         //Launch the Info/Debug Window on a dedicated Thread
         if (info_thread == null) {
@@ -132,11 +131,11 @@ public class NEmuS_Debug extends NEmuS_Runnable {
             debug_canvas = new Canvas(info_width, info_height);
             layout.getChildren().add(debug_canvas);
             Scene debugScene = new Scene(layout, info_width, info_height);
-            debugWindow = new Stage();
-            debugWindow.setScene(debugScene);
-            debugWindow.setOnCloseRequest(windowEvent -> glfwSetWindowShouldClose(game_window, true));
-            debugWindow.setTitle("Debug Window");
-            debugWindow.show();
+            debug_stage = new Stage();
+            debug_stage.setScene(debugScene);
+            debug_stage.setOnCloseRequest(windowEvent -> glfwSetWindowShouldClose(game_window_id, true));
+            debug_stage.setTitle("Debug Window");
+            debug_stage.show();
         });
     }
 
@@ -147,15 +146,15 @@ public class NEmuS_Debug extends NEmuS_Runnable {
     @Override
     public void loopGameWindow() {
         long next_frame = 0, last_frame = 0;
-        while (!glfwWindowShouldClose(game_window)) {
+        while (!glfwWindowShouldClose(game_window_id)) {
             //If a ROM Loading has been requested
-            if (loadROMRequested) {
-                loadROMRequested = false;
+            if (load_rom_requested) {
+                load_rom_requested = false;
                 synchronized (nes) {
-                    emulationRunning = false;
+                    emulation_running = false;
                     try {
-                        initEmulator(requestedRom);
-                        emulationRunning = true;
+                        initEmulator(requested_rom);
+                        emulation_running = true;
                     } catch (EOFException | InvalidFileException | UnsupportedMapperException e) {
                         Platform.runLater(() -> Dialogs.showException("ROM Loading Error", "An error occur during ROM Loading", e));
                     }
@@ -163,39 +162,39 @@ public class NEmuS_Debug extends NEmuS_Runnable {
             }
 
             //If a Reset has been requested
-            if (resetRequested) {
-                resetRequested = false;
+            if (reset_requested) {
+                reset_requested = false;
                 synchronized (nes) {
-                    emulationRunning = false;
+                    emulation_running = false;
                     nes.reset();
-                    emulationRunning = true;
+                    emulation_running = true;
                 }
             }
 
             //If we need to render the screen
-            if ((emulationRunning || redraw) && System.currentTimeMillis() > next_frame) {
+            if ((emulation_running || redraw) && System.currentTimeMillis() > next_frame) {
                 glClearColor(.6f, .6f, .6f, 0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 InputHandling();
                 next_frame = System.currentTimeMillis() + FRAME_DURATION;
-                if (emulationRunning) {
+                if (emulation_running) {
                     //We compute an entire frame in one go and wait for the next one
                     //this isn't hardware accurate, but is close enough to have most game run properly
                     long start = System.currentTimeMillis();
                     do {
                         nes.clock();
-                    } while (!nes.getPpu().frameComplete);
-                    nes.getPpu().frameComplete = false;
-                    frameCount++;
-                    if (frameCount % 10 == 0) {
-                        glfwSetWindowTitle(game_window, game_name + " | " + (System.currentTimeMillis() - start) + " ms (" + (int)(100000f/(System.currentTimeMillis() - last_frame)/10f) + "fps)");
+                    } while (!nes.getPpu().frame_complete);
+                    nes.getPpu().frame_complete = false;
+                    frame_count++;
+                    if (frame_count % 10 == 0) {
+                        glfwSetWindowTitle(game_window_id, game_name + " | " + (System.currentTimeMillis() - start) + " ms (" + (int)(100000f/(System.currentTimeMillis() - last_frame)/10f) + "fps)");
                         last_frame = System.currentTimeMillis();
                     }
                 }
                 screen_texture.load(nes.getPpu().getScreenBuffer());
                 renderGameScreen();
-                glfwSwapBuffers(game_window);
-                if (!emulationRunning)
+                glfwSwapBuffers(game_window_id);
+                if (!emulation_running)
                     redraw = false;
             }
             glfwPollEvents();
@@ -212,9 +211,9 @@ public class NEmuS_Debug extends NEmuS_Runnable {
     private void launchInfoWindow() {
         initInfoWindow();
         long next_frame = 0;
-        while (!glfwWindowShouldClose(game_window)) {
+        while (!glfwWindowShouldClose(game_window_id)) {
             //Only redraw if the emulation is running or a debug step has been made
-            if (emulationRunning || redraw) {
+            if (emulation_running || redraw) {
                 //Set the current OpenGL context
                 //Wrap the ram page to avoid out of bounds
                 if (ram_page < 0x00) ram_page += 0x100;
@@ -227,24 +226,29 @@ public class NEmuS_Debug extends NEmuS_Runnable {
                 }
 
                 //If it was a debug step, clear the flag
-                if (!emulationRunning)
+                if (!emulation_running)
                     redraw = false;
             }
         }
-        glfwSetWindowShouldClose(game_window, true);
+        glfwSetWindowShouldClose(game_window_id, true);
     }
 
     /**
      * Update and redraw the Debug View
      */
     private void updateCanvas() {
+        //The code is decompiled around the current program counter address
+        //we need to do it at runtime because ROM bank can be switched
+        //and the code at a given address is subject to change and need to be re-fetched
+        int pc = nes.getCpu().threadSafeGetPc();
+        decompiled = nes.getCpu().disassemble(pc - 50, pc + 50);
         // ================================= PPU Memory Visualization =================================
-        nes.getPpu().getNametable(0, (WritableImage) nametable1_img);
-        nes.getPpu().getNametable(1, (WritableImage) nametable2_img);
-        nes.getPpu().getNametable(2, (WritableImage) nametable3_img);
-        nes.getPpu().getNametable(3, (WritableImage) nametable4_img);
-        nes.getPpu().getPatternTable(0, selectedPalette, (WritableImage) patterntable1_img);
-        nes.getPpu().getPatternTable(1, selectedPalette, (WritableImage) patterntable2_img);
+        nes.getPpu().getNametable(0, (WritableImage) nametable1_render_target);
+        nes.getPpu().getNametable(1, (WritableImage) nametable2_render_target);
+        nes.getPpu().getNametable(2, (WritableImage) nametable3_render_target);
+        nes.getPpu().getNametable(3, (WritableImage) nametable4_render_target);
+        nes.getPpu().getPatternTable(0, selected_palette, (WritableImage) patterntable1_render_target);
+        nes.getPpu().getPatternTable(1, selected_palette, (WritableImage) patterntable2_render_target);
         // ================================= Status =================================
         GraphicsContext g = debug_canvas.getGraphicsContext2D();
         g.setFill(Color.GREY);
@@ -280,13 +284,13 @@ public class NEmuS_Debug extends NEmuS_Runnable {
         else g.setFill(Color.RED);
         g.fillText("C", 160, 60);
         g.setFill(Color.WHITE);
-        g.fillText("Program C  : $" + String.format("%02X", nes.getCpu().threadSafeGetPc()), 10, 170);
+        g.fillText("Program C  : $" + String.format("%02X", pc), 10, 170);
         g.fillText("A Register : $" + String.format("%02X", nes.getCpu().threadSafeGetA()) + "[" + nes.getCpu().threadSafeGetA() + "]", 10, 185);
         g.fillText("X Register : $" + String.format("%02X", nes.getCpu().threadSafeGetX()) + "[" + nes.getCpu().threadSafeGetX() + "]", 10, 200);
         g.fillText("Y Register : $" + String.format("%02X", nes.getCpu().threadSafeGetY()) + "[" + nes.getCpu().threadSafeGetY() + "]", 10, 215);
         g.fillText("Stack Ptr  : $" + String.format("%04X", nes.getCpu().threadSafeGetStkp()), 10, 230);
         g.fillText("Ticks  : " + nes.getCpu().threadSafeGetCpuClock(), 10, 310);
-        g.fillText("Frames : " + frameCount, 10, 325);
+        g.fillText("Frames : " + frame_count, 10, 325);
 
         // ================================= RAM =================================
         int nRamX = 5, nRamY = 450;
@@ -303,14 +307,14 @@ public class NEmuS_Debug extends NEmuS_Runnable {
         }
 
         // ================================= Code =================================
-        String currentLine = decompiled.get(nes.getCpu().threadSafeGetPc());
+        String currentLine = decompiled.get(pc);
         if (currentLine != null) {
             Queue<String> before = new LinkedList<>();
             Queue<String> after = new LinkedList<>();
             boolean currentLineFound = false;
             for (Map.Entry<Integer, String> line : decompiled.entrySet()) {
                 if (!currentLineFound) {
-                    if (line.getKey() == nes.getCpu().threadSafeGetPc())
+                    if (line.getKey() == pc)
                         currentLineFound = true;
                     else
                         before.offer(line.getValue());
@@ -354,13 +358,13 @@ public class NEmuS_Debug extends NEmuS_Runnable {
                 g.fillText(s, 630, 60 + 11 * i);
             }
         }
-        g.drawImage(patterntable1_img, 415, 440, 192, 192);
-        g.drawImage(patterntable2_img, 637, 440, 192, 192);
+        g.drawImage(patterntable1_render_target, 415, 440, 192, 192);
+        g.drawImage(patterntable2_render_target, 637, 440, 192, 192);
 
-        g.drawImage(nametable1_img, 855, 50);
-        g.drawImage(nametable2_img, 1117, 50);
-        g.drawImage(nametable3_img, 855, 296);
-        g.drawImage(nametable4_img, 1117, 296);
+        g.drawImage(nametable1_render_target, 855, 50);
+        g.drawImage(nametable2_render_target, 1117, 50);
+        g.drawImage(nametable3_render_target, 855, 296);
+        g.drawImage(nametable4_render_target, 1117, 296);
         g.setFill(Color.RED);
         switch (nes.getCartridge().getMirror()) {
             case HORIZONTAL:
@@ -373,7 +377,7 @@ public class NEmuS_Debug extends NEmuS_Runnable {
 
         int palette_size = 14;
         g.setFill(Color.RED);
-        g.fillRect(855 + selectedPalette * (4 * palette_size + 10) - 5, 551, palette_size * 4 + 10, 4 * palette_size + 10);
+        g.fillRect(855 + selected_palette * (4 * palette_size + 10) - 5, 551, palette_size * 4 + 10, 4 * palette_size + 10);
         for (int p = 0; p < 8; p++) {
             for (int s = 0; s < 4; s++) {
                 g.setFill(nes.getPpu().threadSafeGetColorFromPalette(p, s));
@@ -422,16 +426,16 @@ public class NEmuS_Debug extends NEmuS_Runnable {
      * Advance by one CPU Instruction
      */
     public synchronized void cpuStepEvent() {
-        if (!emulationRunning) {
+        if (!emulation_running) {
             do {
                 nes.debugClock();
             } while (!nes.getCpu().complete());
             do {
                 nes.debugClock();
             } while (nes.getCpu().complete());
-            if (nes.getPpu().frameComplete) {
-                frameCount++;
-                nes.getPpu().frameComplete = false;
+            if (nes.getPpu().frame_complete) {
+                frame_count++;
+                nes.getPpu().frame_complete = false;
             }
         }
         redraw = true;
@@ -442,7 +446,7 @@ public class NEmuS_Debug extends NEmuS_Runnable {
      * (loop when overflow)
      */
     public synchronized void paletteSwapEvent() {
-        selectedPalette = (selectedPalette + 1) & 0x7;
+        selected_palette = (selected_palette + 1) & 0x7;
         redraw = true;
     }
 
@@ -451,7 +455,8 @@ public class NEmuS_Debug extends NEmuS_Runnable {
      */
     public synchronized void frameStepEvent() {
         super.frameStepEvent();
-        frameCount++;
+        frame_count++;
         redraw = true;
     }
+
 }

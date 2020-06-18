@@ -8,8 +8,8 @@ import utils.IntegerWrapper;
  */
 public abstract class Mapper {
 
-    final int nPRGBanks;
-    final int nCHRBanks;
+    final int nb_PRG_banks;
+    final int nb_CHR_banks;
 
     /**
      * Create a new instance of Mapper
@@ -18,8 +18,8 @@ public abstract class Mapper {
      * @param nCHRBanks number of Character ROM Banks
      */
     Mapper(int nPRGBanks, int nCHRBanks) {
-        this.nPRGBanks = nPRGBanks;
-        this.nCHRBanks = nCHRBanks;
+        this.nb_PRG_banks = nPRGBanks;
+        this.nb_CHR_banks = nCHRBanks;
     }
 
     /**

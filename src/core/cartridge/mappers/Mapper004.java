@@ -12,20 +12,20 @@ import java.io.EOFException;
  */
 public class Mapper004 extends Mapper {
 
-    private int targetRegister = 0x00;
-    private boolean bPRGBankMode = false;
-    private boolean bCHRInversion = false;
+    private int target_register = 0x00;
+    private boolean flag_PRG_bank_mode = false;
+    private boolean flag_CHR_inversion = false;
 
     private int[] register;
-    private int[] chrBank;
-    private int[] prgBank;
+    private int[] chr_banks;
+    private int[] prg_banks;
 
-    private boolean irqActive = false;
-    private boolean irqEnable = false;
-    private int irqCounter = 0x0000;
-    private int irqReload = 0x0000;
+    private boolean flag_IRQ_active = false;
+    private boolean flag_IRQ_enabled = false;
+    private int irq_counter = 0x0000;
+    private int irq_reload = 0x0000;
 
-    private byte[] cartridgeRAM;
+    private byte[] internal_ram;
 
     private Mirror mirror = Mirror.HORIZONTAL;
 
@@ -39,14 +39,14 @@ public class Mapper004 extends Mapper {
     public Mapper004(int nPRGBanks, int nCHRBanks, String saveFile) {
         super(nPRGBanks, nCHRBanks);
         register = new int[8];
-        chrBank = new int[8];
-        prgBank = new int[4];
+        chr_banks = new int[8];
+        prg_banks = new int[4];
         try {
             //The cartridge contains RAM, it can contains saves, we try to load it if it exist
             FileReader saveReader = new FileReader(saveFile);
-            cartridgeRAM = saveReader.readBytes(32 * 1024);
+            internal_ram = saveReader.readBytes(32 * 1024);
         } catch (InvalidFileException | EOFException e) {
-            cartridgeRAM = new byte[32 * 1024];
+            internal_ram = new byte[32 * 1024];
         }
         reset();
     }
@@ -65,24 +65,24 @@ public class Mapper004 extends Mapper {
         //The CPU try to read from internal RAM
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
-            data.value = cartridgeRAM[addr & 0x1FFF] & 0xFF;
+            data.value = internal_ram[addr & 0x1FFF] & 0xFF;
             return true;
         }
         //Otherwise we select the appropriate PRG bank using the provided address
         if (addr >= 0x8000 && addr <= 0x9FFF) {
-            mapped.value = prgBank[0] + (addr & 0x1FFF);
+            mapped.value = prg_banks[0] + (addr & 0x1FFF);
             return true;
         }
         if (addr >= 0xA000 && addr <= 0xBFFF) {
-            mapped.value = prgBank[1] + (addr & 0x1FFF);
+            mapped.value = prg_banks[1] + (addr & 0x1FFF);
             return true;
         }
         if (addr >= 0xC000 && addr <= 0xDFFF) {
-            mapped.value = prgBank[2] + (addr & 0x1FFF);
+            mapped.value = prg_banks[2] + (addr & 0x1FFF);
             return true;
         }
         if (addr >= 0xE000) {
-            mapped.value = prgBank[3] + (addr & 0x1FFF);
+            mapped.value = prg_banks[3] + (addr & 0x1FFF);
             return true;
         }
         return false;
@@ -105,49 +105,49 @@ public class Mapper004 extends Mapper {
         //The CPU try to write to internal RAM
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
-            cartridgeRAM[addr & 0x1FFF] = (byte) data;
+            internal_ram[addr & 0x1FFF] = (byte) data;
             return true;
         }
 
         //The CPU try to configure the Mapper circuit
         if (addr >= 0x8000 && addr <= 0x9FFF) {
             if ((addr & 0x1) != 0x1) { //If the address if even the data represent which register we want to edit and the PRG and CHR modes
-                targetRegister = data & 0x7;
-                bPRGBankMode = (data & 0x40) == 0x40;
-                bCHRInversion = (data & 0x80) == 0x80;
+                target_register = data & 0x7;
+                flag_PRG_bank_mode = (data & 0x40) == 0x40;
+                flag_CHR_inversion = (data & 0x80) == 0x80;
             } else { //If the address is odd we edit the selected register
-                register[targetRegister] = data;
+                register[target_register] = data;
                 //We set the CHR Banks according to the state of the registers and the Inversion mode
-                if (bCHRInversion) {
-                    chrBank[0] = register[2] * 0x0400;
-                    chrBank[1] = register[3] * 0x0400;
-                    chrBank[2] = register[4] * 0x0400;
-                    chrBank[3] = register[5] * 0x0400;
-                    chrBank[4] = (register[0] & 0xFE) * 0x0400;
-                    chrBank[5] = register[0] * 0x0400 + 0x0400;
-                    chrBank[6] = (register[1] & 0xFE) * 0x0400;
-                    chrBank[7] = register[1] * 0x0400 + 0x0400;
+                if (flag_CHR_inversion) {
+                    chr_banks[0] = register[2] * 0x0400;
+                    chr_banks[1] = register[3] * 0x0400;
+                    chr_banks[2] = register[4] * 0x0400;
+                    chr_banks[3] = register[5] * 0x0400;
+                    chr_banks[4] = (register[0] & 0xFE) * 0x0400;
+                    chr_banks[5] = register[0] * 0x0400 + 0x0400;
+                    chr_banks[6] = (register[1] & 0xFE) * 0x0400;
+                    chr_banks[7] = register[1] * 0x0400 + 0x0400;
                 } else {
-                    chrBank[0] = (register[0] & 0xFE) * 0x0400;
-                    chrBank[1] = register[0] * 0x0400 + 0x0400;
-                    chrBank[2] = (register[1] & 0xFE) * 0x0400;
-                    chrBank[3] = register[1] * 0x0400 + 0x0400;
-                    chrBank[4] = register[2] * 0x0400;
-                    chrBank[5] = register[3] * 0x0400;
-                    chrBank[6] = register[4] * 0x0400;
-                    chrBank[7] = register[5] * 0x0400;
+                    chr_banks[0] = (register[0] & 0xFE) * 0x0400;
+                    chr_banks[1] = register[0] * 0x0400 + 0x0400;
+                    chr_banks[2] = (register[1] & 0xFE) * 0x0400;
+                    chr_banks[3] = register[1] * 0x0400 + 0x0400;
+                    chr_banks[4] = register[2] * 0x0400;
+                    chr_banks[5] = register[3] * 0x0400;
+                    chr_banks[6] = register[4] * 0x0400;
+                    chr_banks[7] = register[5] * 0x0400;
                 }
 
                 //We set the PRG Banks according to the state of the registers and the PRG mode
-                if (bPRGBankMode) {
-                    prgBank[2] = (register[6] & 0x3F) * 0x2000;
-                    prgBank[0] = (nPRGBanks * 2 - 2) * 0x2000;
+                if (flag_PRG_bank_mode) {
+                    prg_banks[2] = (register[6] & 0x3F) * 0x2000;
+                    prg_banks[0] = (nb_PRG_banks * 2 - 2) * 0x2000;
                 } else {
-                    prgBank[0] = (register[6] & 0x3F) * 0x2000;
-                    prgBank[2] = (nPRGBanks * 2 - 2) * 0x2000;
+                    prg_banks[0] = (register[6] & 0x3F) * 0x2000;
+                    prg_banks[2] = (nb_PRG_banks * 2 - 2) * 0x2000;
                 }
-                prgBank[1] = (register[7] & 0x3F) * 0x2000;
-                prgBank[3] = (nPRGBanks * 2 - 1) * 0x2000;
+                prg_banks[1] = (register[7] & 0x3F) * 0x2000;
+                prg_banks[3] = (nb_PRG_banks * 2 - 1) * 0x2000;
             }
             return false;
         }
@@ -166,19 +166,19 @@ public class Mapper004 extends Mapper {
         //The CPU try to set the scanline that should trigger an IRQ
         if (addr >= 0xC000 && addr <= 0xDFFF) {
             if ((addr & 0x1) != 0x1)
-                irqReload = data;
+                irq_reload = data;
             else
-                irqCounter = 0;
+                irq_counter = 0;
             return false;
         }
 
         //The CPU try to activate/deactivate the IRQ triggering
         if (addr >= 0xE000) {
             if ((addr & 0x1) != 0x1) {
-                irqEnable = false;
-                irqActive = false;
+                flag_IRQ_enabled = false;
+                flag_IRQ_active = false;
             } else {
-                irqEnable = true;
+                flag_IRQ_enabled = true;
             }
             return false;
         }
@@ -198,35 +198,35 @@ public class Mapper004 extends Mapper {
         addr &= 0xFFFF;
         //We select the appropriate CHR bank using the provided address
         if (addr <= 0x03FF) {
-            mapped.value = chrBank[0] + (addr & 0x03FF);
+            mapped.value = chr_banks[0] + (addr & 0x03FF);
             return true;
         }
         if (addr <= 0x07FF) {
-            mapped.value = chrBank[1] + (addr & 0x03FF);
+            mapped.value = chr_banks[1] + (addr & 0x03FF);
             return true;
         }
         if (addr <= 0x0BFF) {
-            mapped.value = chrBank[2] + (addr & 0x03FF);
+            mapped.value = chr_banks[2] + (addr & 0x03FF);
             return true;
         }
         if (addr <= 0x0FFF) {
-            mapped.value = chrBank[3] + (addr & 0x03FF);
+            mapped.value = chr_banks[3] + (addr & 0x03FF);
             return true;
         }
         if (addr <= 0x13FF) {
-            mapped.value = chrBank[4] + (addr & 0x03FF);
+            mapped.value = chr_banks[4] + (addr & 0x03FF);
             return true;
         }
         if (addr <= 0x17FF) {
-            mapped.value = chrBank[5] + (addr & 0x03FF);
+            mapped.value = chr_banks[5] + (addr & 0x03FF);
             return true;
         }
         if (addr <= 0x1BFF) {
-            mapped.value = chrBank[6] + (addr & 0x03FF);
+            mapped.value = chr_banks[6] + (addr & 0x03FF);
             return true;
         }
         if (addr <= 0x1FFF) {
-            mapped.value = chrBank[7] + (addr & 0x03FF);
+            mapped.value = chr_banks[7] + (addr & 0x03FF);
             return true;
         }
         return false;
@@ -263,7 +263,7 @@ public class Mapper004 extends Mapper {
      */
     @Override
     public boolean irqState() {
-        return irqActive;
+        return flag_IRQ_active;
     }
 
     /**
@@ -271,7 +271,7 @@ public class Mapper004 extends Mapper {
      */
     @Override
     public void irqClear() {
-        irqActive = false;
+        flag_IRQ_active = false;
     }
 
     /**
@@ -279,13 +279,13 @@ public class Mapper004 extends Mapper {
      */
     @Override
     public void scanline() {
-        if (irqCounter == 0) {
-            irqCounter = irqReload;
+        if (irq_counter == 0) {
+            irq_counter = irq_reload;
         } else {
-            irqCounter--;
+            irq_counter--;
         }
-        if (irqCounter == 0 && irqEnable)
-            irqActive = true;
+        if (irq_counter == 0 && flag_IRQ_enabled)
+            flag_IRQ_active = true;
     }
 
     /**
@@ -293,25 +293,25 @@ public class Mapper004 extends Mapper {
      */
     @Override
     public void reset() {
-        targetRegister = 0;
-        bPRGBankMode = false;
-        bCHRInversion = false;
+        target_register = 0;
+        flag_PRG_bank_mode = false;
+        flag_CHR_inversion = false;
         mirror = Mirror.HORIZONTAL;
-        irqActive = false;
-        irqEnable = false;
-        irqCounter = 0;
-        irqReload = 0;
+        flag_IRQ_active = false;
+        flag_IRQ_enabled = false;
+        irq_counter = 0;
+        irq_reload = 0;
 
-        for (int i = 0; i < 4; i++) prgBank[i] = 0;
+        for (int i = 0; i < 4; i++) prg_banks[i] = 0;
         for (int i = 0; i < 8; i++) {
-            chrBank[i] = 0;
+            chr_banks[i] = 0;
             register[i] = 0;
         }
 
-        prgBank[0] = 0;
-        prgBank[1] = 0x2000;
-        prgBank[2] = (nPRGBanks * 2 - 2) * 0x2000;
-        prgBank[3] = (nPRGBanks * 2 - 1) * 0x2000;
+        prg_banks[0] = 0;
+        prg_banks[1] = 0x2000;
+        prg_banks[2] = (nb_PRG_banks * 2 - 2) * 0x2000;
+        prg_banks[3] = (nb_PRG_banks * 2 - 1) * 0x2000;
     }
 
     /**
@@ -331,6 +331,6 @@ public class Mapper004 extends Mapper {
      */
     @Override
     public byte[] getRAM() {
-        return cartridgeRAM;
+        return internal_ram;
     }
 }

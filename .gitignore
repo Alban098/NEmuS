@@ -5,12 +5,12 @@ out/
 
 *.iml
 
-*.nes
-
 *.log
 
 *.state
 
 *.bak
+
+*.sav
 
 roms/games/

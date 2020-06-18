@@ -22,9 +22,7 @@ import static org.lwjgl.opengl.GL11.*;
 public class NEmuS_Release extends NEmuS_Runnable {
 
     private AudioContext ac;
-    private long clock_count;
-    private int frame_duration = 0;
-    private int fps = 0;
+    private long clock_count = 0;
 
     /**
      * Create a new Instance of the emulator in release mode
@@ -51,8 +49,8 @@ public class NEmuS_Release extends NEmuS_Runnable {
         screen_texture.cleanUp();
 
         //Destroy the Game Window
-        glfwFreeCallbacks(game_window);
-        glfwDestroyWindow(game_window);
+        glfwFreeCallbacks(game_window_id);
+        glfwDestroyWindow(game_window_id);
 
         ac.stop();
 
@@ -77,14 +75,13 @@ public class NEmuS_Release extends NEmuS_Runnable {
     @Override
     protected void initGameWindow() {
         super.initGameWindow();
-
         //Create the audio context responsible of everything time and sound related
         Function function = new Function(new WaveShaper(ac)) {
             public float calculate() {
-                if (emulationRunning)
+                if (emulation_running)
                     while (!nes.clock())
                         clock_count++;
-                return emulationRunning ? (float) nes.dAudioSample : 0;
+                return emulation_running ? (float) nes.final_audio_sample : 0;
             }
         };
         ac.out.addInput(function);
@@ -98,15 +95,16 @@ public class NEmuS_Release extends NEmuS_Runnable {
     public void loopGameWindow() {
         ac.start();
         long last_frame = 0;
-        while (!glfwWindowShouldClose(game_window)) {
+        int frame_duration, fps;
+        while (!glfwWindowShouldClose(game_window_id)) {
             //If a ROM Loading has been requested
-            if (loadROMRequested) {
-                loadROMRequested = false;
+            if (load_rom_requested) {
+                load_rom_requested = false;
                 synchronized (nes) {
-                    emulationRunning = false;
+                    emulation_running = false;
                     try {
-                        initEmulator(requestedRom);
-                        emulationRunning = true;
+                        initEmulator(requested_rom);
+                        emulation_running = true;
                     } catch (EOFException | InvalidFileException | UnsupportedMapperException e) {
                         Platform.runLater(() -> Dialogs.showException("ROM Loading Error", "An error occur during ROM Loading", e));
                     }
@@ -114,30 +112,30 @@ public class NEmuS_Release extends NEmuS_Runnable {
             }
 
             //If a Reset has been requested
-            if (resetRequested) {
-                resetRequested = false;
+            if (reset_requested) {
+                reset_requested = false;
                 synchronized (nes) {
-                    emulationRunning = false;
+                    emulation_running = false;
                     nes.reset();
-                    emulationRunning = true;
+                    emulation_running = true;
                 }
             }
 
             //If we need to render the screen
-            if ((emulationRunning && nes.getPpu().frameComplete) || redraw) {
+            if ((emulation_running && nes.getPpu().frame_complete) || redraw) {
                 frame_duration = (int) (System.currentTimeMillis() - last_frame);
                 fps = (int) (10000f / frame_duration / 10);
                 last_frame = System.currentTimeMillis();
-                frameCount++;
-                nes.getPpu().frameComplete = false;
+                frame_count++;
+                nes.getPpu().frame_complete = false;
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 InputHandling();
                 screen_texture.load(nes.getPpu().getScreenBuffer());
                 renderGameScreen();
-                if (frameCount % 10 == 0) {
-                    glfwSetWindowTitle(game_window, game_name + " | " + frame_duration + " ms (" + fps + "fps)");
+                if (frame_count % 10 == 0) {
+                    glfwSetWindowTitle(game_window_id, game_name + " | " + frame_duration + " ms (" + fps + "fps)");
                 }
-                glfwSwapBuffers(game_window);
+                glfwSwapBuffers(game_window_id);
                 if (redraw)
                     redraw = false;
             }

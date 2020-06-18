@@ -14,7 +14,7 @@ public class GaussianVertical extends PostProcessingStep {
      * @param width  the width of the FBO
      * @param height the height of the FBO
      */
-    public GaussianVertical(Quad quad, int width, int height) {
+    GaussianVertical(Quad quad, int width, int height) {
         super(quad, "shaders/vertex.glsl", "shaders/filters/gaussian_vertical.glsl", width, height);
     }
 
@@ -24,7 +24,7 @@ public class GaussianVertical extends PostProcessingStep {
      * @return a copy of the filter
      */
     @Override
-    public PostProcessingStep clone() {
+    PostProcessingStep cloneFilter() {
         return new GaussianVertical(quad, fbo.getWidth(), fbo.getHeight());
     }
 

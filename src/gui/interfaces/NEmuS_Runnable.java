@@ -35,29 +35,25 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 public abstract class NEmuS_Runnable {
 
     protected static NEmuS_Runnable instance;
-
     protected final NES nes;
 
-    protected String game_name;
-    protected InputMapper inputMapper;
-    protected int game_width = PPU_2C02.SCREEN_WIDTH * 2;
-    protected int game_height = PPU_2C02.SCREEN_HEIGHT * 2;
-    protected long game_window;
-    protected Texture screen_texture;
-    protected Quad screen_quad;
-    protected Fbo fbo;
-    protected ShaderProgram default_shader;
-    protected PostProcessingPipeline pipeline;
+    private InputMapper inputMapper;
+    private Fbo fbo;
+    private int game_width = PPU_2C02.SCREEN_WIDTH * 2;
+    private int game_height = PPU_2C02.SCREEN_HEIGHT * 2;
 
-    protected String requestedRom;
-    protected boolean loadROMRequested = false;
-    protected boolean resetRequested = false;
-    protected boolean emulationRunning = false;
-    protected boolean redraw = false;
-
-    protected long frameCount = 0;
-
-
+    Texture screen_texture;
+    Quad screen_quad;
+    ShaderProgram default_shader;
+    PostProcessingPipeline pipeline;
+    String game_name;
+    String requested_rom;
+    boolean load_rom_requested = false;
+    boolean reset_requested = false;
+    boolean emulation_running = false;
+    boolean redraw = false;
+    long game_window_id;
+    long frame_count = 0;
 
     /**
      * Create a new Instance of the emulator
@@ -105,18 +101,18 @@ public abstract class NEmuS_Runnable {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-        game_window = createContextSepraratedWindow(game_width, game_height, "Game", true);
-        glfwSetWindowAspectRatio(game_window, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
-        inputMapper = new InputMapper(game_window);
+        game_window_id = createContextSeparateWindow(game_width, game_height);
+        glfwSetWindowAspectRatio(game_window_id, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
+        inputMapper = new InputMapper(game_window_id);
 
         //Show the window
-        glfwMakeContextCurrent(game_window);
+        glfwMakeContextCurrent(game_window_id);
         glfwSwapInterval(0);
-        glfwShowWindow(game_window);
+        glfwShowWindow(game_window_id);
 
         //Enable OpenGL on the window
         GL.createCapabilities();
-        glfwSetWindowSizeCallback(game_window, new GLFWWindowSizeCallback() {
+        glfwSetWindowSizeCallback(game_window_id, new GLFWWindowSizeCallback() {
             @Override
             public void invoke(long windows, int w, int h) {
                 game_width = w;
@@ -128,7 +124,7 @@ public abstract class NEmuS_Runnable {
         glEnable(GL_TEXTURE_2D);
         screen_texture = new Texture(PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT, nes.getPpu().getScreenBuffer());
         fbo = new Fbo(PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
-        screen_quad = new Quad(new float[]{-1, -1, 1, -1, 1, 1, -1, 1});
+        screen_quad = new Quad();
 
         try {
             pipeline = new PostProcessingPipeline(screen_quad);
@@ -146,10 +142,9 @@ public abstract class NEmuS_Runnable {
      *
      * @param width  the window hwidth
      * @param height the window height
-     * @param title  the window title
      * @return the id of the windows as returned by GLFW
      */
-    protected long createContextSepraratedWindow(int width, int height, String title, boolean resizeable) {
+    private long createContextSeparateWindow(int width, int height) {
         GLFWErrorCallback.createPrint(System.err).set();
         if (!glfwInit())
             throw new IllegalStateException("GLFW Init failed");
@@ -157,10 +152,10 @@ public abstract class NEmuS_Runnable {
         //Set the window's properties
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
-        glfwWindowHint(GLFW_RESIZABLE, resizeable ? GLFW_TRUE : GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
         //Create the window
-        long window = glfwCreateWindow(width, height, title, NULL, NULL);
+        long window = glfwCreateWindow(width, height, "Game", NULL, NULL);
         if (window == NULL)
             throw new RuntimeException("Failed to create window");
         try (MemoryStack stack = stackPush()) {
@@ -177,7 +172,7 @@ public abstract class NEmuS_Runnable {
     /**
      * Get the current user inputs (Keyboard and Gamepad 1 and 2) and write it to NES
      */
-    protected void InputHandling() {
+    void InputHandling() {
         if (inputMapper.isPressed(NESInputs.CONTROLLER_1_UP, 1)) nes.controller[0] |= 0x08;
         else nes.controller[0] &= ~0x08;
         if (inputMapper.isPressed(NESInputs.CONTROLLER_1_DOWN, 1)) nes.controller[0] |= 0x04;
@@ -218,7 +213,7 @@ public abstract class NEmuS_Runnable {
      * Render the Game Window
      * the Quad is centered and scale to fit the window without stretching
      */
-    protected void renderGameScreen() {
+    void renderGameScreen() {
         fbo.bindFrameBuffer();
         default_shader.bind();
         screen_texture.bind();
@@ -236,9 +231,9 @@ public abstract class NEmuS_Runnable {
      * @param name     the name of the game
      */
     public synchronized void fireLoadROMEvent(String filename, String name) {
-        requestedRom = filename;
+        requested_rom = filename;
         game_name = name;
-        loadROMRequested = true;
+        load_rom_requested = true;
     }
 
     /**
@@ -246,7 +241,7 @@ public abstract class NEmuS_Runnable {
      */
     public synchronized void fireResetEvent() {
         if (nes.getCartridge() != null)
-            resetRequested = true;
+            reset_requested = true;
     }
 
     /**
@@ -283,7 +278,7 @@ public abstract class NEmuS_Runnable {
      */
     public synchronized boolean pause() {
         if (nes.getCartridge() != null) {
-            emulationRunning = !emulationRunning;
+            emulation_running = !emulation_running;
             return true;
         }
         return false;
@@ -293,14 +288,14 @@ public abstract class NEmuS_Runnable {
      * Advance the emulation by one frame
      */
     public synchronized void frameStepEvent() {
-        if (!emulationRunning) {
+        if (!emulation_running) {
             do {
                 nes.debugClock();
-            } while (!nes.getPpu().frameComplete);
+            } while (!nes.getPpu().frame_complete);
             do {
                 nes.debugClock();
             } while (nes.getCpu().complete());
-            nes.getPpu().frameComplete = false;
+            nes.getPpu().frame_complete = false;
             redraw = true;
         }
     }
@@ -352,7 +347,7 @@ public abstract class NEmuS_Runnable {
      * @return is the emulation running
      */
     public synchronized boolean isEmulationRunning() {
-        return emulationRunning;
+        return emulation_running;
     }
 
     /**
@@ -382,23 +377,53 @@ public abstract class NEmuS_Runnable {
         return inputMapper;
     }
 
-    public void pulse1Event(boolean selected) {
-        nes.getApu().setPulse_1_rendered(selected);
+    /**
+     * Enable or Disable the first pulse channel rendering
+     * (only inhibit the output of the channel to the Mixer)
+     *
+     * @param enabled should the channel be rendered
+     */
+    public void pulse1Event(boolean enabled) {
+        nes.getApu().setPulse1Rendered(enabled);
     }
 
-    public void pulse2Event(boolean selected) {
-        nes.getApu().setPulse_2_rendered(selected);
+    /**
+     * Enable or Disable the second pulse channel rendering
+     * (only inhibit the output of the channel to the Mixer)
+     *
+     * @param enabled should the channel be rendered
+     */
+    public void pulse2Event(boolean enabled) {
+        nes.getApu().setPulse2Rendered(enabled);
     }
 
-    public void triangleEvent(boolean selected) {
-        nes.getApu().setTriangle_rendered(selected);
+    /**
+     * Enable or Disable the triangle channel rendering
+     * (only inhibit the output of the channel to the Mixer)
+     *
+     * @param enabled should the channel be rendered
+     */
+    public void triangleEvent(boolean enabled) {
+        nes.getApu().setTriangleRendered(enabled);
     }
 
-    public void noiseEvent(boolean selected) {
-        nes.getApu().setNoise_rendered(selected);
+    /**
+     * Enable or Disable the noise channel rendering
+     * (only inhibit the output of the channel to the Mixer)
+     *
+     * @param enabled should the channel be rendered
+     */
+    public void noiseEvent(boolean enabled) {
+        nes.getApu().setNoiseRendered(enabled);
     }
 
-    public void dmcEvent(boolean selected) {
-        nes.getApu().setDmc_rendered(selected);
+    /**
+     * Enable or Disable the DMC channel rendering
+     * (only inhibit the output of the channel to the Mixer)
+     *
+     * @param enabled should the channel be rendered
+     */
+    public void dmcEvent(boolean enabled) {
+        nes.getApu().setDMCRendered(enabled);
     }
 }

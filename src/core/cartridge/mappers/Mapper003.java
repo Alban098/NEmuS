@@ -7,7 +7,7 @@ import utils.IntegerWrapper;
  */
 public class Mapper003 extends Mapper {
 
-    private int selectedCHRBank = 0x00;
+    private int selected_CHR_bank = 0x00;
 
     /**
      * Create a new instance of Mapper003
@@ -33,9 +33,9 @@ public class Mapper003 extends Mapper {
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
         if (addr >= 0x8000) {
-            if (nPRGBanks == 1)
+            if (nb_PRG_banks == 1)
                 mapped.value = addr & 0x3FFF;
-            if (nPRGBanks == 2)
+            if (nb_PRG_banks == 2)
                 mapped.value = addr & 0x7FFF;
             return true;
         }
@@ -57,7 +57,7 @@ public class Mapper003 extends Mapper {
         addr &= 0xFFFF;
         data &= 0xFF;
         if (addr >= 0x8000) {
-            selectedCHRBank = data & 0x03;
+            selected_CHR_bank = data & 0x03;
             mapped.value = addr;
         }
         return false;
@@ -76,7 +76,7 @@ public class Mapper003 extends Mapper {
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
         if (addr <= 0x1FFF) {
-            mapped.value = (selectedCHRBank * 0x2000) + addr;
+            mapped.value = (selected_CHR_bank * 0x2000) + addr;
             return true;
         }
         return false;
@@ -101,7 +101,7 @@ public class Mapper003 extends Mapper {
      */
     @Override
     public void reset() {
-        selectedCHRBank = 0x00;
+        selected_CHR_bank = 0x00;
     }
 
 }

@@ -13,9 +13,7 @@ public class Fbo {
 
     private final int width;
     private final int height;
-
     private int frameBuffer;
-
     private int texture;
 
     /**

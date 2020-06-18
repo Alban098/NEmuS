@@ -122,7 +122,7 @@ public class Dialogs {
         alert.getButtonTypes().setAll(buttons);
 
         Optional<ButtonType> result = alert.showAndWait();
-        if (!result.isPresent()) {
+        if (result.isEmpty()) {
             return CANCEL;
         } else {
             return result.get().getText();
@@ -137,11 +137,7 @@ public class Dialogs {
         dialog.setContentText(message);
 
         Optional<String> result = dialog.showAndWait();
-        if (result.isPresent()) {
-            return result.get();
-        } else {
-            return null;
-        }
+        return result.orElse(null);
 
     }
 

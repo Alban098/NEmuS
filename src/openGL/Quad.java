@@ -12,19 +12,19 @@ import static org.lwjgl.system.MemoryUtil.memFree;
 
 /**
  * This class represents a Quad where we can render a texture
+ * This Quad fill up the entire screen
  */
 public class Quad {
 
-    public int vaoId;
+    private static final float[] vertices = {-1, -1, 1, -1, 1, 1, -1, 1};
+
+    private int vaoId;
     private int vboId;
 
     /**
-     * Create a new Quad from a set of vertices
-     *
-     * @param vertices an array containing the vertices (in OpenGL coordinates)
+     * Create a new Quad
      */
-    public Quad(float[] vertices) {
-
+    public Quad() {
         FloatBuffer verticesBuffer = MemoryUtil.memAllocFloat(vertices.length);
         verticesBuffer.put(vertices).flip();
 

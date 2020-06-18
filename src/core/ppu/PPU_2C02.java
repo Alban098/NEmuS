@@ -19,17 +19,17 @@ public class PPU_2C02 {
     public static final int SCREEN_WIDTH = 256;
     public static final int SCREEN_HEIGHT = 240;
 
-    private final Color[] palScreen;
+    private final Color[] system_palette;
     private final ByteBuffer screen_buffer;
     private final ByteBuffer screen_buffer_tmp;
 
-    private final byte[][] tblName;
-    private final byte[] tblPalette;
-    private final byte[][] tblPattern;
+    private final byte[][] nametable_memory;
+    private final byte[] palette_memory;
+    private final byte[][] patterntable_memory;
 
-    private final MaskRegister maskRegister;
-    private final ControlRegister controlRegister;
-    private final StatusRegister statusRegister;
+    private final MaskRegister mask_register;
+    private final ControlRegister control_register;
+    private final StatusRegister status_register;
     private final LoopyRegister vram_addr;
     private final LoopyRegister tram_addr;
 
@@ -39,7 +39,7 @@ public class PPU_2C02 {
     private final int[] sprite_shift_pattern_low;
     private final int[] sprite_shift_pattern_high;
 
-    public boolean frameComplete;
+    public boolean frame_complete;
     private Cartridge cartridge;
 
     private int sprite_count;
@@ -81,18 +81,18 @@ public class PPU_2C02 {
      * Create a new PPU, instantiate its components and fill up the palettes
      */
     public PPU_2C02() {
-        tblName = new byte[2][1024];
-        tblPattern = new byte[2][4096];
-        tblPalette = new byte[32];
-        palScreen = new Color[0x40];
+        nametable_memory = new byte[2][1024];
+        patterntable_memory = new byte[2][4096];
+        palette_memory = new byte[32];
+        system_palette = new Color[0x40];
         screen_buffer = BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4);
         screen_buffer_tmp = BufferUtils.createByteBuffer(SCREEN_HEIGHT * SCREEN_WIDTH * 4);
-        frameComplete = false;
+        frame_complete = false;
         scanline = 0;
         cycle = 0;
-        maskRegister = new MaskRegister();
-        controlRegister = new ControlRegister();
-        statusRegister = new StatusRegister();
+        mask_register = new MaskRegister();
+        control_register = new ControlRegister();
+        status_register = new StatusRegister();
         vram_addr = new LoopyRegister();
         tram_addr = new LoopyRegister();
         oams = new ObjectAttribute[64];
@@ -104,74 +104,74 @@ public class PPU_2C02 {
         sprite_shift_pattern_low = new int[8];
         sprite_shift_pattern_high = new int[8];
 
-        palScreen[0x00] = new Color(84 / 255.0, 84 / 255.0, 84 / 255.0, 1);
-        palScreen[0x01] = new Color(0 / 255.0, 30 / 255.0, 116 / 255.0, 1);
-        palScreen[0x02] = new Color(8 / 255.0, 16 / 255.0, 144 / 255.0, 1);
-        palScreen[0x03] = new Color(48 / 255.0, 0 / 255.0, 136 / 255.0, 1);
-        palScreen[0x04] = new Color(68 / 255.0, 0 / 255.0, 100 / 255.0, 1);
-        palScreen[0x05] = new Color(92 / 255.0, 0 / 255.0, 48 / 255.0, 1);
-        palScreen[0x06] = new Color(84 / 255.0, 4 / 255.0, 0 / 255.0, 1);
-        palScreen[0x07] = new Color(60 / 255.0, 24 / 255.0, 0 / 255.0, 1);
-        palScreen[0x08] = new Color(32 / 255.0, 42 / 255.0, 0 / 255.0, 1);
-        palScreen[0x09] = new Color(8 / 255.0, 58 / 255.0, 0 / 255.0, 1);
-        palScreen[0x0A] = new Color(0 / 255.0, 64 / 255.0, 0 / 255.0, 1);
-        palScreen[0x0B] = new Color(0 / 255.0, 60 / 255.0, 0 / 255.0, 1);
-        palScreen[0x0C] = new Color(0 / 255.0, 50 / 255.0, 60 / 255.0, 1);
-        palScreen[0x0D] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
-        palScreen[0x0E] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
-        palScreen[0x0F] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
-        palScreen[0x10] = new Color(152 / 255.0, 150 / 255.0, 152 / 255.0, 1);
-        palScreen[0x11] = new Color(8 / 255.0, 76 / 255.0, 196 / 255.0, 1);
-        palScreen[0x12] = new Color(48 / 255.0, 50 / 255.0, 236 / 255.0, 1);
-        palScreen[0x13] = new Color(92 / 255.0, 30 / 255.0, 228 / 255.0, 1);
-        palScreen[0x14] = new Color(136 / 255.0, 20 / 255.0, 176 / 255.0, 1);
-        palScreen[0x15] = new Color(160 / 255.0, 20 / 255.0, 100 / 255.0, 1);
-        palScreen[0x16] = new Color(152 / 255.0, 34 / 255.0, 32 / 255.0, 1);
-        palScreen[0x17] = new Color(120 / 255.0, 60 / 255.0, 0 / 255.0, 1);
-        palScreen[0x18] = new Color(84 / 255.0, 90 / 255.0, 0 / 255.0, 1);
-        palScreen[0x19] = new Color(40 / 255.0, 114 / 255.0, 0 / 255.0, 1);
-        palScreen[0x1A] = new Color(8 / 255.0, 124 / 255.0, 0 / 255.0, 1);
-        palScreen[0x1B] = new Color(0 / 255.0, 118 / 255.0, 40 / 255.0, 1);
-        palScreen[0x1C] = new Color(0 / 255.0, 102 / 255.0, 120 / 255.0, 1);
-        palScreen[0x1D] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
-        palScreen[0x1E] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
-        palScreen[0x1F] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
-        palScreen[0x20] = new Color(236 / 255.0, 238 / 255.0, 236 / 255.0, 1);
-        palScreen[0x21] = new Color(76 / 255.0, 154 / 255.0, 236 / 255.0, 1);
-        palScreen[0x22] = new Color(120 / 255.0, 124 / 255.0, 236 / 255.0, 1);
-        palScreen[0x23] = new Color(176 / 255.0, 98 / 255.0, 236 / 255.0, 1);
-        palScreen[0x24] = new Color(228 / 255.0, 84 / 255.0, 236 / 255.0, 1);
-        palScreen[0x25] = new Color(236 / 255.0, 88 / 255.0, 180 / 255.0, 1);
-        palScreen[0x26] = new Color(236 / 255.0, 106 / 255.0, 100 / 255.0, 1);
-        palScreen[0x27] = new Color(212 / 255.0, 136 / 255.0, 32 / 255.0, 1);
-        palScreen[0x28] = new Color(160 / 255.0, 170 / 255.0, 0 / 255.0, 1);
-        palScreen[0x29] = new Color(116 / 255.0, 196 / 255.0, 0 / 255.0, 1);
-        palScreen[0x2A] = new Color(76 / 255.0, 208 / 255.0, 32 / 255.0, 1);
-        palScreen[0x2B] = new Color(56 / 255.0, 204 / 255.0, 108 / 255.0, 1);
-        palScreen[0x2C] = new Color(56 / 255.0, 180 / 255.0, 204 / 255.0, 1);
-        palScreen[0x2D] = new Color(60 / 255.0, 60 / 255.0, 60 / 255.0, 1);
-        palScreen[0x2E] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
-        palScreen[0x2F] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
-        palScreen[0x30] = new Color(236 / 255.0, 238 / 255.0, 236 / 255.0, 1);
-        palScreen[0x31] = new Color(168 / 255.0, 204 / 255.0, 236 / 255.0, 1);
-        palScreen[0x32] = new Color(188 / 255.0, 188 / 255.0, 236 / 255.0, 1);
-        palScreen[0x33] = new Color(212 / 255.0, 178 / 255.0, 236 / 255.0, 1);
-        palScreen[0x34] = new Color(236 / 255.0, 174 / 255.0, 236 / 255.0, 1);
-        palScreen[0x35] = new Color(236 / 255.0, 174 / 255.0, 212 / 255.0, 1);
-        palScreen[0x36] = new Color(236 / 255.0, 180 / 255.0, 176 / 255.0, 1);
-        palScreen[0x37] = new Color(228 / 255.0, 196 / 255.0, 144 / 255.0, 1);
-        palScreen[0x38] = new Color(204 / 255.0, 210 / 255.0, 120 / 255.0, 1);
-        palScreen[0x39] = new Color(180 / 255.0, 222 / 255.0, 120 / 255.0, 1);
-        palScreen[0x3A] = new Color(168 / 255.0, 226 / 255.0, 144 / 255.0, 1);
-        palScreen[0x3B] = new Color(152 / 255.0, 226 / 255.0, 180 / 255.0, 1);
-        palScreen[0x3C] = new Color(160 / 255.0, 214 / 255.0, 228 / 255.0, 1);
-        palScreen[0x3D] = new Color(160 / 255.0, 162 / 255.0, 160 / 255.0, 1);
-        palScreen[0x3E] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
-        palScreen[0x3F] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
+        system_palette[0x00] = new Color(84 / 255.0, 84 / 255.0, 84 / 255.0, 1);
+        system_palette[0x01] = new Color(0 / 255.0, 30 / 255.0, 116 / 255.0, 1);
+        system_palette[0x02] = new Color(8 / 255.0, 16 / 255.0, 144 / 255.0, 1);
+        system_palette[0x03] = new Color(48 / 255.0, 0 / 255.0, 136 / 255.0, 1);
+        system_palette[0x04] = new Color(68 / 255.0, 0 / 255.0, 100 / 255.0, 1);
+        system_palette[0x05] = new Color(92 / 255.0, 0 / 255.0, 48 / 255.0, 1);
+        system_palette[0x06] = new Color(84 / 255.0, 4 / 255.0, 0 / 255.0, 1);
+        system_palette[0x07] = new Color(60 / 255.0, 24 / 255.0, 0 / 255.0, 1);
+        system_palette[0x08] = new Color(32 / 255.0, 42 / 255.0, 0 / 255.0, 1);
+        system_palette[0x09] = new Color(8 / 255.0, 58 / 255.0, 0 / 255.0, 1);
+        system_palette[0x0A] = new Color(0 / 255.0, 64 / 255.0, 0 / 255.0, 1);
+        system_palette[0x0B] = new Color(0 / 255.0, 60 / 255.0, 0 / 255.0, 1);
+        system_palette[0x0C] = new Color(0 / 255.0, 50 / 255.0, 60 / 255.0, 1);
+        system_palette[0x0D] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
+        system_palette[0x0E] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
+        system_palette[0x0F] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
+        system_palette[0x10] = new Color(152 / 255.0, 150 / 255.0, 152 / 255.0, 1);
+        system_palette[0x11] = new Color(8 / 255.0, 76 / 255.0, 196 / 255.0, 1);
+        system_palette[0x12] = new Color(48 / 255.0, 50 / 255.0, 236 / 255.0, 1);
+        system_palette[0x13] = new Color(92 / 255.0, 30 / 255.0, 228 / 255.0, 1);
+        system_palette[0x14] = new Color(136 / 255.0, 20 / 255.0, 176 / 255.0, 1);
+        system_palette[0x15] = new Color(160 / 255.0, 20 / 255.0, 100 / 255.0, 1);
+        system_palette[0x16] = new Color(152 / 255.0, 34 / 255.0, 32 / 255.0, 1);
+        system_palette[0x17] = new Color(120 / 255.0, 60 / 255.0, 0 / 255.0, 1);
+        system_palette[0x18] = new Color(84 / 255.0, 90 / 255.0, 0 / 255.0, 1);
+        system_palette[0x19] = new Color(40 / 255.0, 114 / 255.0, 0 / 255.0, 1);
+        system_palette[0x1A] = new Color(8 / 255.0, 124 / 255.0, 0 / 255.0, 1);
+        system_palette[0x1B] = new Color(0 / 255.0, 118 / 255.0, 40 / 255.0, 1);
+        system_palette[0x1C] = new Color(0 / 255.0, 102 / 255.0, 120 / 255.0, 1);
+        system_palette[0x1D] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
+        system_palette[0x1E] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
+        system_palette[0x1F] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
+        system_palette[0x20] = new Color(236 / 255.0, 238 / 255.0, 236 / 255.0, 1);
+        system_palette[0x21] = new Color(76 / 255.0, 154 / 255.0, 236 / 255.0, 1);
+        system_palette[0x22] = new Color(120 / 255.0, 124 / 255.0, 236 / 255.0, 1);
+        system_palette[0x23] = new Color(176 / 255.0, 98 / 255.0, 236 / 255.0, 1);
+        system_palette[0x24] = new Color(228 / 255.0, 84 / 255.0, 236 / 255.0, 1);
+        system_palette[0x25] = new Color(236 / 255.0, 88 / 255.0, 180 / 255.0, 1);
+        system_palette[0x26] = new Color(236 / 255.0, 106 / 255.0, 100 / 255.0, 1);
+        system_palette[0x27] = new Color(212 / 255.0, 136 / 255.0, 32 / 255.0, 1);
+        system_palette[0x28] = new Color(160 / 255.0, 170 / 255.0, 0 / 255.0, 1);
+        system_palette[0x29] = new Color(116 / 255.0, 196 / 255.0, 0 / 255.0, 1);
+        system_palette[0x2A] = new Color(76 / 255.0, 208 / 255.0, 32 / 255.0, 1);
+        system_palette[0x2B] = new Color(56 / 255.0, 204 / 255.0, 108 / 255.0, 1);
+        system_palette[0x2C] = new Color(56 / 255.0, 180 / 255.0, 204 / 255.0, 1);
+        system_palette[0x2D] = new Color(60 / 255.0, 60 / 255.0, 60 / 255.0, 1);
+        system_palette[0x2E] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
+        system_palette[0x2F] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
+        system_palette[0x30] = new Color(236 / 255.0, 238 / 255.0, 236 / 255.0, 1);
+        system_palette[0x31] = new Color(168 / 255.0, 204 / 255.0, 236 / 255.0, 1);
+        system_palette[0x32] = new Color(188 / 255.0, 188 / 255.0, 236 / 255.0, 1);
+        system_palette[0x33] = new Color(212 / 255.0, 178 / 255.0, 236 / 255.0, 1);
+        system_palette[0x34] = new Color(236 / 255.0, 174 / 255.0, 236 / 255.0, 1);
+        system_palette[0x35] = new Color(236 / 255.0, 174 / 255.0, 212 / 255.0, 1);
+        system_palette[0x36] = new Color(236 / 255.0, 180 / 255.0, 176 / 255.0, 1);
+        system_palette[0x37] = new Color(228 / 255.0, 196 / 255.0, 144 / 255.0, 1);
+        system_palette[0x38] = new Color(204 / 255.0, 210 / 255.0, 120 / 255.0, 1);
+        system_palette[0x39] = new Color(180 / 255.0, 222 / 255.0, 120 / 255.0, 1);
+        system_palette[0x3A] = new Color(168 / 255.0, 226 / 255.0, 144 / 255.0, 1);
+        system_palette[0x3B] = new Color(152 / 255.0, 226 / 255.0, 180 / 255.0, 1);
+        system_palette[0x3C] = new Color(160 / 255.0, 214 / 255.0, 228 / 255.0, 1);
+        system_palette[0x3D] = new Color(160 / 255.0, 162 / 255.0, 160 / 255.0, 1);
+        system_palette[0x3E] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
+        system_palette[0x3F] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
 
         incrementScrollX = () -> {
             //If we are rendering sprites or background
-            if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
+            if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
                 //If we cross a nametable boundary we invert the nametableX bit to fetch from the other nametable
                 if (vram_addr.getCoarseX() == 31) {
                     vram_addr.setCoarseX(0);
@@ -184,7 +184,7 @@ public class PPU_2C02 {
         };
         incrementScrollY = () -> {
             //If we are rendering sprites or background
-            if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
+            if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
                 //If we are still in the same tile row
                 if (vram_addr.getFineY() < 7) {
                     vram_addr.setFineY(vram_addr.getFineY() + 1);
@@ -207,13 +207,13 @@ public class PPU_2C02 {
             }
         };
         transferAddressX = () -> {
-            if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
+            if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
                 vram_addr.setNametableX(tram_addr.isNametableXSet());
                 vram_addr.setCoarseX(tram_addr.getCoarseX());
             }
         };
         transferAddressY = () -> {
-            if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
+            if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
                 vram_addr.setNametableY(tram_addr.isNametableYSet());
                 vram_addr.setCoarseY(tram_addr.getCoarseY());
                 vram_addr.setFineY(tram_addr.getFineY());
@@ -226,13 +226,13 @@ public class PPU_2C02 {
             bg_shift_attrib_high = ((bg_shift_attrib_high & 0xFF00) | (((bg_next_tile_attrib & 0b10) == 0b10) ? 0xFF : 0x00)) & 0xFFFF;
         };
         updateShifter = () -> {
-            if (maskRegister.isRenderBackgroundSet()) {
+            if (mask_register.isRenderBackgroundSet()) {
                 bg_shift_pattern_low = (bg_shift_pattern_low << 1) & 0xFFFF;
                 bg_shift_pattern_high = (bg_shift_pattern_high << 1) & 0xFFFF;
                 bg_shift_attrib_low = (bg_shift_attrib_low << 1) & 0xFFFF;
                 bg_shift_attrib_high = (bg_shift_attrib_high << 1) & 0xFFFF;
             }
-            if (maskRegister.isRenderSpritesSet() && cycle >= 1 && cycle < 258) {
+            if (mask_register.isRenderSpritesSet() && cycle >= 1 && cycle < 258) {
                 for (int i = 0; i < sprite_count; i++) {
                     //for all visible sprites, we decrement the position by one until it is time to render it
                     if (visible_oams[i].getX() > 0)
@@ -279,13 +279,13 @@ public class PPU_2C02 {
             synchronized (this) {
                 switch (addr) {
                     case 0x0000: // Control
-                        data = controlRegister.get();
+                        data = control_register.get();
                         break;
                     case 0x0001: // Mask
-                        data = maskRegister.get();
+                        data = mask_register.get();
                         break;
                     case 0x0002: // Status
-                        data = statusRegister.get();
+                        data = status_register.get();
                         break;
                     case 0x0003: // OAM Address
                         break;
@@ -310,9 +310,9 @@ public class PPU_2C02 {
                 break;
             case 0x0002: // Status
                 //When reading the Status Register, the unused bits are filled with le last data that was read
-                data = (statusRegister.get() & 0xE0) | (ppu_data_buffer & 0x1F);
+                data = (status_register.get() & 0xE0) | (ppu_data_buffer & 0x1F);
                 //The Vertical Blank Flag is reset
-                statusRegister.setVerticalBlank(false);
+                status_register.setVerticalBlank(false);
                 //The address_latch is also reset to ensure proper write for the next time
                 address_latch = 0;
                 break;
@@ -334,7 +334,7 @@ public class PPU_2C02 {
                 //Except palette, here their is no delay
                 if (vram_addr.get() >= 0x3F00) data = ppu_data_buffer;
                 //The vram address is incremented (horizontally or vertically depending on the Control Register)
-                vram_addr.set(vram_addr.get() + (controlRegister.isIncrementModeSet() ? 32 : 1));
+                vram_addr.set(vram_addr.get() + (control_register.isIncrementModeSet() ? 32 : 1));
                 if ((vram_addr.get() & 0x1000) == 0x1000 && (last_addr & 0x1000) == 0)
                     cartridge.getMapper().scanline();
                 break;
@@ -353,13 +353,13 @@ public class PPU_2C02 {
         addr &= 0xFFFF;
         switch (addr) {
             case 0x0000: // Control
-                controlRegister.set(data);
+                control_register.set(data);
                 //When writing to the Control Register, one of the Loopy Register need to be updated (in case the nametable has changed)
-                tram_addr.setNametableX(controlRegister.isNametableXSet());
-                tram_addr.setNametableY(controlRegister.isNametableYSet());
+                tram_addr.setNametableX(control_register.isNametableXSet());
+                tram_addr.setNametableY(control_register.isNametableYSet());
                 break;
             case 0x0001: // Mask
-                maskRegister.set(data);
+                mask_register.set(data);
                 break;
             case 0x0002: // Status
                 break;
@@ -413,7 +413,7 @@ public class PPU_2C02 {
                 //The data is written to the VRAM address
                 ppuWrite(vram_addr.get(), data);
                 //The vram address is incremented (horizontally or vertically depending on the Control Register)
-                vram_addr.set(vram_addr.get() + (controlRegister.isIncrementModeSet() ? 32 : 1));
+                vram_addr.set(vram_addr.get() + (control_register.isIncrementModeSet() ? 32 : 1));
                 break;
         }
     }
@@ -431,27 +431,27 @@ public class PPU_2C02 {
         //If the address is mapped by the cartridge, let it handle and return read value
         if (!cartridge.ppuRead(addr, data)) {
             if (addr <= 0x1FFF) { //Read from pattern table
-                data.value = tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF];
+                data.value = patterntable_memory[(addr & 0x1000) >> 12][addr & 0x0FFF];
             } else if (addr <= 0x3EFF) { //Read from nametable
                 addr &= 0x0FFF;
                 if (cartridge.getMirror() == Mirror.VERTICAL) {
                     if (addr <= 0x03FF)
-                        data.value = tblName[0][addr & 0x03FF];
+                        data.value = nametable_memory[0][addr & 0x03FF];
                     if (addr >= 0x0400 && addr <= 0x07FF)
-                        data.value = tblName[1][addr & 0x03FF];
+                        data.value = nametable_memory[1][addr & 0x03FF];
                     if (addr >= 0x0800 && addr <= 0x0BFF)
-                        data.value = tblName[0][addr & 0x03FF];
+                        data.value = nametable_memory[0][addr & 0x03FF];
                     if (addr >= 0x0C00)
-                        data.value = tblName[1][addr & 0x03FF];
+                        data.value = nametable_memory[1][addr & 0x03FF];
                 } else if (cartridge.getMirror() == Mirror.HORIZONTAL) {
                     if (addr <= 0x03FF)
-                        data.value = tblName[0][addr & 0x03FF];
+                        data.value = nametable_memory[0][addr & 0x03FF];
                     if (addr >= 0x0400 && addr <= 0x07FF)
-                        data.value = tblName[0][addr & 0x03FF];
+                        data.value = nametable_memory[0][addr & 0x03FF];
                     if (addr >= 0x0800 && addr <= 0x0BFF)
-                        data.value = tblName[1][addr & 0x03FF];
+                        data.value = nametable_memory[1][addr & 0x03FF];
                     if (addr >= 0x0C00)
-                        data.value = tblName[1][addr & 0x03FF];
+                        data.value = nametable_memory[1][addr & 0x03FF];
                 }
             } else { //Read from palette memory
                 addr &= 0x1F;
@@ -459,7 +459,7 @@ public class PPU_2C02 {
                 if (addr == 0x0014) addr = 0x0004;
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
-                data.value = tblPalette[addr] & (maskRegister.isGrayscaleSet() ? 0x30 : 0x3F);
+                data.value = palette_memory[addr] & (mask_register.isGrayscaleSet() ? 0x30 : 0x3F);
             }
         }
         return data.value & 0xFF;
@@ -477,28 +477,28 @@ public class PPU_2C02 {
         //If the address is mapped by the cartridge, let it handle and return
         if (!cartridge.ppuWrite(addr, data)) {
             if (addr <= 0x1FFF) { //Write to pattern table
-                tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = (byte) data;
+                patterntable_memory[(addr & 0x1000) >> 12][addr & 0x0FFF] = (byte) data;
 
             } else if (addr <= 0x3EFF) { //Write to nametable
                 addr &= 0x0FFF;
                 if (cartridge.getMirror() == Mirror.VERTICAL) {
                     if (addr <= 0x03FF)
-                        tblName[0][addr & 0x03FF] = (byte) data;
+                        nametable_memory[0][addr & 0x03FF] = (byte) data;
                     if (addr >= 0x0400 && addr <= 0x07FF)
-                        tblName[1][addr & 0x03FF] = (byte) data;
+                        nametable_memory[1][addr & 0x03FF] = (byte) data;
                     if (addr >= 0x0800 && addr <= 0x0BFF)
-                        tblName[0][addr & 0x03FF] = (byte) data;
+                        nametable_memory[0][addr & 0x03FF] = (byte) data;
                     if (addr >= 0x0C00)
-                        tblName[1][addr & 0x03FF] = (byte) data;
+                        nametable_memory[1][addr & 0x03FF] = (byte) data;
                 } else if (cartridge.getMirror() == Mirror.HORIZONTAL) {
                     if (addr <= 0x03FF)
-                        tblName[0][addr & 0x03FF] = (byte) data;
+                        nametable_memory[0][addr & 0x03FF] = (byte) data;
                     if (addr >= 0x0400 && addr <= 0x07FF)
-                        tblName[0][addr & 0x03FF] = (byte) data;
+                        nametable_memory[0][addr & 0x03FF] = (byte) data;
                     if (addr >= 0x0800 && addr <= 0x0BFF)
-                        tblName[1][addr & 0x03FF] = (byte) data;
+                        nametable_memory[1][addr & 0x03FF] = (byte) data;
                     if (addr >= 0x0C00)
-                        tblName[1][addr & 0x03FF] = (byte) data;
+                        nametable_memory[1][addr & 0x03FF] = (byte) data;
                 }
             } else { //Writting to palette memory
                 addr &= 0x001F;
@@ -506,7 +506,7 @@ public class PPU_2C02 {
                 if (addr == 0x0014) addr = 0x0004;
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
-                tblPalette[addr] = (byte) data;
+                palette_memory[addr] = (byte) data;
             }
         }
     }
@@ -538,7 +538,7 @@ public class PPU_2C02 {
      * @return the corresponding Color
      */
     private Color getColorFromPalette(int paletteId, int pixel) {
-        return palScreen[ppuRead(0x3F00 + ((paletteId << 2) & 0x00FF) + (pixel & 0x00FF))];
+        return system_palette[ppuRead(0x3F00 + ((paletteId << 2) & 0x00FF) + (pixel & 0x00FF))];
     }
 
     /**
@@ -572,9 +572,9 @@ public class PPU_2C02 {
         bg_shift_pattern_high = 0x0000;
         bg_shift_attrib_low = 0x0000;
         bg_shift_attrib_high = 0x0000;
-        statusRegister.set(0xA0);
-        maskRegister.set(0x00);
-        controlRegister.set(0x00);
+        status_register.set(0xA0);
+        mask_register.set(0x00);
+        control_register.set(0x00);
         vram_addr.set(0x0000);
         tram_addr.set(0x0000);
         screen_buffer_tmp.clear();
@@ -592,14 +592,14 @@ public class PPU_2C02 {
             if (scanline == -1 && cycle == 0)
                 screen_buffer_tmp.clear();
             //If we are on the top left we increment the cycle count and clear the screen buffer
-            if (scanline == 0 && cycle == 0 && odd_frame && (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet())) {
+            if (scanline == 0 && cycle == 0 && odd_frame && (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet())) {
                 cycle = 1;
             }
             //If we are before the first scanline, we reset the Status Register and Shift Registers
             if (scanline == -1 && cycle == 1) {
-                statusRegister.setVerticalBlank(false);
-                statusRegister.setSpriteOverflow(false);
-                statusRegister.setSpriteZeroHit(false);
+                status_register.setVerticalBlank(false);
+                status_register.setSpriteOverflow(false);
+                status_register.setSpriteZeroHit(false);
                 for (int i = 0; i < 8; i++) {
                     sprite_shift_pattern_low[i] = 0x00;
                     sprite_shift_pattern_high[i] = 0x00;
@@ -631,11 +631,11 @@ public class PPU_2C02 {
                         break;
                     case 4:
                         //We use the next tile ID and row index (fineY) to fetch the next 8 pixels lsb
-                        bg_next_tile_lsb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY());
+                        bg_next_tile_lsb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY());
                         break;
                     case 6:
                         //Same but we fetch the msb
-                        bg_next_tile_msb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY() + 8);
+                        bg_next_tile_msb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY() + 8);
                         break;
                     case 7:
                         //We pass to next tile rendering
@@ -681,7 +681,7 @@ public class PPU_2C02 {
                 while (oam_entry < 64 && sprite_count < 9) {
                     //We compute if the sprite is in the current scanline
                     int diff = scanline - oams[oam_entry].getY();
-                    if (diff >= 0 && diff < (controlRegister.isSpriteSizeSet() ? 16 : 8)) {
+                    if (diff >= 0 && diff < (control_register.isSpriteSizeSet() ? 16 : 8)) {
                         //If their is room left for another sprite, we add it to the rendered sprite
                         if (sprite_count < 8) {
                             //If this is the first sprite, a sprite zero hit is possible, we update the flag
@@ -696,7 +696,7 @@ public class PPU_2C02 {
                     oam_entry++;
                 }
                 //If we hit a 9th sprite on the scanline, we set the sprite overflow flag to 1
-                statusRegister.setSpriteOverflow(sprite_count >= 8);
+                status_register.setSpriteOverflow(sprite_count >= 8);
                 if (sprite_count >= 8) sprite_count = 8;
             }
             //At the end of the horizontal blank, we fetch all the relevant sprite data for the next scanline
@@ -706,11 +706,11 @@ public class PPU_2C02 {
                 for (int i = 0; i < sprite_count; i++) {
                     int sprite_pattern_low, sprite_pattern_high;
                     int sprite_pattern_addr_low, sprite_pattern_addr_high;
-                    if (!controlRegister.isSpriteSizeSet()) { //If the sprites are 8x8
+                    if (!control_register.isSpriteSizeSet()) { //If the sprites are 8x8
                         if (!((visible_oams[i].getAttribute() & 0x80) == 0x80)) //If the sprite normally oriented
-                            sprite_pattern_addr_low = (controlRegister.isPatternSpriteSet() ? 0x1 << 12 : 0x0) | (visible_oams[i].getId() << 4) | (scanline - visible_oams[i].getY());
+                            sprite_pattern_addr_low = (control_register.isPatternSpriteSet() ? 0x1 << 12 : 0x0) | (visible_oams[i].getId() << 4) | (scanline - visible_oams[i].getY());
                         else //If the sprite is flipped vertically
-                            sprite_pattern_addr_low = (controlRegister.isPatternSpriteSet() ? 0x1 << 12 : 0x0) | (visible_oams[i].getId() << 4) | (7 - (scanline - visible_oams[i].getY()));
+                            sprite_pattern_addr_low = (control_register.isPatternSpriteSet() ? 0x1 << 12 : 0x0) | (visible_oams[i].getId() << 4) | (7 - (scanline - visible_oams[i].getY()));
                     } else { //If the sprites are 8x16
                         if (!((visible_oams[i].getAttribute() & 0x80) == 0x80)) { //If the sprite normally oriented
                             if (scanline - visible_oams[i].getY() < 8) //Reading top half
@@ -745,8 +745,8 @@ public class PPU_2C02 {
         //If we exit the visible screen, we set the vertical blank flag and eventually fire a Non Maskable Interrupt
         if (scanline >= 241 && scanline < 261) {
             if (scanline == 241 && cycle == 1) {
-                statusRegister.setVerticalBlank(true);
-                if (controlRegister.isEnableNmiSet())
+                status_register.setVerticalBlank(true);
+                if (control_register.isEnableNmiSet())
                     nmi = true;
             }
         }
@@ -755,9 +755,9 @@ public class PPU_2C02 {
         int bg_palette = 0x00;
 
         //If background rendering is enabled
-        if (maskRegister.isRenderBackgroundSet()) {
+        if (mask_register.isRenderBackgroundSet()) {
             //We select the current pixels offset using the scroll information
-            if (maskRegister.isRenderBackgroundLeftSet() || cycle >= 9) {
+            if (mask_register.isRenderBackgroundLeftSet() || cycle >= 9) {
                 int bit_mux = (0x8000 >> fine_x) & 0xFFFF;
                 //We compute the pixel ID by getting the right bit from the 2 shift registers
                 int p0_pixel = (bg_shift_pattern_low & bit_mux) > 0 ? 0x1 : 0x0;
@@ -775,9 +775,9 @@ public class PPU_2C02 {
         boolean fg_priority = false;
 
         //If sprite rendering is enabled
-        if (maskRegister.isRenderSpritesSet()) {
+        if (mask_register.isRenderSpritesSet()) {
             //The 0th sprite being rendered flag is reset
-            if (maskRegister.isRenderSpriteLeftSet() || cycle >= 9) {
+            if (mask_register.isRenderSpriteLeftSet() || cycle >= 9) {
                 spriteZeroBeingRendered = false;
                 //For each sprite in order of priority
                 for (int i = 0; i < sprite_count; i++) {
@@ -829,13 +829,13 @@ public class PPU_2C02 {
             //If we are rendering the 0th sprite and a sprite zero hit is possible then a sprite zero hit may have occur
             if (spriteZeroBeingRendered && spriteZeroHitPossible) {
                 //If we are rendering background and sprites
-                if (maskRegister.isRenderBackgroundSet() && maskRegister.isRenderSpritesSet()) {
+                if (mask_register.isRenderBackgroundSet() && mask_register.isRenderSpritesSet()) {
                     //If we are in the valid test.state space (if we don't render the first columns we don't test.state for hit in it)
-                    if (!(maskRegister.isRenderBackgroundLeftSet() || maskRegister.isRenderSpriteLeftSet())) {
+                    if (!(mask_register.isRenderBackgroundLeftSet() || mask_register.isRenderSpriteLeftSet())) {
                         if (cycle >= 9 && cycle < 258)
-                            statusRegister.setSpriteZeroHit(true);
+                            status_register.setSpriteZeroHit(true);
                     } else if (cycle >= 1 && cycle < 258)
-                        statusRegister.setSpriteZeroHit(true);
+                        status_register.setSpriteZeroHit(true);
                 }
             }
         }
@@ -848,7 +848,7 @@ public class PPU_2C02 {
             screen_buffer_tmp.put((byte) ((int) (getColorFromPalette(palette, pixel).getOpacity() * 255) & 0xFF));
         }
 
-        if (maskRegister.isRenderBackgroundSet() || maskRegister.isRenderSpritesSet()) {
+        if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
             if (cycle == 260 && scanline < 240) {
                 cartridge.getMapper().scanline();
             }
@@ -863,7 +863,7 @@ public class PPU_2C02 {
             if (scanline >= 261) {
                 //We reset the scanline to the top, set the frameComplete flag and flip the screen buffer to prepare rendering
                 scanline = -1;
-                frameComplete = true;
+                frame_complete = true;
                 odd_frame = !odd_frame;
                 //We put the content if the tmp buffer to the screen buffer that will be fetched by the UI
                 screen_buffer_tmp.flip();
@@ -948,9 +948,9 @@ public class PPU_2C02 {
                     //We only keep the 2 lsb of the attribute
                     tile_attrib &= 0x03;
                     //We use the tile id and the current row index to get the lsb of the 8 pixel IDs of the row (low bitplane)
-                    int tile_lsb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row);
+                    int tile_lsb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row);
                     //We use the tile id and the current row index to get the msb of the 8 pixels of the row (high bitplane)
-                    int tile_msb = ppuRead((controlRegister.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row + 8);
+                    int tile_msb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row + 8);
                     //We use the attribute to determinate the tile palette
                     int palette = tile_attrib & 0b11;
                     int pid;
@@ -983,6 +983,6 @@ public class PPU_2C02 {
      * @return the corresponding Color
      */
     public synchronized Color threadSafeGetColorFromPalette(int paletteId, int pixel) {
-        return palScreen[ppuRead(0x3F00 + ((paletteId << 2) & 0xFF) + (pixel & 0xFF)) & 0x3F];
+        return system_palette[ppuRead(0x3F00 + ((paletteId << 2) & 0xFF) + (pixel & 0xFF)) & 0x3F];
     }
 }

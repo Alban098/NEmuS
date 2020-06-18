@@ -14,7 +14,7 @@ public class HorizontalFlip extends PostProcessingStep {
      * @param width  the width of the FBO
      * @param height the height of the FBO
      */
-    public HorizontalFlip(Quad quad, int width, int height) {
+    HorizontalFlip(Quad quad, int width, int height) {
         super(quad, "shaders/h_flip_vertex.glsl", "shaders/filters/no_filter.glsl", width, height);
     }
 
@@ -24,7 +24,7 @@ public class HorizontalFlip extends PostProcessingStep {
      * @return a copy of the filter
      */
     @Override
-    public PostProcessingStep clone() {
+    PostProcessingStep cloneFilter() {
         return new HorizontalFlip(quad, fbo.getWidth(), fbo.getHeight());
     }
 

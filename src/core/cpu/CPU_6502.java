@@ -16,7 +16,7 @@ import java.util.TreeMap;
  */
 public class CPU_6502 {
 
-    private static final boolean LOGMODE = false;
+    private static final boolean LOG_MODE = false;
     private final List<Instruction> opcodes;
     private NES nes;
     private int accumulator = 0x00;
@@ -3647,7 +3647,7 @@ public class CPU_6502 {
             setFlag(Flags.U, true);
 
 
-            if (LOGMODE) {
+            if (LOG_MODE) {
                 try {
                     String log_entry = String.format("%10d:%02d PC:%04X %s A:%02X X:%02X Y:%02X %s%s%s%s%s%s%s%s STKP:%02X\n",
                             cpu_clock, 0, log_pc, instr.name, accumulator, x_register, y_register,

@@ -14,7 +14,7 @@ public class DiagonalFlipTL extends PostProcessingStep {
      * @param width  the width of the FBO
      * @param height the height of the FBO
      */
-    public DiagonalFlipTL(Quad quad, int width, int height) {
+    DiagonalFlipTL(Quad quad, int width, int height) {
         super(quad, "shaders/d1_flip_vertex.glsl", "shaders/filters/no_filter.glsl", width, height);
     }
 
@@ -24,7 +24,7 @@ public class DiagonalFlipTL extends PostProcessingStep {
      * @return a copy of the filter
      */
     @Override
-    public PostProcessingStep clone() {
+    PostProcessingStep cloneFilter() {
         return new DiagonalFlipTL(quad, fbo.getWidth(), fbo.getHeight());
     }
 

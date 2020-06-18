@@ -67,9 +67,6 @@
 | FAIL | cpu\instr_timing\instr_timing.nes | Fails on Unofficiel OPCodes |
 | FAIL | cpu\instr_timing\rom_singles\1-instr_timing.nes | |
 
-| PASS | ppu\full_palette\flowing_palette.nes | |
-| PASS | ppu\full_palette\full_palette.nes | |
-| PASS | ppu\full_palette\full_palette_smooth.nes | |
 | PASS | ppu\blargg_ppu_tests_2005.09.15b\palette_ram.nes | |
 | PASS | ppu\nmi_sync\demo_ntsc.nes | |
 | PASS | ppu\nmi_sync\demo_pal.nes | |

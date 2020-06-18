@@ -13,8 +13,8 @@ import static org.lwjgl.opengl.GL11.glBindTexture;
 public abstract class PostProcessingStep {
 
     protected Quad quad;
-    protected Fbo fbo;
     private ShaderProgram shader;
+    Fbo fbo;
 
     /**
      * Create a new Filter from specific shaders
@@ -24,7 +24,7 @@ public abstract class PostProcessingStep {
      * @param vertex   the vertex shader file
      * @param fragment the fragment shader file
      */
-    public PostProcessingStep(Quad quad, String vertex, String fragment) {
+    PostProcessingStep(Quad quad, String vertex, String fragment) {
         this.quad = quad;
         try {
             shader = new ShaderProgram(vertex, fragment);
@@ -43,7 +43,7 @@ public abstract class PostProcessingStep {
      * @param width    the width of the FBO
      * @param height   the height of the FBO
      */
-    public PostProcessingStep(Quad quad, String vertex, String fragment, int width, int height) {
+    PostProcessingStep(Quad quad, String vertex, String fragment, int width, int height) {
         this.quad = quad;
         try {
             shader = new ShaderProgram(vertex, fragment);
@@ -56,7 +56,7 @@ public abstract class PostProcessingStep {
     /**
      * Delete the shader and the FBO if it exists
      */
-    public void cleanUp() {
+    void cleanUp() {
         if (fbo != null)
             fbo.cleanUp();
         shader.cleanUp();
@@ -89,7 +89,7 @@ public abstract class PostProcessingStep {
      *
      * @return the FBO texture, 0 if no FBO exist
      */
-    public int getOutputTexture() {
+    int getOutputTexture() {
         if (fbo != null)
             return fbo.getTexture();
         return 0;
@@ -100,5 +100,5 @@ public abstract class PostProcessingStep {
      *
      * @return a copy of the filter
      */
-    public abstract PostProcessingStep clone();
+    abstract PostProcessingStep cloneFilter();
 }

@@ -9,7 +9,7 @@ public class KeyTuple {
     public final int keyID;
     public final String keyName;
 
-    public KeyTuple(int keyID, String keyName) {
+    KeyTuple(int keyID, String keyName) {
         this.keyID = keyID;
         this.keyName = keyName;
     }

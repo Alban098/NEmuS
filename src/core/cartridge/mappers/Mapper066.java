@@ -7,8 +7,8 @@ import utils.IntegerWrapper;
  */
 public class Mapper066 extends Mapper {
 
-    private int selectedPGRBank = 0x00;
-    private int selectedCHRBank = 0x00;
+    private int selected_PRG_bank = 0x00;
+    private int selected_CHR_bank = 0x00;
 
     /**
      * Create a new instance of Mapper003
@@ -34,7 +34,7 @@ public class Mapper066 extends Mapper {
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
         if (addr >= 0x8000) {
-            mapped.value = (selectedPGRBank * 0x8000) + (addr & 0x7FFF);
+            mapped.value = (selected_PRG_bank * 0x8000) + (addr & 0x7FFF);
             return true;
         }
         return false;
@@ -54,8 +54,8 @@ public class Mapper066 extends Mapper {
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
         addr &= 0xFFFF;
         if (addr >= 0x8000) {
-            selectedPGRBank = (data & 0x30) >> 4;
-            selectedCHRBank = data & 0x03;
+            selected_PRG_bank = (data & 0x30) >> 4;
+            selected_CHR_bank = data & 0x03;
         }
         return false;
     }
@@ -73,7 +73,7 @@ public class Mapper066 extends Mapper {
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
         addr &= 0xFFFF;
         if (addr <= 0x1FFF) {
-            mapped.value = selectedCHRBank * 0x2000 + addr;
+            mapped.value = selected_CHR_bank * 0x2000 + addr;
             return true;
         }
         return false;
@@ -99,7 +99,7 @@ public class Mapper066 extends Mapper {
      */
     @Override
     public void reset() {
-        selectedPGRBank = 0x00;
-        selectedCHRBank = 0x00;
+        selected_PRG_bank = 0x00;
+        selected_CHR_bank = 0x00;
     }
 }
