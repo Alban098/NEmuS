@@ -83,25 +83,25 @@ public class TriangleChannel {
         if (enabled && length_counter.counter > 0 && linear_counter.counter > 0) {
             sequencer.clock(true);
             if (sequencer.timer > 2) {
-                last_sequencer_output = sequencer.output == 0 ? last_sequencer_output : sequencer.output - 7.5;
+                last_sequencer_output = sequencer.output == 0 ? last_sequencer_output : sequencer.output;
                 if (raw) {
-                    sample = sequencer.output / 15.0;
+                    sample = sequencer.output / 30.0;
                 } else {
                     int lower = sequencer.output;
                     int higher = sequencer.sequence[(sequencer.sequenceIndex + 1) & 0x1F];
                     double percent = last_period/ period;
                     if (lower == 15 && higher == 15) {
                         if (percent <= 0.5)
-                            sample = ((16 - 15) * percent + 15 - 7.5) / 7.5;
+                            sample = ((16 - 15) * percent + 15) / 30.0;
                         else
-                            sample = ((15 - 16) * percent + 16 - 7.5) / 7.5;
+                            sample = ((15 - 16) * percent + 16) / 30.0;
                     } else if (lower == 0 && higher == 0){
                         if (percent <= 0.5)
-                            sample = (-percent - 7.5) / 7.5;
+                            sample = (-percent) / 30.0;
                         else
-                            sample = (percent - 1 - 7.5) / 7.5;
+                            sample = (percent - 1) / 30.0;
                     } else
-                        sample = ((higher - lower) * percent + lower - 7.5) / 7.5;
+                        sample = ((higher - lower) * percent + lower) / 30.0;
                 }
             }
         } else
@@ -115,7 +115,7 @@ public class TriangleChannel {
         if (sample == 0 && (sample - lastSample > 0.02 || sample - lastSample < -0.02)) {
             double timeRem = period * Math.abs(last_sequencer_output);
             int nbStep = (int) (timeRem/timePerCycle);
-            double smoothing_step = last_sequencer_output / 7.5 / nbStep;
+            double smoothing_step = last_sequencer_output / 30.0 / nbStep;
             sample = lastSample - smoothing_step;
             if (sample < 0.05 && sample >= -0.05)
                 sample *= 0.9;

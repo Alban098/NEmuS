@@ -121,7 +121,7 @@ public class NoiseChannel {
         sample = 0;
 
         if (length_counter.counter > 0 && (sequencer.sequence & 0x01) != 0) {
-            sample = (double) sequencer.output * ((double) (envelope.output - 1) / 16.0);
+            sample = (double) sequencer.output * ((double) (envelope.output - 1) / 16.0) * 0.5;
         }
         if (!enabled)
             sample = 0;

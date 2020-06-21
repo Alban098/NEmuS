@@ -48,7 +48,7 @@ public class Oscillator {
             b += -sin(c - p * n) / n;
         }
 
-        return (2.0f * amplitude / PI) * (a - b);
+        return (amplitude / PI) * (a - b) + amplitude * (1 - duty_cycle);
     }
 
     /**

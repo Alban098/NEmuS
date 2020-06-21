@@ -73,7 +73,7 @@ public class APU_2A03 {
      * @return the current audio sample as a value between -1 and 1
      */
     public double getSample() {
-        return ((0.00752 * (((pulse_1_rendered ? pulse_1.sample : 0) * 15) + ((pulse_2_rendered ? pulse_2.sample : 0) * 15))) + (0.00851 * (triangle_rendered ? triangle.sample : 0) * 15) + (0.00494 * (noise_rendered ? noise.sample : 0) * 15) + 0.00335 * (dmc_rendered ? dmc.output : 0)) * 2 * volume;
+        return ((0.00752 * (((pulse_1_rendered ? pulse_1.sample : 0) * 15) + ((pulse_2_rendered ? pulse_2.sample : 0) * 15))) + (0.00851 * (triangle_rendered ? triangle.sample : 0) * 15) + (0.00494 * (noise_rendered ? noise.sample : 0) * 15) + 0.00335 * (dmc_rendered ? dmc.output : 0) * 128) * 2 * volume;
     }
 
     /**

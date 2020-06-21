@@ -118,7 +118,7 @@ public class PulseChannel {
                 } else {
                     oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload.value + 1));
                     oscillator.amplitude = (envelope.output - 1) / 16.0f;
-                    sample = (sample + oscillator.sample(time)) / 2;
+                    sample = oscillator.sample(time) / 2;
                 }
             }
         } else

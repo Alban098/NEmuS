@@ -134,7 +134,7 @@ public class DMCChannel {
             }
         }
         //The output is pushed to the DAC
-        output = outputUnit.output;
+        output = (output + (outputUnit.output / 64.0)) / 4;
     }
 
     /**
