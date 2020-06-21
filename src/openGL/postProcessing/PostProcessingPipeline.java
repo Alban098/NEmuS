@@ -2,6 +2,7 @@ package openGL.postProcessing;
 
 import core.ppu.PPU_2C02;
 import gui.interfaces.NEmuS_Runnable;
+import gui.lwjgui.NEmuSUnified;
 import openGL.Quad;
 import org.lwjgl.opengl.GL11;
 
@@ -71,9 +72,18 @@ public class PostProcessingPipeline {
             steps.get(0).render(texture, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
             for (int i = 1; i < steps.size(); i++)
                 steps.get(i).render(steps.get(i - 1).getOutputTexture(), PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
-            default_filter.render(steps.get(steps.size() - 1).getOutputTexture(), NEmuS_Runnable.getInstance().getGameWidth(), NEmuS_Runnable.getInstance().getGameHeight());
-        } else
-            default_filter.render(texture, NEmuS_Runnable.getInstance().getGameWidth(), NEmuS_Runnable.getInstance().getGameHeight());
+            if (NEmuSUnified.getInstance() != null)
+                default_filter.render(steps.get(steps.size() - 1).getOutputTexture(), NEmuSUnified.getInstance().getWidth() ,  NEmuSUnified.getInstance().getHeight());
+            else
+                default_filter.render(steps.get(steps.size() - 1).getOutputTexture(), 512, 480);
+            //TODO remove when unified finished
+
+        } else {
+            if (NEmuSUnified.getInstance() != null)
+                default_filter.render(texture, NEmuSUnified.getInstance().getWidth(), NEmuSUnified.getInstance().getHeight());
+            else
+                default_filter.render(texture, 512, 480);
+        }
         end();
     }
 
