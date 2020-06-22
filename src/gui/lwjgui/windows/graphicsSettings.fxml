@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.effect.Blend?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+
+<AnchorPane maxHeight="356.0" maxWidth="828.0" minHeight="303.0" minWidth="828.0" prefHeight="303.0" prefWidth="828.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.lwjgui.windows.GraphicsSettings">
+   <children>
+      <ListView fx:id="postProcessingList" layoutY="122.0" orientation="HORIZONTAL" prefHeight="167.0" prefWidth="829.0" />
+      <Button layoutX="494.0" layoutY="75.0" mnemonicParsing="false" onAction="#addProcessingStep" text="Add">
+         <effect>
+            <Blend />
+         </effect>
+         <tooltip>
+            <Tooltip text="Empty Tooltip" />
+         </tooltip>
+      </Button>
+      <ComboBox fx:id="postProcessingComboBox" layoutX="290.0" layoutY="75.0" prefHeight="25.0" prefWidth="186.0" promptText="Post Processing Filter">
+         <effect>
+            <Blend />
+         </effect>
+      </ComboBox>
+      <Button layoutX="736.0" layoutY="75.0" mnemonicParsing="false" onAction="#shiftLeftPostProcessingStep" text="&lt;">
+         <effect>
+            <Blend />
+         </effect>
+      </Button>
+      <Button layoutX="774.0" layoutY="75.0" mnemonicParsing="false" onAction="#shiftRightPostProcessingStep" text="&gt;">
+         <effect>
+            <Blend />
+         </effect>
+      </Button>
+      <Button layoutX="548.0" layoutY="75.0" mnemonicParsing="false" onAction="#removeSelectedFilter" text="Remove Selected">
+         <effect>
+            <Blend />
+         </effect>
+      </Button>
+      <Label layoutX="351.0" layoutY="14.0" text="Graphics Settings">
+         <font>
+            <Font name="System Bold" size="18.0" />
+         </font>
+      </Label>
+      <Separator layoutY="52.0" prefWidth="828.0" />
+      <Label layoutX="16.0" layoutY="74.0" text="Post-Processing Pipeline">
+         <font>
+            <Font name="System Bold" size="18.0" />
+         </font>
+      </Label>
+   </children>
+</AnchorPane>

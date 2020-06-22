@@ -114,7 +114,8 @@ public class PulseChannel {
             sequencer.clock(true, s -> (((s & 0x01) << 7) | ((s & 0xFE) >> 1)));
             if (sequencer.timer >= 8) {
                 if (raw) {
-                    sample = sequencer.output * ((envelope.output - 1) / 16.0);
+                    if (sample >= 1) System.out.println(sample);
+                    sample = sequencer.output * ((envelope.output - 1) / 22.0);
                 } else {
                     oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload.value + 1));
                     oscillator.amplitude = (envelope.output - 1) / 16.0f;

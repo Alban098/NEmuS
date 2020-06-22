@@ -418,6 +418,47 @@ public class PPU_2C02 {
         }
     }
 
+    public synchronized int ppuDebugRead(int addr) {
+        addr &= 0x3FFF;
+        //A Wrapper used to store the data gathered by the Cartridge
+        IntegerWrapper data = new IntegerWrapper();
+        //If the address is mapped by the cartridge, let it handle and return read value
+        if (!cartridge.ppuRead(addr, data)) {
+            if (addr <= 0x1FFF) { //Read from pattern table
+                data.value = patterntable_memory[(addr & 0x1000) >> 12][addr & 0x0FFF];
+            } else if (addr <= 0x3EFF) { //Read from nametable
+                addr &= 0x0FFF;
+                if (cartridge.getMirror() == Mirror.VERTICAL) {
+                    if (addr <= 0x03FF)
+                        data.value = nametable_memory[0][addr & 0x03FF];
+                    if (addr >= 0x0400 && addr <= 0x07FF)
+                        data.value = nametable_memory[1][addr & 0x03FF];
+                    if (addr >= 0x0800 && addr <= 0x0BFF)
+                        data.value = nametable_memory[0][addr & 0x03FF];
+                    if (addr >= 0x0C00)
+                        data.value = nametable_memory[1][addr & 0x03FF];
+                } else if (cartridge.getMirror() == Mirror.HORIZONTAL) {
+                    if (addr <= 0x03FF)
+                        data.value = nametable_memory[0][addr & 0x03FF];
+                    if (addr >= 0x0400 && addr <= 0x07FF)
+                        data.value = nametable_memory[0][addr & 0x03FF];
+                    if (addr >= 0x0800 && addr <= 0x0BFF)
+                        data.value = nametable_memory[1][addr & 0x03FF];
+                    if (addr >= 0x0C00)
+                        data.value = nametable_memory[1][addr & 0x03FF];
+                }
+            } else { //Read from palette memory
+                addr &= 0x1F;
+                if (addr == 0x0010) addr = 0x0000;
+                if (addr == 0x0014) addr = 0x0004;
+                if (addr == 0x0018) addr = 0x0008;
+                if (addr == 0x001C) addr = 0x000C;
+                data.value = palette_memory[addr] & (mask_register.isGrayscaleSet() ? 0x30 : 0x3F);
+            }
+        }
+        return data.value & 0xFF;
+    }
+
     /**
      * Called when the PPU wants to read from its Memory
      *

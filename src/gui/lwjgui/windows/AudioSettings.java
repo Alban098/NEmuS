@@ -5,7 +5,6 @@ import core.apu.channels.components.pulse.Oscillator;
 import gui.lwjgui.NEmuSUnified;
 import gui.lwjgui.NEmuSWindow;
 import javafx.application.Application;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -14,7 +13,6 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Slider;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.stage.WindowEvent;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -63,6 +61,7 @@ public class AudioSettings extends Application implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        instance = this;
         volumeSlider.valueProperty().addListener((observableValue, oldValue, newValue) -> APU_2A03.setVolume(newValue.intValue() / 100.0));
         soundQualitySlider.valueProperty().addListener((observableValue, oldValue, newValue) -> Oscillator.setHarmonics(newValue.intValue() + 5));
     }
@@ -78,7 +77,7 @@ public class AudioSettings extends Application implements Initializable {
         stage.initStyle(StageStyle.DECORATED);
         stage.setResizable(false);
         stage.show();
-        instance = this;
+        instance.stage = stage;
     }
 
     /**

@@ -7,6 +7,7 @@ import exceptions.InvalidFileException;
 import exceptions.UnsupportedMapperException;
 import gui.inputs.InputMapper;
 import gui.inputs.NESInputs;
+import gui.lwjgui.windows.PPUViewer;
 import javafx.application.Platform;
 import lwjgui.gl.Renderer;
 import lwjgui.scene.Context;
@@ -385,5 +386,9 @@ public class NEmuSWindow implements Renderer {
      */
     public void dmcEvent(boolean enabled) {
         nes.getApu().setDMCRendered(enabled);
+    }
+
+    public NES getNes() {
+        return nes;
     }
 }

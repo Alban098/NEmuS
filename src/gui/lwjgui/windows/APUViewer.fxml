@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="456.0" prefWidth="1054.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.lwjgui.windows.APUViewer">
+   <children>
+      <Canvas fx:id="pulse_1_canvas" height="100.0" layoutX="10.0" layoutY="96.0" width="512.0" />
+      <Canvas fx:id="pulse_2_canvas" height="100.0" layoutX="532.0" layoutY="96.0" width="512.0" />
+      <Canvas fx:id="triangle_canvas" height="100.0" layoutX="10.0" layoutY="221.0" width="512.0" />
+      <Canvas fx:id="noise_canvas" height="100.0" layoutX="532.0" layoutY="221.0" width="512.0" />
+      <Canvas fx:id="dmc_canvas" height="100.0" layoutX="10.0" layoutY="346.0" width="512.0" />
+      <Canvas fx:id="mixer_canvas" height="100.0" layoutX="532.0" layoutY="346.0" width="512.0" />
+      <Label layoutX="15.0" layoutY="79.0" text="Pulse Channel 1" />
+      <Label layoutX="537.0" layoutY="79.0" text="Pulse Channel 2" />
+      <Label layoutX="15.0" layoutY="204.0" text="Triangle Channel" />
+      <Label layoutX="537.0" layoutY="204.0" text="Noise Channel" />
+      <Label layoutX="15.0" layoutY="329.0" text="DMC / PCM Channel" />
+      <Label layoutX="537.0" layoutY="329.0" text="Mixer / Total" />
+      <Separator layoutY="62.0" prefHeight="3.0" prefWidth="1054.0" />
+      <Label layoutX="380.0" layoutY="22.0" text="Realtime APU Channels Visualizer">
+         <font>
+            <Font name="System Bold" size="18.0" />
+         </font>
+      </Label>
+   </children>
+</AnchorPane>
