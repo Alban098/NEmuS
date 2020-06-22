@@ -201,7 +201,7 @@ public class NES {
     public boolean clock() {
         //The PPU and APU are clocked every tick
         ppu.clock();
-        apu.clock(!NEmuS.DEBUG_MODE && sound_rendering, time_per_NES_cycle);
+        apu.clock(sound_rendering, time_per_NES_cycle);
         //The CPU clock is 3 time slower than the PPU clock, so it is clocked every 3 ticks
         if (system_ticks % 3 == 0) {
             //If a Direct Memory Access is occurring

@@ -11,23 +11,23 @@
 
 <AnchorPane maxHeight="540.0" maxWidth="542.0" minHeight="540.0" minWidth="542.0" prefHeight="540.0" prefWidth="542.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.lwjgui.windows.PPUViewer">
     <children>
-        <TabPane fx:id="tabpane" maxHeight="510.0" maxWidth="542.0" minHeight="510.0" minWidth="542.0" prefHeight="510.0" prefWidth="542.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <TabPane maxHeight="510.0" maxWidth="542.0" minHeight="510.0" minWidth="542.0" prefHeight="510.0" prefWidth="542.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <tabs>
                 <Tab fx:id="pt_tab" text="Pattern Tables">
                     <content>
                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                             <children>
-                                <Canvas fx:id="pt_1_img" height="256.0" layoutX="10.0" layoutY="75.0" width="256.0" />
-                                <Canvas fx:id="pt_2_img" height="256.0" layoutX="276.0" layoutY="75.0" width="256.0" />
+                                <Canvas fx:id="pt_1_canvas" height="256.0" layoutX="10.0" layoutY="75.0" width="256.0" />
+                                <Canvas fx:id="pt_2_canvas" height="256.0" layoutX="276.0" layoutY="75.0" width="256.0" />
                                 <Separator layoutY="65.0" maxHeight="2.0" maxWidth="542.0" minHeight="2.0" minWidth="542.0" prefHeight="2.0" prefWidth="542.0" />
-                                <Canvas fx:id="palette_1_img" height="60.0" layoutX="10.0" layoutY="425.0" width="60.0" />
-                                <Canvas fx:id="palette_2_img" height="60.0" layoutX="76.0" layoutY="425.0" width="60.0" />
-                                <Canvas fx:id="palette_3_img" height="60.0" layoutX="142.0" layoutY="425.0" width="60.0" />
-                                <Canvas fx:id="palette_4_img" height="60.0" layoutX="208.0" layoutY="425.0" width="60.0" />
-                                <Canvas fx:id="palette_5_img" height="60.0" layoutX="274.0" layoutY="425.0" width="60.0" />
-                                <Canvas fx:id="palette_6_img" height="60.0" layoutX="340.0" layoutY="425.0" width="60.0" />
-                                <Canvas fx:id="palette_7_img" height="60.0" layoutX="406.0" layoutY="425.0" width="60.0" />
-                                <Canvas fx:id="palette_8_img" height="60.0" layoutX="472.0" layoutY="425.0" width="60.0" />
+                                <Canvas fx:id="palette_1_canvas" height="60.0" layoutX="10.0" layoutY="425.0" width="60.0" />
+                                <Canvas fx:id="palette_2_canvas" height="60.0" layoutX="76.0" layoutY="425.0" width="60.0" />
+                                <Canvas fx:id="palette_3_canvas" height="60.0" layoutX="142.0" layoutY="425.0" width="60.0" />
+                                <Canvas fx:id="palette_4_canvas" height="60.0" layoutX="208.0" layoutY="425.0" width="60.0" />
+                                <Canvas fx:id="palette_5_canvas" height="60.0" layoutX="274.0" layoutY="425.0" width="60.0" />
+                                <Canvas fx:id="palette_6_canvas" height="60.0" layoutX="340.0" layoutY="425.0" width="60.0" />
+                                <Canvas fx:id="palette_7_canvas" height="60.0" layoutX="406.0" layoutY="425.0" width="60.0" />
+                                <Canvas fx:id="palette_8_canvas" height="60.0" layoutX="472.0" layoutY="425.0" width="60.0" />
                                 <Label layoutX="179.0" layoutY="20.0" text="Pattern Tables Viewer">
                                     <font>
                                         <Font name="System Bold" size="18.0" />
@@ -49,10 +49,10 @@
                     <content>
                         <AnchorPane maxHeight="510.0" maxWidth="542.0" minHeight="510.0" minWidth="542.0" prefHeight="510.0" prefWidth="542.0">
                             <children>
-                                <Canvas fx:id="nt_1_img" height="240.0" layoutX="10.0" layoutY="10.0" pickOnBounds="true" width="256.0" />
-                                <Canvas fx:id="nt_2_img" height="240.0" layoutX="276.0" layoutY="10.0" pickOnBounds="true" width="256.0" />
-                                <Canvas fx:id="nt_3_img" height="240.0" layoutX="10.0" layoutY="260.0" pickOnBounds="true" width="256.0" />
-                                <Canvas fx:id="nt_4_img" height="240.0" layoutX="276.0" layoutY="260.0" pickOnBounds="true" width="256.0" />
+                                <Canvas fx:id="nt_1_canvas" height="240.0" layoutX="10.0" layoutY="10.0" pickOnBounds="true" width="256.0" />
+                                <Canvas fx:id="nt_2_canvas" height="240.0" layoutX="276.0" layoutY="10.0" pickOnBounds="true" width="256.0" />
+                                <Canvas fx:id="nt_3_canvas" height="240.0" layoutX="10.0" layoutY="260.0" pickOnBounds="true" width="256.0" />
+                                <Canvas fx:id="nt_4_canvas" height="240.0" layoutX="276.0" layoutY="260.0" pickOnBounds="true" width="256.0" />
                                 <Separator layoutX="271.0" maxHeight="510.0" maxWidth="2.0" minHeight="510.0" minWidth="2.0" orientation="VERTICAL" prefHeight="510.0" prefWidth="2.0" />
                                 <Separator layoutY="255.0" maxHeight="2.0" maxWidth="542.0" minHeight="2.0" minWidth="542.0" prefHeight="2.0" prefWidth="542.0" />
                             </children>
@@ -64,7 +64,7 @@
                         <AnchorPane maxHeight="510.0" maxWidth="542.0" minHeight="510.0" minWidth="542.0" prefHeight="510.0" prefWidth="542.0">
                      <children>
                         <ListView fx:id="oam_list" layoutX="10.0" layoutY="10.0" prefHeight="490.0" prefWidth="256.0" />
-                        <Canvas fx:id="oam_img" height="512.0" layoutX="276.0" layoutY="-1.0" onMouseClicked="#selectOAM" width="256.0" />
+                        <Canvas fx:id="oam_canvas" height="512.0" layoutX="276.0" layoutY="-1.0" onMouseClicked="#selectOAM" width="256.0" />
                      </children></AnchorPane>
                     </content>
                 </Tab>

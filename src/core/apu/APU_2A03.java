@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class APU_2A03 {
 
-    private static final int VISUALIZER_SAMPLE_SIZE = 192;
+    private static final int VISUALIZER_SAMPLE_SIZE = 128;
 
     private static final double clock_time = .333333333 / 1789773.0;
     public static int[] length_table = {10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30};
@@ -93,7 +93,7 @@ public class APU_2A03 {
      * @return the current audio sample as a value between -1 and 1
      */
     public double getSample() {
-        double sample =  2 * volume * ((0.00752 * (((pulse_1_rendered ? pulse_1.sample : 0) * 15) + ((pulse_2_rendered ? pulse_2.sample : 0) * 15))) + (0.00851 * (triangle_rendered ? triangle.sample : 0) * 15) + (0.00494 * (noise_rendered ? noise.sample : 0) * 15) + 0.00335 * (dmc_rendered ? dmc.output : 0) * 128);
+        double sample = ((0.00752 * (((pulse_1_rendered ? pulse_1.sample : 0) * 15) + ((pulse_2_rendered ? pulse_2.sample : 0) * 15))) + (0.00851 * (triangle_rendered ? triangle.sample : 0) * 15) + (0.00494 * (noise_rendered ? noise.sample : 0) * 15) + 0.00335 * (dmc_rendered ? dmc.output : 0) * 128);
         if (cycles_until_visualizer_sample == 0) {
             if (pulse_1_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
                 pulse_1_visualizer_queue.poll();
@@ -117,12 +117,12 @@ public class APU_2A03 {
 
             if (mixer_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
                 mixer_visualizer_queue.poll();
-            mixer_visualizer_queue.offer(sample);
+            mixer_visualizer_queue.offer(sample * 2.5);
 
             cycles_until_visualizer_sample = 1280 / VISUALIZER_SAMPLE_SIZE;
         }
         cycles_until_visualizer_sample--;
-        return sample;
+        return sample * 2 * volume;
     }
 
     public Queue<Double> getPulse1VisualizerQueue() {

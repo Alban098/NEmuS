@@ -241,7 +241,7 @@ public class NEmuS_Debug extends NEmuS_Runnable {
         //we need to do it at runtime because ROM bank can be switched
         //and the code at a given address is subject to change and need to be re-fetched
         int pc = nes.getCpu().threadSafeGetPc();
-        decompiled = nes.getCpu().disassemble(pc - 50, pc + 50);
+        decompiled = nes.getCpu().disassemble(pc - 50, pc + 50, " ");
         // ================================= PPU Memory Visualization =================================
         nes.getPpu().getNametable(0, (WritableImage) nametable1_render_target);
         nes.getPpu().getNametable(1, (WritableImage) nametable2_render_target);

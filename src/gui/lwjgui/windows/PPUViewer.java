@@ -29,8 +29,6 @@ public class PPUViewer extends Application implements Initializable {
 
     private static PPUViewer instance;
 
-    private Thread worker;
-
     private NEmuSWindow emulator;
     private NES nes;
     private Stage stage;
@@ -43,33 +41,33 @@ public class PPUViewer extends Application implements Initializable {
     private int selected_palette = 0x00;
 
     @FXML
-    private Canvas nt_1_img;
+    private Canvas nt_1_canvas;
     @FXML
-    private Canvas nt_2_img;
+    private Canvas nt_2_canvas;
     @FXML
-    private Canvas nt_3_img;
+    private Canvas nt_3_canvas;
     @FXML
-    private Canvas nt_4_img;
+    private Canvas nt_4_canvas;
     @FXML
-    private Canvas pt_1_img;
+    private Canvas pt_1_canvas;
     @FXML
-    private Canvas pt_2_img;
+    private Canvas pt_2_canvas;
     @FXML
-    private Canvas palette_1_img;
+    private Canvas palette_1_canvas;
     @FXML
-    private Canvas palette_2_img;
+    private Canvas palette_2_canvas;
     @FXML
-    private Canvas palette_3_img;
+    private Canvas palette_3_canvas;
     @FXML
-    private Canvas palette_4_img;
+    private Canvas palette_4_canvas;
     @FXML
-    private Canvas palette_5_img;
+    private Canvas palette_5_canvas;
     @FXML
-    private Canvas palette_6_img;
+    private Canvas palette_6_canvas;
     @FXML
-    private Canvas palette_7_img;
+    private Canvas palette_7_canvas;
     @FXML
-    private Canvas palette_8_img;
+    private Canvas palette_8_canvas;
     @FXML
     private Tab nt_tab;
     @FXML
@@ -79,7 +77,7 @@ public class PPUViewer extends Application implements Initializable {
     @FXML
     private ListView<String> oam_list;
     @FXML
-    private Canvas oam_img;
+    private Canvas oam_canvas;
 
     private Canvas[] palette_images;
 
@@ -112,14 +110,21 @@ public class PPUViewer extends Application implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        worker = new Thread(this::updateImages);
-        worker.start();
-        palette_images = new Canvas[]{palette_1_img, palette_2_img, palette_3_img, palette_4_img, palette_5_img, palette_6_img, palette_7_img, palette_8_img};
+        palette_images = new Canvas[]{palette_1_canvas, palette_2_canvas, palette_3_canvas, palette_4_canvas, palette_5_canvas, palette_6_canvas, palette_7_canvas, palette_8_canvas};
         instance = this;
         for (int i = 0; i < palette_images.length; i++ ) {
             final int finalI = i;
+            palette_images[i].getGraphicsContext2D().fillRect(0, 0, palette_images[i].getWidth(), palette_images[i].getHeight());
             palette_images[i].addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent -> selected_palette = finalI);
         }
+        nt_1_canvas.getGraphicsContext2D().fillRect(0, 0, nt_1_canvas.getWidth(), nt_1_canvas.getHeight());
+        nt_2_canvas.getGraphicsContext2D().fillRect(0, 0, nt_2_canvas.getWidth(), nt_2_canvas.getHeight());
+        nt_3_canvas.getGraphicsContext2D().fillRect(0, 0, nt_3_canvas.getWidth(), nt_3_canvas.getHeight());
+        nt_4_canvas.getGraphicsContext2D().fillRect(0, 0, nt_4_canvas.getWidth(), nt_4_canvas.getHeight());
+        pt_1_canvas.getGraphicsContext2D().fillRect(0, 0, pt_1_canvas.getWidth(), pt_1_canvas.getHeight());
+        pt_2_canvas.getGraphicsContext2D().fillRect(0, 0, pt_2_canvas.getWidth(), pt_2_canvas.getHeight());
+        oam_canvas.getGraphicsContext2D().fillRect(0, 0, oam_canvas.getWidth(), oam_canvas.getHeight());
+        new Thread(this::updateImages).start();
     }
 
     @Override
@@ -146,15 +151,15 @@ public class PPUViewer extends Application implements Initializable {
                         nes.getPpu().getNametable(1, (WritableImage) nametable2_render_target);
                         nes.getPpu().getNametable(2, (WritableImage) nametable3_render_target);
                         nes.getPpu().getNametable(3, (WritableImage) nametable4_render_target);
-                        nt_1_img.getGraphicsContext2D().drawImage(nametable1_render_target, 0, 0);
-                        nt_2_img.getGraphicsContext2D().drawImage(nametable2_render_target, 0, 0);
-                        nt_3_img.getGraphicsContext2D().drawImage(nametable3_render_target, 0, 0);
-                        nt_4_img.getGraphicsContext2D().drawImage(nametable4_render_target, 0, 0);
+                        nt_1_canvas.getGraphicsContext2D().drawImage(nametable1_render_target, 0, 0);
+                        nt_2_canvas.getGraphicsContext2D().drawImage(nametable2_render_target, 0, 0);
+                        nt_3_canvas.getGraphicsContext2D().drawImage(nametable3_render_target, 0, 0);
+                        nt_4_canvas.getGraphicsContext2D().drawImage(nametable4_render_target, 0, 0);
                     } else if (pt_tab.isSelected()) {
                         nes.getPpu().getPatternTable(0, selected_palette, (WritableImage) patterntable1_render_target);
                         nes.getPpu().getPatternTable(1, selected_palette, (WritableImage) patterntable2_render_target);
-                        pt_1_img.getGraphicsContext2D().drawImage(patterntable1_render_target, 0, 0, 256, 256);
-                        pt_2_img.getGraphicsContext2D().drawImage(patterntable2_render_target, 0, 0, 256, 256);
+                        pt_1_canvas.getGraphicsContext2D().drawImage(patterntable1_render_target, 0, 0, 256, 256);
+                        pt_2_canvas.getGraphicsContext2D().drawImage(patterntable2_render_target, 0, 0, 256, 256);
                         for (int i = 0; i < 8; i++) {
                             GraphicsContext g = palette_images[i].getGraphicsContext2D();
                             for (int j = 0; j < 4; j++) {
@@ -172,7 +177,7 @@ public class PPUViewer extends Application implements Initializable {
                     } else if (oam_tab.isSelected()) {
                         int selectedIndex = oam_list.getSelectionModel().getSelectedIndex();
                         oam_list.getItems().clear();
-                        GraphicsContext g = oam_img.getGraphicsContext2D();
+                        GraphicsContext g = oam_canvas.getGraphicsContext2D();
                         int control = nes.getPpu().cpuRead(0, true);
                         switch (control & 0x20) {
                             case 0x00: // 8x8

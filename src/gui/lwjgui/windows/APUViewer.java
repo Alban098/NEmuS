@@ -23,8 +23,6 @@ public class APUViewer extends Application  implements Initializable {
 
     private static APUViewer instance;
 
-    private Thread worker;
-
     private NEmuSWindow emulator;
     private NES nes;
     private Stage stage;
@@ -65,9 +63,14 @@ public class APUViewer extends Application  implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        worker = new Thread(this::updateImages);
-        worker.start();
         instance = this;
+        pulse_1_canvas.getGraphicsContext2D().fillRect(0, 0, pulse_1_canvas.getWidth(), pulse_1_canvas.getHeight());
+        pulse_2_canvas.getGraphicsContext2D().fillRect(0, 0, pulse_2_canvas.getWidth(), pulse_2_canvas.getHeight());
+        triangle_canvas.getGraphicsContext2D().fillRect(0, 0, triangle_canvas.getWidth(), triangle_canvas.getHeight());
+        noise_canvas.getGraphicsContext2D().fillRect(0, 0, noise_canvas.getWidth(), noise_canvas.getHeight());
+        dmc_canvas.getGraphicsContext2D().fillRect(0, 0, dmc_canvas.getWidth(), dmc_canvas.getHeight());
+        mixer_canvas.getGraphicsContext2D().fillRect(0, 0, mixer_canvas.getWidth(), mixer_canvas.getHeight());
+        new Thread(this::updateImages).start();
     }
 
     @Override
@@ -110,8 +113,8 @@ public class APUViewer extends Application  implements Initializable {
         Double last = waveform.poll();
         for (double sample : waveform) {
             if (last != null)
-                g.strokeLine(index, 80 - last * 115, index+3, 80 - sample*115);
-            index += 3;
+                g.strokeLine(index, 90 - last * 110, index+4, 90 - sample*110);
+            index += 4;
             last = sample;
         }
     }

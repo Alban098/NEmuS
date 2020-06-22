@@ -47,6 +47,7 @@ public class NEmuSWindow implements Renderer {
     private boolean reset_requested = false;
     private boolean emulation_running = false;
     private boolean redraw = false;
+    private boolean started = false;
     private long frame_count = 0;
 
     private AudioContext ac;
@@ -160,6 +161,7 @@ public class NEmuSWindow implements Renderer {
                 try {
                     initEmulator(requested_rom);
                     emulation_running = true;
+                    started = true;
                 } catch (EOFException | InvalidFileException | UnsupportedMapperException e) {
                     Platform.runLater(() -> Dialogs.showException("ROM Loading Error", "An error occur during ROM Loading", e));
                 }
@@ -249,7 +251,7 @@ public class NEmuSWindow implements Renderer {
      * Advance the emulation by one frame
      */
     public synchronized void frameStepEvent() {
-        if (!emulation_running) {
+        if (!emulation_running && started) {
             do {
                 nes.debugClock();
             } while (!nes.getPpu().frame_complete);
@@ -262,44 +264,22 @@ public class NEmuSWindow implements Renderer {
     }
 
     /**
-     * Set the current RAM Page to be the 16th previous one
-     * (loop when overflow)
-     */
-    public synchronized void ramPageLeftPlusEvent() {
-    }
-
-    /**
-     * Set the current RAM Page to be the 16th next one
-     * (loop when overflow)
-     */
-    public synchronized void ramPageRightPlusEvent() {
-    }
-
-    /**
-     * Set the current RAM Page to be the previous one
-     * (loop when overflow)
-     */
-    public synchronized void ramPageLeftEvent() {
-    }
-
-    /**
-     * Set the current RAM Page to be the next one
-     * (loop when overflow)
-     */
-    public synchronized void ramPageRightEvent() {
-    }
-
-    /**
      * Advance by one CPU Instruction
      */
     public synchronized void cpuStepEvent() {
-    }
-
-    /**
-     * Swap the currently selected palette
-     * (loop when overflow)
-     */
-    public synchronized void paletteSwapEvent() {
+        if (!emulation_running && started) {
+            do {
+                nes.debugClock();
+            } while (!nes.getCpu().complete());
+            do {
+                nes.debugClock();
+            } while (nes.getCpu().complete());
+            if (nes.getPpu().frame_complete) {
+                frame_count++;
+                nes.getPpu().frame_complete = false;
+            }
+        }
+        redraw = true;
     }
 
     /**
@@ -390,5 +370,9 @@ public class NEmuSWindow implements Renderer {
 
     public NES getNes() {
         return nes;
+    }
+
+    public boolean isStarted() {
+        return started;
     }
 }

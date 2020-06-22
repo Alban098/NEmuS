@@ -97,7 +97,7 @@ public class NEmuSUnified extends LWJGUIApplication {
 
         MenuItem controller = new MenuItem("Controllers");
         controller.setOnAction(actionEvent -> {
-            if (AudioSettings.hasInstance()) {
+            if (ControllersSettings.hasInstance()) {
                 Platform.runLater(ControllersSettings::focusInstance);
             } else {
                 Platform.runLater(() -> {
@@ -155,6 +155,20 @@ public class NEmuSUnified extends LWJGUIApplication {
             }
         });
 
+        MenuItem cpu = new MenuItem("CPU Viewer");
+        cpu.setOnAction(actionEvent -> {
+            if (CPUViewer.hasInstance()) {
+                Platform.runLater(CPUViewer::focusInstance);
+            } else {
+                Platform.runLater(() -> {
+                    try {
+                        new CPUViewer().start(new Stage());
+                    } catch (Exception e) {
+                        Dialogs.showException("CPU Viewer Error", "Error opening CPU Viewer Window", e);
+                    }
+                });
+            }
+        });
 
         Menu file = new Menu("File");
         file.getItems().add(load);
@@ -172,10 +186,9 @@ public class NEmuSUnified extends LWJGUIApplication {
         menu.getItems().add(settings);
 
         Menu debug = new Menu("Debug");
-        //debug.getItems().add(new MenuItem("CPU"));
+        debug.getItems().add(cpu);
         debug.getItems().add(ppu);
         debug.getItems().add(apu);
-        //debug.getItems().add(new MenuItem("APU"));
         menu.getItems().add(debug);
 
         window.setScene(new Scene(root, PPU_2C02.SCREEN_WIDTH * 2, (int) (PPU_2C02.SCREEN_HEIGHT * 2 + menu.getHeight())));

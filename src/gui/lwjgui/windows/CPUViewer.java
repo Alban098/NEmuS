@@ -1,19 +1,254 @@
 package gui.lwjgui.windows;
 
+import gui.lwjgui.NEmuSUnified;
+import gui.lwjgui.NEmuSWindow;
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollBar;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-public class CPUViewer extends Application {
+import java.net.URL;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.ResourceBundle;
+
+public class CPUViewer extends Application implements Initializable {
+
+    private static CPUViewer instance;
+
+    private NEmuSWindow emulator;
+    private Stage stage;
+    private Label[][] ram_fields;
+    private Label[][] code_fields;
+    private Map<Integer, String> decompiled;
+
+    @FXML
+    private GridPane ram_area;
+    @FXML
+    private ScrollBar ram_scroll;
+    @FXML
+    private Tab ram_tab;
+    @FXML
+    private Tab cpu_tab;
+    @FXML
+    private GridPane code_area;
+    @FXML
+    public TextField y_field;
+    @FXML
+    public TextField stkp_field;
+    @FXML
+    public TextField pc_field;
+    @FXML
+    public TextField a_field;
+    @FXML
+    public TextField x_field;
+    @FXML
+    public Label n_label;
+    @FXML
+    public Label v_label;
+    @FXML
+    public Label u_label;
+    @FXML
+    public Label b_label;
+    @FXML
+    public Label d_label;
+    @FXML
+    public Label i_label;
+    @FXML
+    public Label z_label;
+    @FXML
+    public Label c_label;
+
+    private boolean redraw;
+
+    public CPUViewer() {
+        this.emulator = NEmuSUnified.getInstance().getEmulator();
+    }
+
+    public static boolean hasInstance() {
+        return instance != null;
+    }
+
+    public static void focusInstance() {
+        instance.stage.setIconified(false);
+        instance.stage.requestFocus();
+    }
+
+    /**
+     * Initialize the Settings Window
+     */
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        instance = this;
+        code_fields = new Label[code_area.getRowCount()][4];
+        ram_fields = new Label[17][16];
+        for (int i = 1; i <= 0x10; i++) {
+            Label t1 = new Label(String.format("%02X", i - 1));
+            t1.setStyle("-fx-background-color: -fx-control-inner-background; -fx-text-fill: blue; -fx-font-size: 14; -fx-padding: 0; -fx-font-family: monospace");
+            Label t2 = new Label(String.format("%04X", (i - 1) << 4));
+            t2.setStyle("-fx-background-color: -fx-control-inner-background; -fx-text-fill: blue; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
+            ram_fields[0][i - 1] = t2;
+            ram_area.add(t1, i, 0);
+            ram_area.add(t2, 0, i);
+        }
+        for (int i = 1; i <= 0x10; i++) {
+            for (int j = 1; j <= 0x10; j++) {
+                Label field = new Label("00");
+                field.setStyle("-fx-background-color: -fx-control-inner-background; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
+                ram_area.add(field, i, j);
+                ram_fields[i][j - 1] = field;
+            }
+        }
+        ram_area.setStyle("-fx-background-color: -fx-control-inner-background;");
+
+        for (int i = 0; i < code_area.getRowCount(); i++) {
+            Label addr = new Label(String.format("%04X", i));
+            addr.setStyle("-fx-text-fill: #007306; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
+            Label code = new Label("NOP");
+            code.setStyle("-fx-text-fill: #0000ff; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
+            Label operand = new Label("");
+            operand.setStyle("-fx-text-fill: #0000ff; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
+            Label mode = new Label("{IMP}");
+            mode.setStyle("-fx-text-fill: #0000ff; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
+            code_area.add(addr, 0, i);
+            code_area.add(code, 1, i);
+            code_area.add(operand, 2, i);
+            code_area.add(mode, 3, i);
+            code_fields[i] = new Label[]{addr, code, operand, mode};
+        }
+        for (Label l : code_fields[code_area.getRowCount()/2])
+            l.setStyle("-fx-text-fill: #ff0000; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
+        new Thread(this::updateRAM).start();
+    }
+
+    private void updateRAM() {
+        long next_frame = 0;
+        while(instance != null) {
+            if (emulator.isEmulationRunning() && System.currentTimeMillis() >= next_frame || redraw && emulator.isStarted()) {
+                redraw = false;
+                next_frame = System.currentTimeMillis() + 100;
+                if (ram_tab.isSelected()) {
+                    Platform.runLater(() -> {
+                        int base_addr = (int) (ram_scroll.getValue()) << 4;
+                        for (int i = 1; i <= 0x10; i++) {
+                            for (int j = 1; j <= 0x10; j++) {
+                                ram_fields[i][j - 1].setText(String.format("%02X", emulator.getNes().cpuRead(base_addr + 0x10 * (j - 1) + i, true)));
+                            }
+                        }
+                        for (int i = 0; i < 0x10; i++)
+                            ram_fields[0][i].setText(String.format("%04X", base_addr + (i << 4)));
+                    });
+                } else if (cpu_tab.isSelected()) {
+                    int pc = emulator.getNes().getCpu().threadSafeGetPc();
+                    decompiled = emulator.getNes().getCpu().disassemble(pc - 30, pc + 30, "!");
+                    Platform.runLater(() -> {
+                        a_field.setText(String.format("$%02X", emulator.getNes().getCpu().threadSafeGetA()) + "[" + emulator.getNes().getCpu().threadSafeGetA() + "]");
+                        x_field.setText(String.format("$%02X", emulator.getNes().getCpu().threadSafeGetX()) + "[" + emulator.getNes().getCpu().threadSafeGetX() + "]");
+                        y_field.setText(String.format("$%02X", emulator.getNes().getCpu().threadSafeGetY()) + "[" + emulator.getNes().getCpu().threadSafeGetY() + "]");
+                        stkp_field.setText(String.format("$%02X", emulator.getNes().getCpu().threadSafeGetStkp()) + "[" + emulator.getNes().getCpu().threadSafeGetStkp() + "]");
+                        pc_field.setText(String.format("$%02X", emulator.getNes().getCpu().threadSafeGetPc()) + "[" + emulator.getNes().getCpu().threadSafeGetPc() + "]");
+                        int status = emulator.getNes().getCpu().threadSafeGetStatus();
+                        n_label.setStyle("-fx-text-fill: " + ((status & 0x80) == 0x80 ? "green" : "red"));
+                        v_label.setStyle("-fx-text-fill: " + ((status & 0x40) == 0x40 ? "green" : "red"));
+                        u_label.setStyle("-fx-text-fill: " + ((status & 0x20) == 0x20 ? "green" : "red"));
+                        b_label.setStyle("-fx-text-fill: " + ((status & 0x10) == 0x10 ? "green" : "red"));
+                        d_label.setStyle("-fx-text-fill: " + ((status & 0x8) == 0x8 ? "green" : "red"));
+                        i_label.setStyle("-fx-text-fill: " + ((status & 0x4) == 0x4 ? "green" : "red"));
+                        z_label.setStyle("-fx-text-fill: " + ((status & 0x2) == 0x2 ? "green" : "red"));
+                        c_label.setStyle("-fx-text-fill: " + ((status & 0x1) == 0x1 ? "green" : "red"));
+
+                        String currentLine = decompiled.get(pc);
+                        if (currentLine != null) {
+                            Queue<String> before = new LinkedList<>();
+                            Queue<String> after = new LinkedList<>();
+                            boolean currentLineFound = false;
+                            for (Map.Entry<Integer, String> line : decompiled.entrySet()) {
+                                if (!currentLineFound) {
+                                    if (line.getKey() == pc)
+                                        currentLineFound = true;
+                                    else
+                                        before.offer(line.getValue());
+                                    if (before.size() > code_area.getRowCount() / 2)
+                                        before.poll();
+                                } else {
+                                    after.offer(line.getValue());
+                                    if (after.size() >= code_area.getRowCount() / 2)
+                                        break;
+                                }
+                            }
+                            int i = 0;
+                            for (String line : before) {
+                                String[] split = line.split("!");
+                                code_fields[i][0].setText(split[0]);
+                                code_fields[i][1].setText(split[1]);
+                                code_fields[i][2].setText(split[2]);
+                                code_fields[i][3].setText(split[3]);
+                                i++;
+                            }
+                            String[] split = currentLine.split("!");
+                            code_fields[i][0].setText(split[0]);
+                            code_fields[i][1].setText(split[1]);
+                            code_fields[i][2].setText(split[2]);
+                            code_fields[i][3].setText(split[3]);
+                            i++;
+                            for (String line : after) {
+                                split = line.split("!");
+                                code_fields[i][0].setText(split[0]);
+                                code_fields[i][1].setText(split[1]);
+                                code_fields[i][2].setText(split[2]);
+                                code_fields[i][3].setText(split[3]);
+                                i++;
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    }
 
     @Override
     public void start(Stage stage) throws Exception {
-        Scene scene = new Scene(FXMLLoader.load(getClass().getResource("cpuViewer.fxml")));
+        this.stage = stage;
+        stage.setOnCloseRequest(windowEvent -> instance = null);
+        Scene scene = new Scene(FXMLLoader.load(getClass().getResource("CPUViewer.fxml")));
         stage.setScene(scene);
+        stage.setTitle("CPU Viewer");
+        //TODO Icon
         stage.initStyle(StageStyle.DECORATED);
         stage.setResizable(false);
         stage.show();
+        instance.stage = stage;
+    }
+
+    /**
+     * Will trigger a CPU instruction event to the Emulator
+     */
+    @FXML
+    public void cpuStepEvent() {
+        emulator.cpuStepEvent();
+        redraw = true;
+    }
+    /**
+     * Will trigger a frame advance event to the Emulator
+     */
+    @FXML
+    public void frameStepEvent() {
+        emulator.frameStepEvent();
+        redraw = true;
+    }
+
+    @FXML
+    private void scrollEvent() {
+        redraw = true;
     }
 }

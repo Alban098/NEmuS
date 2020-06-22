@@ -14,12 +14,30 @@
       <Canvas fx:id="noise_canvas" height="100.0" layoutX="532.0" layoutY="221.0" width="512.0" />
       <Canvas fx:id="dmc_canvas" height="100.0" layoutX="10.0" layoutY="346.0" width="512.0" />
       <Canvas fx:id="mixer_canvas" height="100.0" layoutX="532.0" layoutY="346.0" width="512.0" />
-      <Label layoutX="15.0" layoutY="79.0" text="Pulse Channel 1" />
-      <Label layoutX="537.0" layoutY="79.0" text="Pulse Channel 2" />
-      <Label layoutX="15.0" layoutY="204.0" text="Triangle Channel" />
-      <Label layoutX="537.0" layoutY="204.0" text="Noise Channel" />
-      <Label layoutX="15.0" layoutY="329.0" text="DMC / PCM Channel" />
-      <Label layoutX="537.0" layoutY="329.0" text="Mixer / Total" />
+      <Label layoutX="15.0" layoutY="100.0" text="Pulse Channel 1" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font></Label>
+      <Label layoutX="537.0" layoutY="100.0" text="Pulse Channel 2" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font></Label>
+      <Label layoutX="15.0" layoutY="225.0" text="Triangle Channel" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font></Label>
+      <Label layoutX="537.0" layoutY="225.0" text="Noise Channel" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font></Label>
+      <Label layoutX="15.0" layoutY="350.0" text="DMC / PCM Channel" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font></Label>
+      <Label layoutX="537.0" layoutY="350.0" text="Mixer / Total" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font></Label>
       <Separator layoutY="62.0" prefHeight="3.0" prefWidth="1054.0" />
       <Label layoutX="380.0" layoutY="22.0" text="Realtime APU Channels Visualizer">
          <font>
