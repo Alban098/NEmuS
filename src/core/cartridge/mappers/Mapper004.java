@@ -16,9 +16,9 @@ public class Mapper004 extends Mapper {
     private boolean flag_PRG_bank_mode = false;
     private boolean flag_CHR_inversion = false;
 
-    private int[] register;
-    private int[] chr_banks;
-    private int[] prg_banks;
+    private final int[] register;
+    private final int[] chr_banks;
+    private final int[] prg_banks;
 
     private boolean flag_IRQ_active = false;
     private boolean flag_IRQ_enabled = false;
@@ -61,7 +61,6 @@ public class Mapper004 extends Mapper {
      */
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
-        addr &= 0xFFFF;
         //The CPU try to read from internal RAM
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
@@ -99,9 +98,6 @@ public class Mapper004 extends Mapper {
      */
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
-        addr &= 0xFFFF;
-        data &= 0xFF;
-
         //The CPU try to write to internal RAM
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
@@ -195,7 +191,6 @@ public class Mapper004 extends Mapper {
      */
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
-        addr &= 0xFFFF;
         //We select the appropriate CHR bank using the provided address
         if (addr <= 0x03FF) {
             mapped.value = chr_banks[0] + (addr & 0x03FF);
@@ -278,7 +273,7 @@ public class Mapper004 extends Mapper {
      * Notify the Mapper that one scanline has occurred
      */
     @Override
-    public void scanline() {
+    public void notifyScanline() {
         if (irq_counter == 0) {
             irq_counter = irq_reload;
         } else {
@@ -302,7 +297,8 @@ public class Mapper004 extends Mapper {
         irq_counter = 0;
         irq_reload = 0;
 
-        for (int i = 0; i < 4; i++) prg_banks[i] = 0;
+        for (int i = 0; i < 4; i++)
+            prg_banks[i] = 0;
         for (int i = 0; i < 8; i++) {
             chr_banks[i] = 0;
             register[i] = 0;

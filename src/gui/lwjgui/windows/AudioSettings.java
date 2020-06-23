@@ -1,0 +1,161 @@
+package gui.lwjgui.windows;
+
+import core.apu.APU_2A03;
+import core.apu.channels.components.pulse.Oscillator;
+import gui.lwjgui.NEmuSUnified;
+import gui.lwjgui.NEmuSContext;
+import javafx.application.Application;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Scene;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Slider;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+
+import java.net.URL;
+import java.util.ResourceBundle;
+
+/**
+ * This class represent the Audio Settings Window
+ */
+public class AudioSettings extends Application implements Initializable {
+
+    private static AudioSettings instance;
+
+    private final NEmuSContext emulator;
+
+    private Stage stage;
+
+    @FXML
+    private Slider volumeSlider;
+    @FXML
+    private Slider soundQualitySlider;
+    @FXML
+    private CheckBox audioRenderingCheck;
+    @FXML
+    private CheckBox rawAudioCheck;
+    @FXML
+    private CheckBox pulse1Checkbox;
+    @FXML
+    private CheckBox pulse2Checkbox;
+    @FXML
+    private CheckBox triangleCheckbox;
+    @FXML
+    private CheckBox noiseCheckbox;
+    @FXML
+    private CheckBox dmcCheckbox;
+
+    /**
+     * Create a new instance of AudioSettings
+     */
+    public AudioSettings() {
+        this.emulator = NEmuSUnified.getInstance().getEmulator();
+    }
+
+    /**
+     * Does an instance of AudioSettings exist
+     *
+     * @return does an instance exist
+     */
+    public static boolean hasInstance() {
+        return instance != null;
+    }
+
+    /**
+     * Focus the current instance is it exist
+     */
+    public static void focusInstance() {
+        if (instance != null) {
+            instance.stage.setIconified(false);
+            instance.stage.requestFocus();
+        }
+    }
+
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        instance = this;
+        volumeSlider.valueProperty().addListener((observableValue, oldValue, newValue) -> APU_2A03.setVolume(newValue.intValue() / 100.0));
+        soundQualitySlider.valueProperty().addListener((observableValue, oldValue, newValue) -> Oscillator.setHarmonics(newValue.intValue() + 5));
+        volumeSlider.setValue(APU_2A03.getVolume() * 100);
+        soundQualitySlider.setValue(Oscillator.getHarmonics() - 5);
+        audioRenderingCheck.setSelected(emulator.isAudioRenderingEnabled());
+        rawAudioCheck.setSelected(emulator.isRAWAudioEnabled());
+        pulse1Checkbox.setSelected(emulator.isPulse1Rendered());
+        pulse2Checkbox.setSelected(emulator.isPulse2Rendered());
+        triangleCheckbox.setSelected(emulator.isTriangleRendered());
+        noiseCheckbox.setSelected(emulator.isNoiseRendered());
+        dmcCheckbox.setSelected(emulator.isDMCRendered());
+    }
+
+    @Override
+    public void start(Stage stage) throws Exception {
+        this.stage = stage;
+        stage.setOnCloseRequest(windowEvent -> instance = null);
+        Scene scene = new Scene(FXMLLoader.load(getClass().getResource("audioSettings.fxml")));
+        stage.setScene(scene);
+        stage.setTitle("Audio Settings");
+        //TODO Icon
+        stage.initStyle(StageStyle.DECORATED);
+        stage.setResizable(false);
+        stage.show();
+        instance.stage = stage;
+    }
+
+    /**
+     * Will trigger an audio renderings state event to the Emulator
+     */
+    @FXML
+    public void fireAudioRenderingEvent() {
+        emulator.fireAudioRenderingEvent(audioRenderingCheck.isSelected());
+    }
+
+    /**
+     * Will trigger an audio renderings state event to the Emulator
+     */
+    @FXML
+    public void fireRawAudioEvent() {
+        emulator.fireRawAudioEvent(rawAudioCheck.isSelected());
+    }
+
+    /**
+     * Will trigger a pulse 1 channel enable event to the Emulator
+     */
+    @FXML
+    public void pulse1Event() {
+        emulator.pulse1Event(pulse1Checkbox.isSelected());
+    }
+
+    /**
+     * Will trigger a pulse 2 channel channel enable event to the Emulator
+     */
+    @FXML
+    public void pulse2Event() {
+        emulator.pulse2Event(pulse2Checkbox.isSelected());
+    }
+
+    /**
+     * Will trigger a triangle channel enable event to the Emulator
+     */
+    @FXML
+    public void triangleEvent() {
+        emulator.triangleEvent(triangleCheckbox.isSelected());
+    }
+
+    /**
+     * Will trigger a noise channel enable event to the Emulator
+     */
+    @FXML
+    public void noiseEvent() {
+        emulator.noiseEvent(noiseCheckbox.isSelected());
+    }
+
+    /**
+     * Will trigger a DMC channel enable event to the Emulator
+     */
+    @FXML
+    public void dmcEvent() {
+        emulator.dmcEvent(dmcCheckbox.isSelected());
+    }
+}

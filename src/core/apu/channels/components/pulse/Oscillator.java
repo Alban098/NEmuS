@@ -5,30 +5,28 @@ package core.apu.channels.components.pulse;
  */
 public class Oscillator {
 
-    private static float harmonics = 10;
-
-    private static float PI = 3.14159265f;
+    private static int harmonics = 10;
 
     public float frequency = 0;
     public float duty_cycle = 0;
     public float amplitude = 1;
 
     /**
-     * Return the number of harmonics of the Oscillator
-     *
-     * @return the number of harmonics of the Oscillator
-     */
-    public static float getHarmonics() {
-        return harmonics;
-    }
-
-    /**
      * Set the number of harmonics of the Oscillator
      *
      * @param harmonics the number of harmonics to set
      */
-    public synchronized static void setHarmonics(float harmonics) {
+    public static void setHarmonics(int harmonics) {
         Oscillator.harmonics = harmonics;
+    }
+
+    /**
+     * Return the number of harmonics of the Oscillator
+     *
+     * @return the number of harmonics of the Oscillator
+     */
+    public static int getHarmonics() {
+        return harmonics;
     }
 
     /**
@@ -40,15 +38,14 @@ public class Oscillator {
     public float sample(double t) {
         float a = 0;
         float b = 0;
-        float p = duty_cycle * 2.0f * PI;
+        float p = duty_cycle * 6.2918530f;
 
         for (float n = 1; n < harmonics; n++) {
-            float c = (float) (n * frequency * 2.0f * PI * t);
+            float c = (float) (n * frequency * 6.2918530f * t);
             a += -sin(c) / n;
             b += -sin(c - p * n) / n;
         }
-
-        return (amplitude / PI) * (a - b) + amplitude * (1 - duty_cycle);
+        return (amplitude / 3.14159265f) * (a - b) + amplitude * (1 - duty_cycle);
     }
 
     /**

@@ -2,10 +2,6 @@ package core.cpu;
 
 import core.NES;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +12,6 @@ import java.util.TreeMap;
  */
 public class CPU_6502 {
 
-    private static final boolean LOG_MODE = false;
     private final List<Instruction> opcodes;
     private NES nes;
     private int accumulator = 0x00;
@@ -2368,7 +2363,7 @@ public class CPU_6502 {
      * @param addr the address to write to
      */
     private void write(int addr, int data) {
-        nes.cpuWrite(addr & 0xFFFF, data & 0xFF);
+        nes.cpuWrite(addr, data);
     }
 
     /**
@@ -2378,7 +2373,7 @@ public class CPU_6502 {
      * @return the read data
      */
     private int read(int addr) {
-        return nes.cpuRead(addr & 0xFFFF, false) & 0xFF;
+        return nes.cpuRead(addr, false) & 0xFF;
     }
 
     /**
@@ -2429,7 +2424,6 @@ public class CPU_6502 {
      */
     private int zp0() {
         addr_abs = read(program_counter++);
-        addr_abs &= 0x00FF;
         program_counter &= 0xFFFF;
 
         return 0;
@@ -2447,7 +2441,7 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int zpy() {
-        addr_abs = read(program_counter++) + (y_register & 0xFF);
+        addr_abs = read(program_counter++) + y_register;
         addr_abs &= 0x00FF;
         program_counter &= 0xFFFF;
 
@@ -2467,7 +2461,6 @@ public class CPU_6502 {
         program_counter &= 0xFFFF;
 
         addr_abs = (high << 8) | low;
-        addr_abs &= 0xFFFF;
 
         return 0;
     }
@@ -2485,7 +2478,7 @@ public class CPU_6502 {
         int high = read(program_counter++);
         program_counter &= 0xFFFF;
 
-        addr_abs = (high << 8 | low) + (y_register & 0xFF);
+        addr_abs = (high << 8 | low) + y_register;
         addr_abs &= 0xFFFF;
 
         if ((addr_abs & 0xFF00) != (high << 8)) return 1;
@@ -2514,7 +2507,6 @@ public class CPU_6502 {
         int high = read(((ptr + (x_register & 0xFF) + 1) & 0xFFFF) & 0x00FF);
 
         addr_abs = (high << 8) | low;
-        addr_abs &= 0xFFFF;
 
         return 0;
     }
@@ -2545,7 +2537,7 @@ public class CPU_6502 {
      * @return 0 No extra cycle required
      */
     private int zpx() {
-        addr_abs = read(program_counter++) + (x_register & 0xFF);
+        addr_abs = read(program_counter++) + x_register;
         addr_abs &= 0x00FF;
         program_counter &= 0xFFFF;
 
@@ -2581,13 +2573,14 @@ public class CPU_6502 {
         int high = read(program_counter++);
         program_counter &= 0xFFFF;
 
-        addr_abs = ((high << 8) | low) + (x_register & 0xFF);
+        addr_abs = ((high << 8) | low) + x_register;
         addr_abs &= 0xFFFF;
 
         //Dummy read
-        if ((low & 0xFF) + (x_register & 0xFF) > 0xFF || opcodes.get(opcode).name.equals("ROL"))
+        if (low + x_register > 0xFF || opcodes.get(opcode).name.equals("ROL"))
             read(((high << 8) & 0xFF00) | (addr_abs & 0xFF));
         if ((addr_abs & 0xFF00) != (high << 8)) return 1;
+
         return 0;
     }
 
@@ -2617,7 +2610,6 @@ public class CPU_6502 {
         program_counter &= 0xFFFF;
 
         int ptr = (high << 8) | low;
-        ptr &= 0xFFFF;
 
         if (low == 0xFF) addr_abs = (read(ptr & 0xFF00) << 8) | read(ptr); //Page boundary bug
         else addr_abs = (read(ptr + 1) << 8) | read(ptr);
@@ -2644,18 +2636,19 @@ public class CPU_6502 {
         int ptr = read(program_counter++);
         program_counter &= 0xFFFF;
 
-        int low = read(ptr & 0x00FF) & 0x00FF;
-        int high = read((ptr + 1) & 0x00FF) & 0x00FF;
+        int low = read(ptr);
+        int high = read((ptr + 1) & 0x00FF);
 
         addr_abs = (high << 8) | low;
-        addr_abs += y_register & 0xFF;
+        addr_abs += y_register;
         addr_abs &= 0xFFFF;
 
         //Dummy read
-        if ((low & 0xFF) + (y_register & 0xFF) > 0xFF)
+        if (low + y_register > 0xFF)
             read(((high << 8) & 0xFF00) | (addr_abs & 0xFF));
 
         if ((addr_abs & 0xFF00) != (high << 8)) return 1;
+
         return 0;
     }
 
@@ -2792,7 +2785,7 @@ public class CPU_6502 {
      */
     private int bit() {
         fetch();
-        tmp = (accumulator & fetched) & 0x00FF;
+        tmp = (accumulator & fetched);
 
         setFlag(Flags.Z, (tmp & 0xFF) == 0x0000);
         setFlag(Flags.N, (fetched & 0x80) == 0x80);
@@ -2965,7 +2958,6 @@ public class CPU_6502 {
      */
     private int cmp() {
         fetch();
-        //tmp =  ((a + (fetched ^ 0x00FF) + 1) & 0x00FF);
         tmp = accumulator - fetched;
 
         setFlag(Flags.C, accumulator >= fetched);
@@ -3630,7 +3622,6 @@ public class CPU_6502 {
         if (cycles <= 0) {
             //Fetch the Operation Code
             opcode = read(program_counter);
-            int log_pc = program_counter;
             setFlag(Flags.U, true);
             //Increment the Program Counter
             program_counter++;
@@ -3645,25 +3636,6 @@ public class CPU_6502 {
             //If the Instruction is susceptible of requiring an extra cycle and the addressing mode require one, the the Instruction require an extra cycle
             cycles += (additional_cycle_1 & additional_cycle_2);
             setFlag(Flags.U, true);
-
-
-            if (LOG_MODE) {
-                try {
-                    String log_entry = String.format("%10d:%02d PC:%04X %s A:%02X X:%02X Y:%02X %s%s%s%s%s%s%s%s STKP:%02X\n",
-                            cpu_clock, 0, log_pc, instr.name, accumulator, x_register, y_register,
-                            getFlag(Flags.N) ? "N" : ".", getFlag(Flags.V) ? "V" : ".", getFlag(Flags.U) ? "U" : ".",
-                            getFlag(Flags.B) ? "B" : ".", getFlag(Flags.D) ? "D" : ".", getFlag(Flags.I) ? "I" : ".",
-                            getFlag(Flags.Z) ? "Z" : ".", getFlag(Flags.C) ? "C" : ".", stack_pointer);
-                    File logfile = new File("log.txt");
-                    FileWriter fr = new FileWriter(logfile, true);
-                    BufferedWriter br = new BufferedWriter(fr);
-                    br.write(log_entry);
-                    br.close();
-                    fr.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
         //Decrement the remaining busy cycle index
         cpu_clock++;
@@ -3785,7 +3757,7 @@ public class CPU_6502 {
     private int resetVector() {
         int low = read(0xFFFC);
         int high = read(0xFFFD);
-        return (high << 8 | low) & 0xFFFF;
+        return (high << 8 | low);
     }
 
     /**
@@ -3796,7 +3768,7 @@ public class CPU_6502 {
     private int nmiVector() {
         int low = read(0xFFFA);
         int high = read(0xFFFB);
-        return (high << 8 | low) & 0xFFFF;
+        return (high << 8 | low);
     }
 
     /**
@@ -3807,7 +3779,7 @@ public class CPU_6502 {
     private int irqVector() {
         int low = read(0xFFFE);
         int high = read(0xFFFF);
-        return (high << 8 | low) & 0xFFFF;
+        return (high << 8 | low);
     }
 
     // ========================================================== Debug Methods ========================================================== //
@@ -3817,9 +3789,10 @@ public class CPU_6502 {
      *
      * @param start range start address
      * @param end   range end address
+     * @param separator separator sequence put between each element
      * @return a Map with addresses as Keys and Instructions as Values
      */
-    public Map<Integer, String> disassemble(int start, int end) {
+    public Map<Integer, String> disassemble(int start, int end, String separator) {
         int addr = start;
         int line_addr;
         int value, low, high;
@@ -3828,77 +3801,77 @@ public class CPU_6502 {
 
         while (addr < end) {
             line_addr = addr;
-            String line = String.format("$%04X: ", addr);
+            String line = String.format("$%04X:" + separator, addr);
             int opcode = nes.cpuRead(addr, true);
             addr = (addr + 1) & 0x1FFFF;
             Instruction instr = opcodes.get(opcode);
-            line += instr.name + " ";
+            line += instr.name + separator;
             switch (instr.addr_mode) {
                 case "IMP":
-                    line += "{IMP}";
+                    line += separator + "{IMP}";
                     break;
                 case "IMM":
                     value = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("#$%02X {IMM}", value);
+                    line += String.format("#$%02X" + separator + "{IMM}", value);
                     break;
                 case "ZP0":
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%02X {ZP0}", low);
+                    line += String.format("$%02X" + separator + "{ZP0}", low);
                     break;
                 case "ZPX":
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%02X, X {ZPX}", low);
+                    line += String.format("$%02X, X" + separator + "{ZPX}", low);
                     break;
                 case "ZPY":
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%02X, Y {ZPY}", low);
+                    line += String.format("$%02X, Y" + separator + "{ZPY}", low);
                     break;
                 case "IZX":
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("($%02X, X) {IZX}", low);
+                    line += String.format("($%02X, X)" + separator + "{IZX}", low);
                     break;
                 case "IZY":
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("($%02X), Y {IZY}", low);
+                    line += String.format("($%02X), Y" + separator + "{IZY}", low);
                     break;
                 case "ABS":
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     high = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%04X {ABS}", (high << 8) | low);
+                    line += String.format("$%04X" + separator + "{ABS}", (high << 8) | low);
                     break;
                 case "ABX":
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     high = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%04X, X {ABX}", (high << 8) | low);
+                    line += String.format("$%04X, X" + separator + "{ABX}", (high << 8) | low);
                     break;
                 case "ABY":
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     high = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%04X, Y {ABY}", (high << 8) | low);
+                    line += String.format("$%04X, Y" + separator + "{ABY}", (high << 8) | low);
                     break;
                 case "IND":
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     high = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("($%04X) {IND}", (high << 8) | low);
+                    line += String.format("($%04X)" + separator + "{IND}", (high << 8) | low);
                     break;
                 case "REL":
                     value = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%02X ", value) + String.format("[$%04X] {IND}", addr + (byte) (value));
+                    line += String.format("$%02X ", value) + String.format("[$%04X]" + separator + "{IND}", addr + (byte) (value));
             }
             code.put(line_addr, line);
         }
@@ -3907,94 +3880,67 @@ public class CPU_6502 {
 
     /**
      * Return whether or not the current instruction is complete
-     * Thread safe
      *
      * @return is the current instruction complete
      */
-    public synchronized boolean complete() {
+    public boolean complete() {
         return cycles == 0;
     }
 
     /**
      * Return the current Accumulator value as an 8bit unsigned value
-     * Thread safe
      *
      * @return the current Y Accumulator value as an 8bit unsigned value
      */
-    public synchronized int threadSafeGetA() {
+    public int getAccumulator() {
         return accumulator;
     }
 
     /**
      * Return the current X Register value as an 8bit unsigned value
-     * Thread safe
      *
      * @return the current X Register value as an 8bit unsigned value
      */
-    public synchronized int threadSafeGetX() {
+    public int getXRegister() {
         return x_register;
     }
 
     /**
      * Return the current Y Register value as an 8bit unsigned value
-     * Thread safe
      *
      * @return the current Y Register value as an 8bit unsigned value
      */
-    public synchronized int threadSafeGetY() {
+    public int getYRegister() {
         return y_register;
     }
 
     /**
      * Return the current Stack Pointer as an 8bit unsigned value
-     * Thread safe
      *
      * @return the current Stack Pointer as an 8bit unsigned value
      */
-    public synchronized int threadSafeGetStkp() {
+    public int getStackPointer() {
         return stack_pointer;
     }
 
     /**
-     * Return the current state of a CPU Flag
-     * Thread safe
-     *
-     * @param flag the Flag to get the value of
-     * @return a boolean representing the current value of the selected Flag
-     */
-    public synchronized boolean threadSafeGetState(Flags flag) {
-        return (status & flag.value) == flag.value;
-    }
-
-    /**
      * Return the current Program Counter
-     * Thread safe
      *
      * @return the current Program Counter
      */
-    public synchronized int threadSafeGetStatus() {
+    public int getStatus() {
         return status;
     }
 
     /**
      * Return the current Program Counter as a 16bit unsigned value
-     * Thread safe
      *
      * @return the current Program Counter as a 16bit unsigned value
      */
-    public synchronized int threadSafeGetPc() {
+    public int getProgramCounter() {
         return program_counter;
     }
 
-    /**
-     * Return the number of CPU cycles from system startup
-     * Thread Safe
-     *
-     * @return total number of CPU cycles
-     */
-    public synchronized long threadSafeGetCpuClock() {
-        return cpu_clock;
-    }
 }
 
 /**

@@ -91,7 +91,7 @@ public abstract class Mapper {
      * Notify the Mapper that one scanline has occurred
      * Do nothing if not overridden
      */
-    public void scanline() {}
+    public void notifyScanline() {}
 
     /**
      * Reset the Mapper if it has processing capabilities

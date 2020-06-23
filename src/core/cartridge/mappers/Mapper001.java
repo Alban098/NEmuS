@@ -8,7 +8,7 @@ import utils.IntegerWrapper;
 import java.io.EOFException;
 
 /**
- * This class implements the iNES Mapper 001 (MCC1)
+ * This class implements the iNES Mapper 001 (MMC1)
  */
 public class Mapper001 extends Mapper {
 
@@ -56,7 +56,6 @@ public class Mapper001 extends Mapper {
      */
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
-        addr &= 0xFFFF;
         //The CPU try to read from internal RAM
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
@@ -92,8 +91,6 @@ public class Mapper001 extends Mapper {
      */
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
-        addr &= 0xFFFF;
-        data &= 0xFF;
         //The CPU try to write to internal RAM
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
@@ -123,10 +120,10 @@ public class Mapper001 extends Mapper {
                         control_register = load_register & 0x1F;
                         switch (control_register & 0x03) {
                             case 0:
-                                mirroring_mode = Mirror.ONESCREEN_LOW;
+                                mirroring_mode = Mirror.ONE_SCREEN_LOW;
                                 break;
                             case 1:
-                                mirroring_mode = Mirror.ONESCREEN_HIGH;
+                                mirroring_mode = Mirror.ONE_SCREEN_HIGH;
                                 break;
                             case 2:
                                 mirroring_mode = Mirror.VERTICAL;
@@ -175,7 +172,6 @@ public class Mapper001 extends Mapper {
      */
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
-        addr &= 0xFFFF;
         if (addr <= 0x1FFF) {
             //If their is not banks we simply return the provided address
             if (nb_CHR_banks == 0) {
@@ -209,7 +205,6 @@ public class Mapper001 extends Mapper {
      */
     @Override
     public boolean ppuMapWrite(int addr, IntegerWrapper mapped, int data) {
-        addr &= 0xFFFF;
         if (addr <= 0x1FFF) {
             if (nb_CHR_banks == 0) {
                 mapped.value = addr;

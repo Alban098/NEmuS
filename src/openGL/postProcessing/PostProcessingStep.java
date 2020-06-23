@@ -12,22 +12,20 @@ import static org.lwjgl.opengl.GL11.glBindTexture;
  */
 public abstract class PostProcessingStep {
 
-    protected Quad quad;
+    final Quad quad;
     private ShaderProgram shader;
     Fbo fbo;
 
     /**
      * Create a new Filter from specific shaders
      * filters created with this will be rendered directly to the screen
-     *
      * @param quad     the Quad where to render
-     * @param vertex   the vertex shader file
-     * @param fragment the fragment shader file
+     *
      */
-    PostProcessingStep(Quad quad, String vertex, String fragment) {
+    PostProcessingStep(Quad quad) {
         this.quad = quad;
         try {
-            shader = new ShaderProgram(vertex, fragment);
+            shader = new ShaderProgram("shaders/v_flip_vertex.glsl", "shaders/filters/no_filter.glsl");
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);

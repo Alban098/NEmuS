@@ -5,7 +5,7 @@ import openGL.Quad;
 /**
  * This class represents a filter that flip the screen horizontally
  */
-public class HorizontalFlip extends PostProcessingStep {
+class HorizontalFlip extends PostProcessingStep {
 
     /**
      * Create a new Filter from specific shaders that will be rendered in an FBO of a specific size

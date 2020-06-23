@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="213.0" prefWidth="568.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.lwjgui.windows.AudioSettings">
+   <children>
+      <SplitPane dividerPositions="0.5865724381625441" prefHeight="385.0" prefWidth="568.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <items>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="383.0" prefWidth="333.0">
+               <children>
+                  <Slider fx:id="volumeSlider" blockIncrement="1.0" layoutX="15.0" layoutY="60.0" majorTickUnit="50.0" minorTickCount="4" prefHeight="38.0" prefWidth="300.0" showTickLabels="true" showTickMarks="true" value="100.0" />
+                  <Slider fx:id="soundQualitySlider" blockIncrement="1.0" layoutX="15.0" layoutY="120.0" majorTickUnit="15.0" max="8.0" minorTickCount="14" prefHeight="24.0" prefWidth="300.0" showTickMarks="true" snapToTicks="true" value="6.0" />
+                  <Label layoutX="15.0" layoutY="40.0" text="Volume" />
+                  <Label layoutX="15.0" layoutY="100.0" text="Audio Quality" />
+                  <CheckBox fx:id="audioRenderingCheck" layoutX="33.0" layoutY="160.0" mnemonicParsing="false" onAction="#fireAudioRenderingEvent" selected="true" text="Audio Rendering" />
+                  <CheckBox fx:id="rawAudioCheck" layoutX="203.0" layoutY="160.0" mnemonicParsing="false" onAction="#fireRawAudioEvent" text="RAW Audio" />
+                  <Label layoutX="103.0" layoutY="5.0" text="Audio Settings">
+                     <font>
+                        <Font name="System Bold" size="18.0" />
+                     </font>
+                  </Label>
+               </children>
+            </AnchorPane>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="323.0" prefWidth="227.0">
+               <children>
+                  <CheckBox fx:id="pulse1Checkbox" layoutX="40.0" layoutY="40.0" mnemonicParsing="false" onAction="#pulse1Event" selected="true" text="Pulse Channel 1" />
+                  <CheckBox fx:id="pulse2Checkbox" layoutX="40.0" layoutY="70.0" mnemonicParsing="false" onAction="#pulse2Event" selected="true" text="Pulse Channel 2" />
+                  <CheckBox fx:id="triangleCheckbox" layoutX="40.0" layoutY="100.0" mnemonicParsing="false" onAction="#triangleEvent" selected="true" text="Triangle Channel" />
+                  <CheckBox fx:id="noiseCheckbox" layoutX="40.0" layoutY="130.0" mnemonicParsing="false" onAction="#noiseEvent" selected="true" text="Noise Channel" />
+                  <CheckBox fx:id="dmcCheckbox" layoutX="40.0" layoutY="160.0" mnemonicParsing="false" onAction="#dmcEvent" selected="true" text="DMC / PCM Channel" />
+                  <Label layoutX="49.0" layoutY="5.0" text="Audio Channels">
+                     <font>
+                        <Font name="System Bold" size="18.0" />
+                     </font>
+                  </Label>
+               </children>
+            </AnchorPane>
+        </items>
+      </SplitPane>
+   </children>
+</AnchorPane>

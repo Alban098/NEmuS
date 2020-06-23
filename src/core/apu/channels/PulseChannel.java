@@ -1,7 +1,9 @@
 package core.apu.channels;
 
 import core.apu.APU_2A03;
-import core.apu.channels.components.*;
+import core.apu.channels.components.Envelope;
+import core.apu.channels.components.LengthCounter;
+import core.apu.channels.components.Sequencer;
 import core.apu.channels.components.pulse.Oscillator;
 import core.apu.channels.components.pulse.Sweeper;
 
@@ -10,13 +12,13 @@ import core.apu.channels.components.pulse.Sweeper;
  */
 public class PulseChannel {
 
-    public double sample = 0.0;
+    private final Sequencer sequencer;
+    private final Envelope envelope;
+    private final LengthCounter length_counter;
+    private final Sweeper sweeper;
+    private final Oscillator oscillator;
 
-    private Sequencer sequencer;
-    private Envelope envelope;
-    private LengthCounter length_counter;
-    private Sweeper sweeper;
-    private Oscillator oscillator;
+    public double sample = 0.0;
 
     private boolean enabled = false;
     private boolean halted = false;
@@ -80,7 +82,7 @@ public class PulseChannel {
      * @param data the value of the 8 lsb of the sequencer reload value
      */
     public void writeTimerLow(int data) {
-        sequencer.reload.value = (sequencer.reload.value & 0xFF00) | data;
+        sequencer.reload = (sequencer.reload & 0xFF00) | data;
     }
 
     /**
@@ -90,8 +92,8 @@ public class PulseChannel {
      * @param data the value of the 8 msb of the sequencer reload value
      */
     public void writeTimerHigh(int data) {
-        sequencer.reload.value = (sequencer.reload.value & 0x00FF) | ((data & 0x7) << 8);
-        sequencer.timer = sequencer.reload.value;
+        sequencer.reload = (sequencer.reload & 0x00FF) | ((data & 0x7) << 8);
+        sequencer.timer = sequencer.reload;
     }
 
     /**
@@ -114,9 +116,10 @@ public class PulseChannel {
             sequencer.clock(true, s -> (((s & 0x01) << 7) | ((s & 0xFE) >> 1)));
             if (sequencer.timer >= 8) {
                 if (raw) {
-                    sample = sequencer.output * ((envelope.output - 1) / 16.0);
+                    if (sample >= 1) System.out.println(sample);
+                    sample = sequencer.output * ((envelope.output - 1) / 22.0);
                 } else {
-                    oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload.value + 1));
+                    oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload + 1));
                     oscillator.amplitude = (envelope.output - 1) / 16.0f;
                     sample = oscillator.sample(time) / 2;
                 }
@@ -167,8 +170,8 @@ public class PulseChannel {
     /**
      * Clock the Frequency Sweeper
      */
-    public void clockSweeper() {
-        sweeper.clock(sequencer.reload, true);
+    public void clockSweeper(int channel) {
+        sequencer.reload = sweeper.clock(sequencer.reload, channel);
     }
 
     /**

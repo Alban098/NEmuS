@@ -4,7 +4,6 @@ import core.apu.APU_2A03;
 import core.cartridge.Cartridge;
 import core.cpu.CPU_6502;
 import core.ppu.PPU_2C02;
-import gui.NEmuS;
 import utils.IntegerWrapper;
 
 /**
@@ -16,12 +15,14 @@ public class NES {
     private static final long SAVE_INTERVAL = 20000;
 
     public final int[] controller;
+    public double final_audio_sample = 0.0;
+
     private final byte[] ram;
     private final CPU_6502 cpu;
     private final PPU_2C02 ppu;
     private final APU_2A03 apu;
     private final int[] controller_state;
-    public double final_audio_sample = 0.0;
+
     private long next_save = 0;
     private long system_ticks = 0;
     private Cartridge cartridge;
@@ -108,17 +109,6 @@ public class NES {
 
     /**
      * Read a value from the CPU Addressable range
-     * Used for dumping RAM from other Thread without altering the console state
-     *
-     * @param addr the Address to read from
-     * @return the read value
-     */
-    public synchronized int threadSafeCpuRead(int addr) {
-        return cpuRead(addr, true);
-    }
-
-    /**
-     * Read a value from the CPU Addressable range
      *
      * @param addr     the Address to read from
      * @param readOnly is the reading action allowed to alter CPU/PPU state
@@ -158,7 +148,7 @@ public class NES {
     /**
      * Reset the console by resetting the CPU, the PPU and set the systemTicks to 0
      */
-    public synchronized void reset() {
+    public void reset() {
         cpu.reset();
         ppu.reset();
         cartridge.reset();
@@ -182,18 +172,6 @@ public class NES {
     }
 
     /**
-     * Compute a console clock, used be by Debug windows
-     * it is Thread safe
-     */
-    public synchronized void debugClock() {
-        synchronized (getPpu()) {
-            synchronized (getCpu()) {
-                clock();
-            }
-        }
-    }
-
-    /**
      * Compute one console tick
      * the PPU is clocked every times
      * the CPU is clocked one every 3 times
@@ -201,7 +179,7 @@ public class NES {
     public boolean clock() {
         //The PPU and APU are clocked every tick
         ppu.clock();
-        apu.clock(!NEmuS.DEBUG_MODE && sound_rendering, time_per_NES_cycle);
+        apu.clock(sound_rendering, time_per_NES_cycle);
         //The CPU clock is 3 time slower than the PPU clock, so it is clocked every 3 ticks
         if (system_ticks % 3 == 0) {
             //If a Direct Memory Access is occurring
@@ -211,7 +189,6 @@ public class NES {
                     if (system_ticks % 2 == 1)
                         dma_dummy = false;
                 } else { //If the transfer is occurring
-                    int oam_addr = ppu.getOamAddr();
                     if (system_ticks % 2 == 0) //On even cycles, we read from the selected CPU Memory Page
                         dma_data = cpuRead(dma_page << 8 | dma_addr, false);
                     else { //On odd cycles, we write the read data to the PPU Memory (OAM Memory)
@@ -303,7 +280,21 @@ public class NES {
         apu.enabledRawMode(raw);
     }
 
+    /**
+     * Halt the CPU for a set amount of cycles
+     *
+     * @param cycles the number of cycles the CPU should be halted
+     */
     public void haltCPU(int cycles) {
         dummy_cycle_left = cycles;
+    }
+
+    /**
+     * Return whether or not sound rendering is enabled
+     *
+     * @return is sound rendering enabled
+     */
+    public boolean isSoundRenderingEnabled() {
+        return sound_rendering;
     }
 }

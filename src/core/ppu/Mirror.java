@@ -7,6 +7,6 @@ public enum Mirror {
     HARDWARE,
     HORIZONTAL,
     VERTICAL,
-    ONESCREEN_LOW,
-    ONESCREEN_HIGH,
+    ONE_SCREEN_LOW,
+    ONE_SCREEN_HIGH,
 }

@@ -5,7 +5,7 @@ import openGL.Quad;
 /**
  * This class represents a filter that will apply a vertical Gaussian Blur
  */
-public class GaussianVertical extends PostProcessingStep {
+class GaussianVertical extends PostProcessingStep {
 
     /**
      * Create a new Filter from specific shaders that will be rendered in an FBO of a specific size

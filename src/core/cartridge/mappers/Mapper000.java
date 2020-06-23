@@ -27,7 +27,6 @@ public class Mapper000 extends Mapper {
      */
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
-        addr &= 0xFFFF;
         if (addr >= 0x8000) {
             mapped.value = addr & (nb_PRG_banks > 1 ? 0x7FFF : 0x3FFF);
             return true;
@@ -45,7 +44,6 @@ public class Mapper000 extends Mapper {
      */
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
-        addr &= 0xFFFF;
         if (addr >= 0x8000) {
             mapped.value = addr & (nb_PRG_banks > 1 ? 0x7FFF : 0x3FFF);
             return true;
@@ -63,7 +61,6 @@ public class Mapper000 extends Mapper {
      */
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
-        addr &= 0xFFFF;
         if (addr <= 0x1FFF) {
             mapped.value = addr;
             return true;

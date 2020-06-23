@@ -114,16 +114,4 @@ public class ObjectAttribute {
     public void setX(int x) {
         this.x = x & 0xFF;
     }
-
-    // ======================================= Savestates Methods ======================================= //
-
-    /**
-     * Return a dump of the Object Attribute
-     * that can be restored later
-     *
-     * @return a byte[4] containing the Object Attribute
-     */
-    public byte[] dump() {
-        return new byte[]{(byte) x, (byte) attribute, (byte) id, (byte) y};
-    }
 }

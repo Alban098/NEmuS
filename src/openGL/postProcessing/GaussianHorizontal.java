@@ -5,7 +5,7 @@ import openGL.Quad;
 /**
  * This class represents a filter that will apply a horizontal Gaussian Blur
  */
-public class GaussianHorizontal extends PostProcessingStep {
+class GaussianHorizontal extends PostProcessingStep {
 
     /**
      * Create a new Filter from specific shaders that will be rendered in an FBO of a specific size

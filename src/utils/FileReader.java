@@ -50,22 +50,4 @@ public class FileReader {
             buf[i] = nextByte();
         return buf;
     }
-
-    /**
-     * Return whether or not there is data left to read or not
-     *
-     * @return is data left on the file
-     */
-    public boolean hasDataLeft() {
-        return currentIndex < file.length;
-    }
-
-    /**
-     * Return the size of the file
-     *
-     * @return the file size
-     */
-    public int getFileSize() {
-        return file.length;
-    }
 }

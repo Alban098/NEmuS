@@ -30,10 +30,10 @@ public class InputMapper {
 
     private static final float DEAD_ZONE_RADIUS = .4f;
 
-    private long window;
+    private final long window;
 
-    private Map<NESInputs, Integer> mappedControlsJoystick;
-    private Map<NESInputs, Integer> mappedControlsKeyboard;
+    private final Map<NESInputs, Integer> mappedControlsJoystick;
+    private final Map<NESInputs, Integer> mappedControlsKeyboard;
     private Map<Integer, String> keyNames;
     private Map<Integer, String> buttonNames;
 
@@ -400,10 +400,9 @@ public class InputMapper {
     /**
      * Get the currently pressed gamepad button if a gamepad is connected
      *
-     * @param window the window in which to capture the press
      * @return a KeyTuple containing the id and name of the pressed button, null if none
      */
-    public KeyTuple getButtonPressed(long window) {
+    public KeyTuple getButtonPressed() {
         if (glfwJoystickPresent(GLFW_JOYSTICK_1)) {
             ByteBuffer buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_1);
             if (buttons != null) {

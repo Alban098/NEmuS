@@ -10,11 +10,11 @@ public class DMCChannel {
 
     private static final int[] rate_table = {428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54};
 
-    public double output = 0;
+    private final NES nes;
+    private final MemoryReader memoryReader;
+    private final OutputUnit outputUnit;
 
-    private NES nes;
-    private MemoryReader memoryReader;
-    private OutputUnit outputUnit;
+    public double output = 0;
 
     private boolean interrupt = false;
     private boolean irqEnabled = false;
@@ -28,7 +28,7 @@ public class DMCChannel {
     /**
      * Create a new DMC Channel
      *
-     * @param nes the current nes used to read sample from memory
+     * @param nes the current NES used to read sample from memory
      */
     public DMCChannel(NES nes) {
         this.nes = nes;
@@ -59,7 +59,7 @@ public class DMCChannel {
      * @param data the sample
      */
     public void directLoad(int data) {
-       outputUnit.output = data & 0x7F;
+        outputUnit.output = data & 0x7F;
     }
 
     /**
@@ -174,6 +174,7 @@ public class DMCChannel {
  * This class is just a wrapper for the OutputUnit
  */
 class OutputUnit {
+
     int shift_register = 0x00;
     int bits_remaining = 0x00;
     int output = 0x00;

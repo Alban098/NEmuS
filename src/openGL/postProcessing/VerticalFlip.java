@@ -5,7 +5,7 @@ import openGL.Quad;
 /**
  * This class represents a filter that flip the screen vertically
  */
-public class VerticalFlip extends PostProcessingStep {
+class VerticalFlip extends PostProcessingStep {
 
     /**
      * Create a new Filter from specific shaders
@@ -14,7 +14,7 @@ public class VerticalFlip extends PostProcessingStep {
      * @param quad the Quad where to render
      */
     VerticalFlip(Quad quad) {
-        super(quad, "shaders/v_flip_vertex.glsl", "shaders/filters/no_filter.glsl");
+        super(quad);
     }
 
     /**

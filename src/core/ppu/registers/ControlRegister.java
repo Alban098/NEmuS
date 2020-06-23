@@ -58,30 +58,12 @@ public class ControlRegister {
     }
 
     /**
-     * Set the nametable_x bit high or low
-     *
-     * @param nametable_x is the nametable_x bit high
-     */
-    public void setNametableX(boolean nametable_x) {
-        this.nametable_x = nametable_x;
-    }
-
-    /**
      * Return whether or not the nametable_y bit set
      *
      * @return is the nametable_y bit set
      */
     public boolean isNametableYSet() {
         return nametable_y;
-    }
-
-    /**
-     * Set the nametable_y bit high or low
-     *
-     * @param nametable_y is the nametable_y bit high
-     */
-    public void setNametableY(boolean nametable_y) {
-        this.nametable_y = nametable_y;
     }
 
     /**
@@ -94,30 +76,12 @@ public class ControlRegister {
     }
 
     /**
-     * Set the increment_mode bit high or low
-     *
-     * @param increment_mode is the increment_mode bit high
-     */
-    public void setIncrementMode(boolean increment_mode) {
-        this.increment_mode = increment_mode;
-    }
-
-    /**
      * Return whether or not the pattern_sprite bit set
      *
      * @return is the pattern_sprite bit set
      */
     public boolean isPatternSpriteSet() {
         return pattern_sprite;
-    }
-
-    /**
-     * Set the pattern_sprite bit high or low
-     *
-     * @param pattern_sprite is the pattern_sprite bit high
-     */
-    public void setPatternSprite(boolean pattern_sprite) {
-        this.pattern_sprite = pattern_sprite;
     }
 
     /**
@@ -128,16 +92,6 @@ public class ControlRegister {
     public boolean isPatternBackgroundSet() {
         return pattern_background;
     }
-
-    /**
-     * Set the pattern_background bit high or low
-     *
-     * @param pattern_background is the pattern_background bit high
-     */
-    public void setPatternBackground(boolean pattern_background) {
-        this.pattern_background = pattern_background;
-    }
-
     /**
      * Return whether or not the sprite_size bit set
      *
@@ -148,48 +102,12 @@ public class ControlRegister {
     }
 
     /**
-     * Set the sprite_size bit high or low
-     *
-     * @param sprite_size is the sprite_size bit high
-     */
-    public void setSpriteSize(boolean sprite_size) {
-        this.sprite_size = sprite_size;
-    }
-
-    /**
-     * Return whether or not the slave_mode bit set
-     *
-     * @return is the slave_mode bit set
-     */
-    public boolean isSlaveModeSet() {
-        return slave_mode;
-    }
-
-    /**
-     * Set the slave_mode bit high or low
-     *
-     * @param slave_mode is the slave_mode bit high
-     */
-    public void setSlaveMode(boolean slave_mode) {
-        this.slave_mode = slave_mode;
-    }
-
-    /**
      * Return whether or not the enable_nmi bit set
      *
      * @return is the enable_nmi bit set
      */
     public boolean isEnableNmiSet() {
         return enable_nmi;
-    }
-
-    /**
-     * Set the enable_nmi bit high or low
-     *
-     * @param enable_nmi is the enable_nmi bit high
-     */
-    public void setEnableNmi(boolean enable_nmi) {
-        this.enable_nmi = enable_nmi;
     }
 
     @Override
