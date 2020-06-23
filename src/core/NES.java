@@ -22,6 +22,7 @@ public class NES {
     private final PPU_2C02 ppu;
     private final APU_2A03 apu;
     private final int[] controller_state;
+
     private long next_save = 0;
     private long system_ticks = 0;
     private Cartridge cartridge;
@@ -279,7 +280,21 @@ public class NES {
         apu.enabledRawMode(raw);
     }
 
+    /**
+     * Halt the CPU for a set amount of cycles
+     *
+     * @param cycles the number of cycles the CPU should be halted
+     */
     public void haltCPU(int cycles) {
         dummy_cycle_left = cycles;
+    }
+
+    /**
+     * Return whether or not sound rendering is enabled
+     *
+     * @return is sound rendering enabled
+     */
+    public boolean isSoundRenderingEnabled() {
+        return sound_rendering;
     }
 }

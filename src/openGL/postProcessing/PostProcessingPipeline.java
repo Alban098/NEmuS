@@ -1,7 +1,6 @@
 package openGL.postProcessing;
 
 import core.ppu.PPU_2C02;
-import gui.interfaces.NEmuS_Runnable;
 import gui.lwjgui.NEmuSUnified;
 import openGL.Quad;
 import org.lwjgl.opengl.GL11;
@@ -17,14 +16,14 @@ import static org.lwjgl.opengl.GL11C.glEnable;
  */
 public class PostProcessingPipeline {
 
-    private List<PostProcessingStep> allSteps;
-    private List<PostProcessingStep> steps;
+    private final List<PostProcessingStep> allSteps;
+    private final List<PostProcessingStep> steps;
 
     //We need to duplicate the Filters when required, this need to be done by the OpenGL Thread
     //So we use a buffer variable to store the list of filters to apply
     private List<PostProcessingStep> requestedSteps;
 
-    private PostProcessingStep default_filter;
+    private final PostProcessingStep default_filter;
 
     private volatile boolean locked = false;
 
@@ -54,6 +53,7 @@ public class PostProcessingPipeline {
      */
     public void applyFilters(int texture) {
         //If the pipeline has been modified, we lock the buffer and recompile the pipeline
+        while (locked) Thread.onSpinWait();
         locked = true;
         if (requestedSteps != null) {
             for (PostProcessingStep step : steps)
@@ -128,5 +128,15 @@ public class PostProcessingPipeline {
         //We wait until the buffer is available before writing it from another Thread
         while (locked) Thread.onSpinWait();
         requestedSteps = steps;
+    }
+
+    public List<String> getSteps() {
+        while (locked) Thread.onSpinWait();
+        locked = true;
+        List<String> l = new ArrayList<>();
+        for (PostProcessingStep step : steps)
+            l.add(step.toString());
+        locked = false;
+        return l;
     }
 }

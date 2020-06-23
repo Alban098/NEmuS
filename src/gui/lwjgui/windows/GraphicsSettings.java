@@ -1,7 +1,7 @@
 package gui.lwjgui.windows;
 
 import gui.lwjgui.NEmuSUnified;
-import gui.lwjgui.NEmuSWindow;
+import gui.lwjgui.NEmuSContext;
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -14,13 +14,17 @@ import javafx.stage.StageStyle;
 import openGL.postProcessing.PostProcessingStep;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
+/**
+ * This class represent the Graphics Settings Window
+ */
 public class GraphicsSettings extends Application implements Initializable {
 
     private static GraphicsSettings instance;
 
-    private NEmuSWindow emulator;
+    private final NEmuSContext emulator;
     private Stage stage;
 
     @FXML
@@ -28,26 +32,37 @@ public class GraphicsSettings extends Application implements Initializable {
     @FXML
     private ComboBox<PostProcessingStep> postProcessingComboBox;
 
+    /**
+     * Create a new instance of GraphicsSettings
+     */
     public GraphicsSettings() {
         this.emulator = NEmuSUnified.getInstance().getEmulator();
     }
 
+    /**
+     * Does an instance of GraphicsSettings exist
+     *
+     * @return does an instance exist
+     */
     public static boolean hasInstance() {
         return instance != null;
     }
 
+    /**
+     * Focus the current instance is it exist
+     */
     public static void focusInstance() {
-        instance.stage.setIconified(false);
-        instance.stage.requestFocus();
+        if (instance != null) {
+            instance.stage.setIconified(false);
+            instance.stage.requestFocus();
+        }
     }
 
-    /**
-     * Initialize the Settings Window
-     */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         instance = this;
         postProcessingComboBox.getItems().addAll(emulator.getPipeline().getAllSteps());
+        populateList(emulator.getPipeline().getSteps());
     }
 
     @Override
@@ -108,7 +123,7 @@ public class GraphicsSettings extends Application implements Initializable {
         postProcessingList.getItems().set(index, switched);
         postProcessingList.getItems().set(index + 1, selected);
         postProcessingList.getSelectionModel().select(index + 1);
-       emulator.getPipeline().setSteps(postProcessingList.getItems());
+        emulator.getPipeline().setSteps(postProcessingList.getItems());
     }
 
     /**
@@ -118,5 +133,21 @@ public class GraphicsSettings extends Application implements Initializable {
     public void removeSelectedFilter() {
         postProcessingList.getItems().remove(postProcessingList.getSelectionModel().getSelectedItem());
         emulator.getPipeline().setSteps(postProcessingList.getItems());
+    }
+
+    /**
+     * Populate the listView with the right PostProcessingSteps
+     *
+     * @param steps a list of steps ids to add (orders
+     */
+    private void populateList(List<String> steps) {
+        for (String id : steps) {
+            for (PostProcessingStep step : postProcessingComboBox.getItems()) {
+                if (id.equals(step.toString())) {
+                    postProcessingList.getItems().add(step);
+                    break;
+                }
+            }
+        }
     }
 }

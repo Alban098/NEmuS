@@ -1,7 +1,5 @@
 package core.apu.channels.components;
 
-import utils.IntegerWrapper;
-
 import java.util.function.Function;
 
 /**
@@ -12,24 +10,22 @@ public class Sequencer {
     public int sequence = 0;
     public int timer = 0;
     public int output = 0;
-    public IntegerWrapper reload = new IntegerWrapper();
+    public int reload = 0;
 
     /**
      * Update the sequencer
      *
      * @param enabled is the sequencer enabled
      * @param func    the operation that the sequencer should execute
-     * @return the raw sample of the sequencer
      */
-    public int clock(boolean enabled, Function<Integer, Integer> func) {
+    public void clock(boolean enabled, Function<Integer, Integer> func) {
         if (enabled) {
             timer--;
             if (timer == -1) {
-                timer = reload.value + 1;
+                timer = reload + 1;
                 sequence = func.apply(sequence);
                 output = sequence & 0x1;
             }
         }
-        return output;
     }
 }

@@ -1,7 +1,7 @@
 package core.apu.channels;
 
 import core.apu.APU_2A03;
-import core.apu.channels.components.*;
+import core.apu.channels.components.LengthCounter;
 import core.apu.channels.components.triangle.LinearCounter;
 import core.apu.channels.components.triangle.TriangleSequencer;
 
@@ -10,11 +10,11 @@ import core.apu.channels.components.triangle.TriangleSequencer;
  */
 public class TriangleChannel {
 
-    public double sample = 0.0;
+    private final TriangleSequencer sequencer;
+    private final LinearCounter linear_counter;
+    private final LengthCounter length_counter;
 
-    private TriangleSequencer sequencer;
-    private LinearCounter linear_counter;
-    private LengthCounter length_counter;
+    public double sample = 0.0;
 
     private boolean enabled = false;
     private boolean halted = false;
@@ -47,7 +47,7 @@ public class TriangleChannel {
      * @param data the value of the 8 lsb of the sequencer reload value
      */
     public void writeTimerLow(int data) {
-        sequencer.reload.value = (sequencer.reload.value & 0xFF00) | data;
+        sequencer.reload = (sequencer.reload & 0xFF00) | data;
     }
 
     /**
@@ -57,7 +57,7 @@ public class TriangleChannel {
      * @param data the value of the 8 msb of the sequencer reload value
      */
     public void writeTimerHigh(int data) {
-        sequencer.reload.value = (sequencer.reload.value & 0x00FF) | ((data & 0x7) << 8);
+        sequencer.reload = (sequencer.reload & 0x00FF) | ((data & 0x7) << 8);
 
     }
 
@@ -78,7 +78,7 @@ public class TriangleChannel {
      */
     public void computeSample(double timePerCycle, boolean raw) {
         last_period += timePerCycle;
-        double period = (sequencer.reload.value + 1) * timePerCycle;
+        double period = (sequencer.reload + 1) * timePerCycle;
         double lastSample = sample;
         if (enabled && length_counter.counter > 0 && linear_counter.counter > 0) {
             sequencer.clock(true);
@@ -89,19 +89,26 @@ public class TriangleChannel {
                 } else {
                     int lower = sequencer.output;
                     int higher = sequencer.sequence[(sequencer.sequenceIndex + 1) & 0x1F];
-                    double percent = last_period/ period;
+                    double percent = last_period / period;
                     if (lower == 15 && higher == 15) {
                         if (percent <= 0.5)
                             sample = ((16 - 15) * percent + 15) / 30.0;
-                        else
+                        else if (percent <= 1)
                             sample = ((15 - 16) * percent + 16) / 30.0;
-                    } else if (lower == 0 && higher == 0){
+                        else
+                            sample = higher / 30.0;
+                    } else if (lower == 0 && higher == 0) {
                         if (percent <= 0.5)
                             sample = (-percent) / 30.0;
-                        else
+                        else if (percent <= 1)
                             sample = (percent - 1) / 30.0;
+                        else
+                            sample = higher / 30.0;
                     } else
-                        sample = ((higher - lower) * percent + lower) / 30.0;
+                        if (percent <= 1)
+                            sample = ((higher - lower) * percent + lower) / 30.0;
+                        else
+                            sample = higher / 30.0;
                 }
             }
         } else
@@ -114,7 +121,7 @@ public class TriangleChannel {
         //if the channel is disabled when the sample isn't 0, we smooth the sound by finishing the cycle
         if (sample == 0 && (sample - lastSample > 0.02 || sample - lastSample < -0.02)) {
             double timeRem = period * Math.abs(last_sequencer_output);
-            int nbStep = (int) (timeRem/timePerCycle);
+            int nbStep = (int) (timeRem / timePerCycle);
             double smoothing_step = last_sequencer_output / 30.0 / nbStep;
             sample = lastSample - smoothing_step;
             if (sample < 0.05 && sample >= -0.05)

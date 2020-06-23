@@ -1,7 +1,7 @@
 package gui.lwjgui.windows;
 
 import gui.lwjgui.NEmuSUnified;
-import gui.lwjgui.NEmuSWindow;
+import gui.lwjgui.NEmuSContext;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -19,11 +19,14 @@ import java.net.URL;
 import java.util.Queue;
 import java.util.ResourceBundle;
 
-public class APUViewer extends Application  implements Initializable {
+/**
+ * This class represent the APU Debug Window
+ */
+public class APUViewer extends Application implements Initializable {
 
     private static APUViewer instance;
 
-    private NEmuSWindow emulator;
+    private final NEmuSContext emulator;
     private Stage stage;
 
     @FXML
@@ -39,26 +42,32 @@ public class APUViewer extends Application  implements Initializable {
     @FXML
     private Canvas mixer_canvas;
 
+    /**
+     * Create a new instance of PPUViewer
+     */
     public APUViewer() {
         this.emulator = NEmuSUnified.getInstance().getEmulator();
     }
 
+    /**
+     * Does an instance of APUViewer exist
+     *
+     * @return does an instance exist
+     */
     public static boolean hasInstance() {
         return instance != null;
     }
 
-    public static void focusInstance() {
-        instance.stage.setIconified(false);
-        instance.stage.requestFocus();
-    }
-
-    public static APUViewer getInstance() {
-        return instance;
-    }
-
     /**
-     * Initialize the Settings Window
+     * Focus the current instance is it exist
      */
+    public static void focusInstance() {
+        if (instance != null) {
+            instance.stage.setIconified(false);
+            instance.stage.requestFocus();
+        }
+    }
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         instance = this;
@@ -84,6 +93,10 @@ public class APUViewer extends Application  implements Initializable {
         instance.stage = stage;
     }
 
+    /**
+     * The rendering loop of the window
+     * run until the window is closed
+     */
     private void updateImages() {
         while(instance != null) {
             if (emulator.isEmulationRunning()) {

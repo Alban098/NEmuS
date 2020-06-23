@@ -7,8 +7,10 @@ public class Envelope {
 
     public boolean started = false;
     public boolean disabled = false;
+
     public int volume = 0;
     public int output = 0;
+
     private int divider_count = 0;
     private int decay_count = 0;
 

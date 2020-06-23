@@ -6,7 +6,6 @@ import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.util.Pair;
 import lwjgui.LWJGUIApplication;
 import lwjgui.scene.Scene;
 import lwjgui.scene.Window;
@@ -16,20 +15,19 @@ import org.lwjgl.glfw.GLFWWindowCloseCallback;
 import utils.Dialogs;
 
 import java.io.File;
-import java.util.Stack;
 
 import static org.lwjgl.glfw.GLFW.glfwSetWindowAspectRatio;
 
+/**
+ * This class represent the GUI of the emulator
+ */
 public class NEmuSUnified extends LWJGUIApplication {
 
     private static NEmuSUnified instance;
 
     private String currentDirectory;
-    private Stack<Pair<String, String>> recentRoms;
-
     private Window window;
-    private NEmuSWindow emulator;
-
+    private NEmuSContext emulator;
     private MenuBar menu;
 
     public static void main(String[] args) {
@@ -41,44 +39,39 @@ public class NEmuSUnified extends LWJGUIApplication {
     public void start(String[] strings, Window window) {
         instance = this;
         currentDirectory = "./";
-        recentRoms = new Stack<>();
+        window.setTitle("NEmuS Unified");
 
+        //We initialize the emulator context
         this.window = window;
-        emulator = new NEmuSWindow(window.getContext().getWindowHandle());
-
-        BorderPane root = new BorderPane();
-        root.setBackgroundLegacy(null);
+        emulator = new NEmuSContext(window.getContext().getWindowHandle());
 
         //Just to initialize JavaFX
         new JFXPanel();
         Platform.setImplicitExit(false);
 
+        //We initialize the Menu and its behaviour
+        BorderPane root = new BorderPane();
+        root.setBackgroundLegacy(null);
         menu = new MenuBar();
         root.setTop(menu);
 
         MenuItem load = new MenuItem("Open");
-        load.setOnAction(actionEvent -> {
-            Platform.runLater( () -> {
-                FileChooser romLoader = new FileChooser();
-                romLoader.setInitialDirectory(new File(currentDirectory));
-                romLoader.getExtensionFilters().add(new FileChooser.ExtensionFilter("iNES file", "*.nes"));
-                File file = romLoader.showOpenDialog(null);
-                if (file != null) {
-                    currentDirectory = file.getAbsolutePath().replace(file.getName(), "");
-                    emulator.fireLoadROMEvent(file.getAbsolutePath(), file.getName());
-                }
-            });
-        });
+        load.setOnAction(actionEvent -> Platform.runLater( () -> {
+            FileChooser romLoader = new FileChooser();
+            romLoader.setInitialDirectory(new File(currentDirectory));
+            romLoader.getExtensionFilters().add(new FileChooser.ExtensionFilter("iNES file", "*.nes"));
+            File file = romLoader.showOpenDialog(null);
+            if (file != null) {
+                currentDirectory = file.getAbsolutePath().replace(file.getName(), "");
+                emulator.fireLoadROMEvent(file.getAbsolutePath());
+            }
+        }));
 
         MenuItem pause = new MenuItem("Pause/Resume");
-        pause.setOnAction(actionEvent -> {
-           emulator.pause();
-        });
+        pause.setOnAction(actionEvent -> emulator.pause());
 
         MenuItem reset = new MenuItem("Reset");
-        reset.setOnAction(actionEvent -> {
-            emulator.fireResetEvent();
-        });
+        reset.setOnAction(actionEvent -> emulator.fireResetEvent());
 
         MenuItem audio = new MenuItem("Audio");
         audio.setOnAction(actionEvent -> {
@@ -97,12 +90,12 @@ public class NEmuSUnified extends LWJGUIApplication {
 
         MenuItem controller = new MenuItem("Controllers");
         controller.setOnAction(actionEvent -> {
-            if (ControllersSettings.hasInstance()) {
-                Platform.runLater(ControllersSettings::focusInstance);
+            if (ControllerSettings.hasInstance()) {
+                Platform.runLater(ControllerSettings::focusInstance);
             } else {
                 Platform.runLater(() -> {
                     try {
-                        new ControllersSettings().start(new Stage());
+                        new ControllerSettings().start(new Stage());
                     } catch (Exception e) {
                         Dialogs.showException("Controllers Settings Error", "Error opening Controllers Settings Window", e);
                     }
@@ -191,32 +184,54 @@ public class NEmuSUnified extends LWJGUIApplication {
         debug.getItems().add(apu);
         menu.getItems().add(debug);
 
+        //We setup the Window
         window.setScene(new Scene(root, PPU_2C02.SCREEN_WIDTH * 2, (int) (PPU_2C02.SCREEN_HEIGHT * 2 + menu.getHeight())));
         glfwSetWindowAspectRatio(window.getContext().getWindowHandle(), window.getContext().getWidth(), window.getContext().getHeight());
         window.show();
 
+        //We link the Window and the emulator context
         window.setRenderingCallback(emulator);
         window.getWindowCloseCallback().addCallback(new GLFWWindowCloseCallback() {
             @Override
             public void invoke(long window) {
-                NEmuSWindow.getInstance().cleanUp();
+                emulator.cleanUp();
                 System.exit(0);
             }
         });
     }
 
-    public NEmuSWindow getEmulator() {
+    /**
+     * Return the current emulator context
+     *
+     * @return the current emulator context
+     */
+    public NEmuSContext getEmulator() {
         return emulator;
     }
 
+    /**
+     * Return the instance of the GUI
+     *
+     * @return the current instance of the GUI
+     */
     public static NEmuSUnified getInstance() {
         return instance;
     }
 
+    /**
+     * Return the width of the game view
+     *
+     * @return the width of the game view
+     */
     public int getWidth() {
         return window.getContext().getWidth();
     }
 
+    /**
+     * Return the height of the game view (omitting the menu)
+     *
+     * @return the height of the game view without the menu
+     */
     public int getHeight() {
         return (int) (window.getContext().getHeight() - menu.getHeight());
     }

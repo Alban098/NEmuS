@@ -66,12 +66,12 @@ public class PPU_2C02 {
     private boolean odd_frame = false;
     private boolean nmi;
 
-    private Runnable incrementScrollX;
-    private Runnable incrementScrollY;
-    private Runnable transferAddressX;
-    private Runnable transferAddressY;
-    private Runnable updateShifter;
-    private Runnable loadBackgroundShifter;
+    private final Runnable incrementScrollX;
+    private final Runnable incrementScrollY;
+    private final Runnable transferAddressX;
+    private final Runnable transferAddressY;
+    private final Runnable updateShifter;
+    private final Runnable loadBackgroundShifter;
 
     /**
      * Create a new PPU, instantiate its components and fill up the palettes
@@ -329,7 +329,7 @@ public class PPU_2C02 {
                 //The vram address is incremented (horizontally or vertically depending on the Control Register)
                 vram_addr.set(vram_addr.get() + (control_register.isIncrementModeSet() ? 32 : 1));
                 if ((vram_addr.get() & 0x1000) == 0x1000 && (last_addr & 0x1000) == 0)
-                    cartridge.getMapper().scanline();
+                    cartridge.getMapper().notifyScanline();
                 break;
         }
         return data & 0xFF;
@@ -669,7 +669,7 @@ public class PPU_2C02 {
                 spriteZeroHitPossible = false;
 
                 //We read all OAM and break if we hit the max number of sprite for one scanline
-                while (oam_entry < 64 && sprite_count < 9) {
+                while (oam_entry < 64 && sprite_count < 8) {
                     //We compute if the sprite is in the current scanline
                     int diff = scanline - oams[oam_entry].getY();
                     if (diff >= 0 && diff < (control_register.isSpriteSizeSet() ? 16 : 8)) {
@@ -841,7 +841,7 @@ public class PPU_2C02 {
 
         if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
             if (cycle == 260 && scanline < 240) {
-                cartridge.getMapper().scanline();
+                cartridge.getMapper().notifyScanline();
             }
         }
 
@@ -905,7 +905,7 @@ public class PPU_2C02 {
                         tile_lsb >>= 1;
                         tile_msb >>= 1;
                         //We populate the image by getting the right color from the palette using the palette and pixel IDs
-                        dest.getPixelWriter().setColor((tileX * 8 + (7 - col)), (tileY * 8 + row), getColorFromPalette(paletteId, pixel));
+                        dest.getPixelWriter().setColor(((tileX << 3) | (7 - col)), ((tileY << 3) | row), getColorFromPalette(paletteId, pixel));
                     }
                 }
             }
@@ -957,7 +957,7 @@ public class PPU_2C02 {
                         tile_lsb = (tile_lsb << 1) & 0xFFFF;
                         tile_msb = (tile_msb << 1) & 0xFFFF;
                         //We populate the image by getting the right color from the palette using the palette and pixel IDs
-                        dest.getPixelWriter().setColor((x * 8 + (col)), (y * 8 + row), getColorFromPalette(pid, pixel));
+                        dest.getPixelWriter().setColor(((x << 3) | (col)), ((y << 3) | row), getColorFromPalette(pid, pixel));
                     }
                 }
             }

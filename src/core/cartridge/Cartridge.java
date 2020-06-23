@@ -44,11 +44,11 @@ public class Cartridge {
         FileReader reader = new FileReader(filename);
         //Read the Header
         Header header = new Header(reader);
+
         //Extract the Mapper ID and Mirroring mode
         int mapperId = ((header.mapper2 >> 4) << 4) | header.mapper1 >> 4;
         mirror = (header.mapper1 & 0x01) == 0x01 ? Mirror.VERTICAL : Mirror.HORIZONTAL;
-        System.out.println("Mapper " + mapperId);
-        System.out.println("Mirroring mode : " + mirror.name());
+
         //Discard padding if necessary
         if ((header.mapper1 & 0x04) == 0x04)
             reader.readBytes(512);
@@ -67,6 +67,7 @@ public class Cartridge {
             if (nb_CHR_banks == 0)
                 chr_memory = new byte[8192];
         }
+        //If it's a iNES 2 file
         if (fileType == 2) {
             //Read Program Memory
             nb_PRG_banks = (header.prg_ram_size & 0x07) << 8 | (header.prg_rom_chunks & 0xFF);
@@ -98,7 +99,7 @@ public class Cartridge {
                 mapper = new Mapper066(nb_PRG_banks, nb_CHR_banks);
                 break;
             default:
-                throw new UnsupportedMapperException("Mapper " + mapperId + " not implemented yet");
+                throw new UnsupportedMapperException("Mapper " + (mapperId & 0xFF) + " not implemented yet");
         }
     }
 

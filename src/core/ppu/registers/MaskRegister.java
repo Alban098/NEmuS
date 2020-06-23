@@ -58,30 +58,12 @@ public class MaskRegister {
     }
 
     /**
-     * Set the grayscale bit high or low
-     *
-     * @param grayscale is the grayscale bit high
-     */
-    public void setGrayscale(boolean grayscale) {
-        this.grayscale = grayscale;
-    }
-
-    /**
      * Return whether or not the render_background_left bit set
      *
      * @return is the render_background_left bit set
      */
     public boolean isRenderBackgroundLeftSet() {
         return render_background_left;
-    }
-
-    /**
-     * Set the render_background_left bit high or low
-     *
-     * @param render_background_left is the render_background_left bit high
-     */
-    public void setRenderBackgroundLeftSet(boolean render_background_left) {
-        this.render_background_left = render_background_left;
     }
 
     /**
@@ -94,15 +76,6 @@ public class MaskRegister {
     }
 
     /**
-     * Set the render_sprite_left bit high or low
-     *
-     * @param render_sprite_left is the render_sprite_left bit high
-     */
-    public void setRenderSpriteLeft(boolean render_sprite_left) {
-        this.render_sprite_left = render_sprite_left;
-    }
-
-    /**
      * Return whether or not the render_background bit set
      *
      * @return is the render_background bit set
@@ -112,84 +85,12 @@ public class MaskRegister {
     }
 
     /**
-     * Set the render_background bit high or low
-     *
-     * @param render_background is the render_background bit high
-     */
-    public void setRenderBackground(boolean render_background) {
-        this.render_background = render_background;
-    }
-
-    /**
      * Return whether or not the render_sprites bit set
      *
      * @return is the render_sprites bit set
      */
     public boolean isRenderSpritesSet() {
         return render_sprites;
-    }
-
-    /**
-     * Set the render_sprites bit high or low
-     *
-     * @param render_sprites is the render_sprites bit high
-     */
-    public void setRenderSprites(boolean render_sprites) {
-        this.render_sprites = render_sprites;
-    }
-
-    /**
-     * Return whether or not the enhance_red bit set
-     *
-     * @return is the enhance_red bit set
-     */
-    public boolean isEnhanceRedSet() {
-        return enhance_red;
-    }
-
-    /**
-     * Set the enhance_red bit high or low
-     *
-     * @param enhance_red is the enhance_red bit high
-     */
-    public void setEnhanceRed(boolean enhance_red) {
-        this.enhance_red = enhance_red;
-    }
-
-    /**
-     * Return whether or not the enhance_green bit set
-     *
-     * @return is the enhance_green bit set
-     */
-    public boolean isEnhanceGreenSet() {
-        return enhance_green;
-    }
-
-    /**
-     * Set the enhance_green bit high or low
-     *
-     * @param enhance_green is the enhance_green bit high
-     */
-    public void setEnhanceGreen(boolean enhance_green) {
-        this.enhance_green = enhance_green;
-    }
-
-    /**
-     * Return whether or not the enhance_blue bit set
-     *
-     * @return is the enhance_blue bit set
-     */
-    public boolean isEnhanceBlueSet() {
-        return enhance_blue;
-    }
-
-    /**
-     * Set the enhance_blue bit high or low
-     *
-     * @param enhance_blue is the enhance_blue bit high
-     */
-    public void setEnhanceBlue(boolean enhance_blue) {
-        this.enhance_blue = enhance_blue;
     }
 
     @Override

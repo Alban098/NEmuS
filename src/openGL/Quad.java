@@ -5,8 +5,6 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.FloatBuffer;
 
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.system.MemoryUtil.memFree;
 
@@ -18,8 +16,8 @@ public class Quad {
 
     private static final float[] vertices = {-1, -1, 1, -1, 1, 1, -1, 1};
 
-    private int vaoId;
-    private int vboId;
+    private final int vaoId;
+    private final int vboId;
 
     /**
      * Create a new Quad

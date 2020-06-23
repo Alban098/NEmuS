@@ -1,7 +1,7 @@
 package gui.lwjgui.windows;
 
 import gui.lwjgui.NEmuSUnified;
-import gui.lwjgui.NEmuSWindow;
+import gui.lwjgui.NEmuSContext;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -23,11 +23,14 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.ResourceBundle;
 
+/**
+ * This class represent the CPU Debug Window
+ */
 public class CPUViewer extends Application implements Initializable {
 
     private static CPUViewer instance;
 
-    private NEmuSWindow emulator;
+    private final NEmuSContext emulator;
     private Stage stage;
     private Label[][] ram_fields;
     private Label[][] code_fields;
@@ -44,50 +47,60 @@ public class CPUViewer extends Application implements Initializable {
     @FXML
     private GridPane code_area;
     @FXML
-    public TextField y_field;
+    private TextField y_field;
     @FXML
-    public TextField stkp_field;
+    private TextField stkp_field;
     @FXML
-    public TextField pc_field;
+    private TextField pc_field;
     @FXML
-    public TextField a_field;
+    private TextField a_field;
     @FXML
-    public TextField x_field;
+    private TextField x_field;
     @FXML
-    public Label n_label;
+    private Label n_label;
     @FXML
-    public Label v_label;
+    private Label v_label;
     @FXML
-    public Label u_label;
+    private Label u_label;
     @FXML
-    public Label b_label;
+    private Label b_label;
     @FXML
-    public Label d_label;
+    private Label d_label;
     @FXML
-    public Label i_label;
+    private Label i_label;
     @FXML
-    public Label z_label;
+    private Label z_label;
     @FXML
-    public Label c_label;
+    private Label c_label;
 
     private boolean redraw;
 
+    /**
+     * Create a new instance of CPUViewer
+     */
     public CPUViewer() {
         this.emulator = NEmuSUnified.getInstance().getEmulator();
     }
 
+    /**
+     * Does an instance of CPUViewer exist
+     *
+     * @return does an instance exist
+     */
     public static boolean hasInstance() {
         return instance != null;
     }
 
+    /**
+     * Focus the current instance is it exist
+     */
     public static void focusInstance() {
-        instance.stage.setIconified(false);
-        instance.stage.requestFocus();
+        if (instance != null) {
+            instance.stage.setIconified(false);
+            instance.stage.requestFocus();
+        }
     }
 
-    /**
-     * Initialize the Settings Window
-     */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         instance = this;
@@ -132,6 +145,10 @@ public class CPUViewer extends Application implements Initializable {
         new Thread(this::updateRAM).start();
     }
 
+    /**
+     * The rendering loop of the window
+     * run until the window is closed
+     */
     private void updateRAM() {
         while(instance != null) {
             if (emulator.isEmulationRunning() || redraw && emulator.isStarted()) {
@@ -211,11 +228,11 @@ public class CPUViewer extends Application implements Initializable {
                         }
                     });
                 }
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    Dialogs.showError("CPU Viewer Loop Error", "Error while drawing CPU Viewer");
-                }
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Dialogs.showError("CPU Viewer Loop Error", "Error while drawing CPU Viewer");
             }
         }
     }
@@ -251,6 +268,9 @@ public class CPUViewer extends Application implements Initializable {
         redraw = true;
     }
 
+    /**
+     * Trigger a redraw of the window
+     */
     @FXML
     private void scrollEvent() {
         redraw = true;

@@ -16,9 +16,9 @@ public class Mapper004 extends Mapper {
     private boolean flag_PRG_bank_mode = false;
     private boolean flag_CHR_inversion = false;
 
-    private int[] register;
-    private int[] chr_banks;
-    private int[] prg_banks;
+    private final int[] register;
+    private final int[] chr_banks;
+    private final int[] prg_banks;
 
     private boolean flag_IRQ_active = false;
     private boolean flag_IRQ_enabled = false;
@@ -273,7 +273,7 @@ public class Mapper004 extends Mapper {
      * Notify the Mapper that one scanline has occurred
      */
     @Override
-    public void scanline() {
+    public void notifyScanline() {
         if (irq_counter == 0) {
             irq_counter = irq_reload;
         } else {
@@ -297,7 +297,8 @@ public class Mapper004 extends Mapper {
         irq_counter = 0;
         irq_reload = 0;
 
-        for (int i = 0; i < 4; i++) prg_banks[i] = 0;
+        for (int i = 0; i < 4; i++)
+            prg_banks[i] = 0;
         for (int i = 0; i < 8; i++) {
             chr_banks[i] = 0;
             register[i] = 0;

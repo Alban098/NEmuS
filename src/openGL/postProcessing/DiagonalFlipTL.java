@@ -5,7 +5,7 @@ import openGL.Quad;
 /**
  * This class represents a filter that flip the screen along the diagonal starting from the top left
  */
-public class DiagonalFlipTL extends PostProcessingStep {
+class DiagonalFlipTL extends PostProcessingStep {
 
     /**
      * Create a new Filter from specific shaders that will be rendered in an FBO of a specific size

@@ -1,7 +1,5 @@
 package core.apu.channels.components.pulse;
 
-import utils.IntegerWrapper;
-
 /**
  * This class represents a sweeper used to change the frequency of the audio signal
  */
@@ -20,37 +18,39 @@ public class Sweeper {
     /**
      * Update the state of the frequency sweeper
      *
-     * @param target the data to extract the from
+     * @param reload the sequencer reload value
      */
-    public void track(IntegerWrapper target) {
+    public void track(int reload) {
         if (enabled) {
-            change = target.value >> shift;
-            muted = (target.value < 8) || (target.value > 0x7FF);
+            change = reload >> shift;
+            muted = (reload < 8) || (reload > 0x7FF);
         }
     }
 
     /**
      * Compute a tick of the frequency sweeper
      *
-     * @param target  the sequencer reload value (will be modified)
+     * @param reload  the sequencer reload value (will be modified)
      * @param channel which channel is selected (false = 0, true = 1)
+     * @return the new reload value
      */
-    public void clock(IntegerWrapper target, boolean channel) {
+    public int clock(int reload, int channel) {
         if (timer == 0 && enabled && shift > 0 && !muted) {
-            if (target.value >= 8 && change < 0x07FF) {
+            if (reload >= 8 && change < 0x07FF) {
                 if (down)
-                    target.value -= change - (channel ? 1 : 0);
+                    reload -= change - (channel & 1);
                 else
-                    target.value += change;
+                    reload += change;
             }
         }
         if (enabled) {
-            if (timer == 0 || reload) {
+            if (timer == 0 || this.reload) {
                 timer = period;
-                reload = false;
+                this.reload = false;
             } else
                 timer--;
-            muted = (target.value < 8) || (target.value > 0x7FF);
+            muted = (reload < 8) || (reload > 0x7FF);
         }
+        return reload;
     }
 }

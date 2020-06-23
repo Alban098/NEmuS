@@ -3,7 +3,7 @@ package gui.lwjgui.windows;
 import core.apu.APU_2A03;
 import core.apu.channels.components.pulse.Oscillator;
 import gui.lwjgui.NEmuSUnified;
-import gui.lwjgui.NEmuSWindow;
+import gui.lwjgui.NEmuSContext;
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -17,11 +17,15 @@ import javafx.stage.StageStyle;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+/**
+ * This class represent the Audio Settings Window
+ */
 public class AudioSettings extends Application implements Initializable {
 
     private static AudioSettings instance;
 
-    private NEmuSWindow emulator;
+    private final NEmuSContext emulator;
+
     private Stage stage;
 
     @FXML
@@ -43,27 +47,46 @@ public class AudioSettings extends Application implements Initializable {
     @FXML
     private CheckBox dmcCheckbox;
 
+    /**
+     * Create a new instance of AudioSettings
+     */
     public AudioSettings() {
         this.emulator = NEmuSUnified.getInstance().getEmulator();
     }
 
+    /**
+     * Does an instance of AudioSettings exist
+     *
+     * @return does an instance exist
+     */
     public static boolean hasInstance() {
         return instance != null;
     }
 
+    /**
+     * Focus the current instance is it exist
+     */
     public static void focusInstance() {
-        instance.stage.setIconified(false);
-        instance.stage.requestFocus();
+        if (instance != null) {
+            instance.stage.setIconified(false);
+            instance.stage.requestFocus();
+        }
     }
 
-    /**
-     * Initialize the Settings Window
-     */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         instance = this;
         volumeSlider.valueProperty().addListener((observableValue, oldValue, newValue) -> APU_2A03.setVolume(newValue.intValue() / 100.0));
         soundQualitySlider.valueProperty().addListener((observableValue, oldValue, newValue) -> Oscillator.setHarmonics(newValue.intValue() + 5));
+        volumeSlider.setValue(APU_2A03.getVolume() * 100);
+        soundQualitySlider.setValue(Oscillator.getHarmonics() - 5);
+        audioRenderingCheck.setSelected(emulator.isAudioRenderingEnabled());
+        rawAudioCheck.setSelected(emulator.isRAWAudioEnabled());
+        pulse1Checkbox.setSelected(emulator.isPulse1Rendered());
+        pulse2Checkbox.setSelected(emulator.isPulse2Rendered());
+        triangleCheckbox.setSelected(emulator.isTriangleRendered());
+        noiseCheckbox.setSelected(emulator.isNoiseRendered());
+        dmcCheckbox.setSelected(emulator.isDMCRendered());
     }
 
     @Override

@@ -29,17 +29,8 @@ public class StatusRegister {
         int val = 0x00;
         val |= vertical_blank ? 0x80 : 0x00;
         val |= sprite_zero_hit ? 0x40 : 0x00;
-        val |= sprite_zero_hit ? 0x20 : 0x00;
+        val |= sprite_overflow ? 0x20 : 0x00;
         return val & 0xFF;
-    }
-
-    /**
-     * Return whether or not the sprite_overflow bit set
-     *
-     * @return is the sprite_overflow bit set
-     */
-    public boolean isSpriteOverflowSet() {
-        return sprite_overflow;
     }
 
     /**
@@ -52,30 +43,12 @@ public class StatusRegister {
     }
 
     /**
-     * Return whether or not the sprite_zero_hit bit set
-     *
-     * @return is the sprite_zero_hit bit set
-     */
-    public boolean isSpriteZeroHitSet() {
-        return sprite_zero_hit;
-    }
-
-    /**
      * Set the sprite_zero_hit bit high or low
      *
      * @param sprite_zero_hit is the sprite_zero_hit bit high
      */
     public void setSpriteZeroHit(boolean sprite_zero_hit) {
         this.sprite_zero_hit = sprite_zero_hit;
-    }
-
-    /**
-     * Return whether or not the vertical_blank bit set
-     *
-     * @return is the vertical_blank bit set
-     */
-    public boolean isVerticalBlankSet() {
-        return vertical_blank;
     }
 
     /**

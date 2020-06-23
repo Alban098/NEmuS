@@ -4,6 +4,7 @@ package gui.inputs;
  * This class represents all possible inputs of the emulator
  */
 public enum NESInputs {
+
     CONTROLLER_1_A,
     CONTROLLER_1_B,
     CONTROLLER_1_SELECT,

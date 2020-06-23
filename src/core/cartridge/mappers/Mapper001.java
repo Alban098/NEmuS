@@ -8,7 +8,7 @@ import utils.IntegerWrapper;
 import java.io.EOFException;
 
 /**
- * This class implements the iNES Mapper 001 (MCC1)
+ * This class implements the iNES Mapper 001 (MMC1)
  */
 public class Mapper001 extends Mapper {
 
@@ -120,10 +120,10 @@ public class Mapper001 extends Mapper {
                         control_register = load_register & 0x1F;
                         switch (control_register & 0x03) {
                             case 0:
-                                mirroring_mode = Mirror.ONESCREEN_LOW;
+                                mirroring_mode = Mirror.ONE_SCREEN_LOW;
                                 break;
                             case 1:
-                                mirroring_mode = Mirror.ONESCREEN_HIGH;
+                                mirroring_mode = Mirror.ONE_SCREEN_HIGH;
                                 break;
                             case 2:
                                 mirroring_mode = Mirror.VERTICAL;

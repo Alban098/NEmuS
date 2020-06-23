@@ -17,16 +17,18 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class APU_2A03 {
 
     private static final int VISUALIZER_SAMPLE_SIZE = 256;
+    private static final double CLOCK_TIME = .333333333 / 1789773.0;
 
-    private static final double clock_time = .333333333 / 1789773.0;
-    public static int[] length_table = {10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30};
     private static double volume = 1;
 
-    private PulseChannel pulse_1;
-    private PulseChannel pulse_2;
-    private TriangleChannel triangle;
-    private NoiseChannel noise;
-    private DMCChannel dmc;
+    public static final int[] length_table = {10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30};
+
+    private final PulseChannel pulse_1;
+    private final PulseChannel pulse_2;
+    private final TriangleChannel triangle;
+    private final NoiseChannel noise;
+    private final DMCChannel dmc;
+    private final Queue<AudioSampleCollection> audio_visualizer_queue;
 
     private int clock_counter = 0;
     private double total_time = 0.0;
@@ -44,8 +46,6 @@ public class APU_2A03 {
     private boolean triangle_rendered = true;
     private boolean dmc_rendered = true;
 
-    private Queue<AudioSampleCollection> audio_visualizer_queue;
-
     private int cycles_until_visualizer_sample = 0;
 
     /**
@@ -61,15 +61,6 @@ public class APU_2A03 {
     }
 
     /**
-     * Return the current volume
-     *
-     * @return the current APU volume
-     */
-    public static double getVolume() {
-        return volume;
-    }
-
-    /**
      * Set the master volume of the APU
      *
      * @param volume the volume to set between 0 and 1
@@ -79,15 +70,26 @@ public class APU_2A03 {
     }
 
     /**
+     * Return the current volume of the APU
+     *
+     * @return the current APU volume
+     */
+    public static double getVolume() {
+        return volume;
+    }
+
+    /**
      * Return the current audio sample as a value between -1 and 1
      *
      * @return the current audio sample as a value between -1 and 1
      */
     public double getSample() {
         double sample = ((0.00752 * (((pulse_1_rendered ? pulse_1.sample : 0) * 15) + ((pulse_2_rendered ? pulse_2.sample : 0) * 15))) + (0.00851 * (triangle_rendered ? triangle.sample : 0) * 15) + (0.00494 * (noise_rendered ? noise.sample : 0) * 15) + 0.00335 * (dmc_rendered ? dmc.output : 0) * 128);
+
         if (cycles_until_visualizer_sample == 0) {
             if (audio_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
                 audio_visualizer_queue.poll();
+
             AudioSampleCollection sampleCollection = new AudioSampleCollection();
             sampleCollection.pulse1 = pulse_1_rendered ? pulse_1.sample : 0;
             sampleCollection.pulse2 = pulse_2_rendered ? pulse_2.sample : 0;
@@ -99,6 +101,7 @@ public class APU_2A03 {
 
             cycles_until_visualizer_sample = 1280 / VISUALIZER_SAMPLE_SIZE;
         }
+
         cycles_until_visualizer_sample--;
         return sample * 2 * volume;
     }
@@ -283,11 +286,11 @@ public class APU_2A03 {
                 if (flag_5_step_mode) {
                     pulse_1.clockLengthCounter();
                     pulse_1.clockEnvelope();
-                    pulse_1.clockSweeper();
+                    pulse_1.clockSweeper(0);
 
                     pulse_2.clockLengthCounter();
                     pulse_2.clockEnvelope();
-                    pulse_2.clockSweeper();
+                    pulse_2.clockSweeper(1);
 
                     triangle.clockLinearCounter();
                     triangle.clockLengthCounter();
@@ -333,74 +336,74 @@ public class APU_2A03 {
         boolean quarter_frame = false;
         boolean half_frame = false;
 
-        total_time += clock_time;
+        total_time += CLOCK_TIME;
         if (clock_counter % 3 == 0) {
             dmc.clock();
             if (enable_sampling)
-                triangle.computeSample(timePerClock/3, raw_audio);
-        }
-        if (clock_counter % 6 == 0) {
-            //A write to 0x4017 will cause the frame counter to be reset after 4 CPU cycles (2 APU cycles)
-            if (cycle_remaining_since_4017_write == 0) {
-                frame_counter = 0;
-                cycle_remaining_since_4017_write = -1;
-            }
-            if (cycle_remaining_since_4017_write >= 0)
-                cycle_remaining_since_4017_write -= 2;
+                triangle.computeSample(timePerClock / 3, raw_audio);
+            if (clock_counter % 6 == 0) {
+                //A write to 0x4017 will cause the frame counter to be reset after 4 CPU cycles (2 APU cycles)
+                if (cycle_remaining_since_4017_write == 0) {
+                    frame_counter = 0;
+                    cycle_remaining_since_4017_write = -1;
+                }
+                if (cycle_remaining_since_4017_write >= 0)
+                    cycle_remaining_since_4017_write -= 2;
 
-            frame_counter++;
-            if (flag_5_step_mode) {
-                if (frame_counter == 3729)
-                    quarter_frame = true;
-                if (frame_counter == 7457) {
-                    quarter_frame = true;
-                    half_frame = true;
+                frame_counter++;
+                if (flag_5_step_mode) {
+                    if (frame_counter == 3729)
+                        quarter_frame = true;
+                    if (frame_counter == 7457) {
+                        quarter_frame = true;
+                        half_frame = true;
+                    }
+                    if (frame_counter == 11186)
+                        quarter_frame = true;
+                    if (frame_counter == 18641) {
+                        quarter_frame = true;
+                        half_frame = true;
+                        frame_counter = 0;
+                    }
+                } else {
+                    if (frame_counter == 3729)
+                        quarter_frame = true;
+                    if (frame_counter == 7457) {
+                        quarter_frame = true;
+                        half_frame = true;
+                    }
+                    if (frame_counter == 11186)
+                        quarter_frame = true;
+                    if (frame_counter == 14916) {
+                        quarter_frame = true;
+                        half_frame = true;
+                        frame_counter = 0;
+                        if (!flag_IRQ_inhibit)
+                            frame_IRQ = true;
+                    }
                 }
-                if (frame_counter == 11186)
-                    quarter_frame = true;
-                if (frame_counter == 18641) {
-                    quarter_frame = true;
-                    half_frame = true;
-                    frame_counter = 0;
+                if (quarter_frame) {
+                    triangle.clockLinearCounter();
+                    if (enable_sampling) {
+                        pulse_1.clockEnvelope();
+                        pulse_2.clockEnvelope();
+                        noise.clockEnvelope();
+                    }
                 }
-            } else {
-                if (frame_counter == 3729)
-                    quarter_frame = true;
-                if (frame_counter == 7457) {
-                    quarter_frame = true;
-                    half_frame = true;
+                if (half_frame) {
+                    pulse_1.clockLengthCounter();
+                    pulse_2.clockLengthCounter();
+                    triangle.clockLengthCounter();
+                    noise.clockLengthCounter();
+                    pulse_1.clockSweeper(0);
+                    pulse_2.clockSweeper(1);
                 }
-                if (frame_counter == 11186)
-                    quarter_frame = true;
-                if (frame_counter == 14916) {
-                    quarter_frame = true;
-                    half_frame = true;
-                    frame_counter = 0;
-                    if (!flag_IRQ_inhibit)
-                        frame_IRQ = true;
-                }
-            }
-            if (quarter_frame) {
-                triangle.clockLinearCounter();
                 if (enable_sampling) {
-                    pulse_1.clockEnvelope();
-                    pulse_2.clockEnvelope();
-                    noise.clockEnvelope();
+                    pulse_1.computeSample(total_time, raw_audio);
+                    pulse_2.computeSample(total_time, raw_audio);
+                    noise.computeSample();
+                    dmc.computeSample();
                 }
-            }
-            if (half_frame) {
-                pulse_1.clockLengthCounter();
-                pulse_2.clockLengthCounter();
-                triangle.clockLengthCounter();
-                noise.clockLengthCounter();
-                pulse_1.clockSweeper();
-                pulse_2.clockSweeper();
-            }
-            if (enable_sampling) {
-                pulse_1.computeSample(total_time, raw_audio);
-                pulse_2.computeSample(total_time, raw_audio);
-                noise.computeSample();
-                dmc.computeSample();
             }
         }
         pulse_1.trackSweeper();
@@ -426,5 +429,59 @@ public class APU_2A03 {
      */
     public boolean irq() {
         return frame_IRQ || dmc.hasInterruptTriggered();
+    }
+
+    /**
+     * Return whether or not RAW audio is enabled
+     *
+     * @return is RAW audio rendering enabled
+     */
+    public boolean isRAWAudioEnabled() {
+        return raw_audio;
+    }
+
+    /**
+     * Return whether or not Pulse 1 is enabled
+     *
+     * @return is Pulse 1 rendering enabled
+     */
+    public boolean isPulse1Rendered() {
+        return pulse_1_rendered;
+    }
+
+    /**
+     * Return whether or not Pulse 2 is enabled
+     *
+     * @return is Pulse 2 rendering enabled
+     */
+    public boolean isPulse2Rendered() {
+        return pulse_2_rendered;
+    }
+
+    /**
+     * Return whether or not Triangle is enabled
+     *
+     * @return is Triangle rendering enabled
+     */
+    public boolean isTriangleRendered() {
+        return triangle_rendered;
+    }
+
+    /**
+     * Return whether or not Noise is enabled
+     *
+     * @return is Noise rendering enabled
+     */
+    public boolean isNoiseRendered() {
+        return noise_rendered;
+    }
+
+    /**
+     * Return whether or not DMC is enabled
+     *
+     * @return is DMC rendering enabled
+     */
+    public boolean isDMCRendered() {
+        return dmc_rendered;
     }
 }
