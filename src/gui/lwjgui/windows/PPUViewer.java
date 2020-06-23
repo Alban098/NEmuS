@@ -82,6 +82,8 @@ public class PPUViewer extends Application implements Initializable {
     private ListView<String> oam_list;
     @FXML
     private Canvas oam_canvas;
+    @FXML
+    private Canvas preview_canvas;
 
     private Canvas[] palette_images;
 
@@ -201,6 +203,9 @@ public class PPUViewer extends Application implements Initializable {
                         int selectedIndex = oam_list.getSelectionModel().getSelectedIndex();
                         oam_list.getItems().clear();
                         GraphicsContext g = oam_canvas.getGraphicsContext2D();
+                        GraphicsContext preview = preview_canvas.getGraphicsContext2D();
+                        preview.setFill(Color.GREY);
+                        preview.fillRect(0, 0, 256, 240);
                         //We get the current state of the PPU Control Register
                         int control = nes.getPpu().cpuRead(0, true);
                         switch (control & 0x20) {
@@ -240,6 +245,8 @@ public class PPUViewer extends Application implements Initializable {
                                             //We draw the pixel
                                             g.setFill(nes.getPpu().getColorFromPalette(px == 0 ? 0 : pal, px));
                                             g.fillRect(((i & 0x7) << 5) | (col << 2), ((i >> 3) << 5) | (row << 2), 4, 4);
+                                            preview.setFill(px == 0 ? Color.GREY : nes.getPpu().getColorFromPalette(pal, px));
+                                            preview.fillRect(entry.getX() + col, entry.getY() + row, 1, 1);
                                             //We shift the bit planes for the next pixel
                                             sprite_pattern_high <<= 1;
                                             sprite_pattern_low <<= 1;
@@ -248,12 +255,17 @@ public class PPUViewer extends Application implements Initializable {
                                     //If the current ObjectAttribute is the selected one, we highlight it
                                     if (i == selectedIndex) {
                                         g.setFill(Color.RED);
+                                        preview.setFill(Color.RED);
                                         int x = (i % 8) * (8*4);
                                         int y = (i / 8) * (8*4);
                                         g.fillRect(x, y, 32, 3);
                                         g.fillRect(x, y + 29, 32,3);
                                         g.fillRect(x, y, 3, 32);
                                         g.fillRect(x + 29, y, 3, 32);
+                                        preview.fillRect(entry.getX(), entry.getY(), 8, 1);
+                                        preview.fillRect(entry.getX(), entry.getY() + 7, 8,1);
+                                        preview.fillRect(entry.getX(), entry.getY(), 1, 8);
+                                        preview.fillRect(entry.getX() + 7, entry.getY(), 1, 8);
                                     }
                                 }
                                 break;
@@ -290,19 +302,25 @@ public class PPUViewer extends Application implements Initializable {
                                             int pal = (entry.getAttribute() & 0x3) + 4;
                                             g.setFill(nes.getPpu().getColorFromPalette(px == 0 ? 0 : pal, px));
                                             g.fillRect(((i & 0x7) << 5) | (col << 2), ((i >> 3) << 6) | (row << 2), 4, 4);
-
+                                            preview.setFill(px == 0 ? Color.GREY : nes.getPpu().getColorFromPalette(pal, px));
+                                            preview.fillRect(entry.getX() + col, entry.getY() + row, 1, 1);
                                             sprite_pattern_high <<= 1;
                                             sprite_pattern_low <<= 1;
                                         }
                                     }
                                     if (i == selectedIndex) {
                                         g.setFill(Color.RED);
+                                        preview.setFill(Color.RED);
                                         int x = (i % 8) * (8*4);
                                         int y = (i / 8) * (16 * 4);
                                         g.fillRect(x, y, 32, 3);
                                         g.fillRect(x, y + 61, 32,3);
                                         g.fillRect(x, y, 3, 64);
                                         g.fillRect(x + 29, y, 3, 64);
+                                        preview.fillRect(entry.getX(), entry.getY(), 8, 1);
+                                        preview.fillRect(entry.getX(), entry.getY() + 15, 8,1);
+                                        preview.fillRect(entry.getX(), entry.getY(), 1, 16);
+                                        preview.fillRect(entry.getX() + 7, entry.getY(), 1, 16);
                                     }
                                 }
                                 break;

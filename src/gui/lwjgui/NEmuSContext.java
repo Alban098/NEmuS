@@ -176,11 +176,10 @@ public class NEmuSContext implements Renderer {
         //If a Reset has been requested
         if (reset_requested) {
             reset_requested = false;
-            synchronized (nes) {
-                emulation_running = false;
-                nes.reset();
-                emulation_running = true;
-            }
+            boolean running = emulation_running;
+            emulation_running = false;
+            nes.reset();
+            emulation_running = running;
         }
 
         //If we need to render the screen

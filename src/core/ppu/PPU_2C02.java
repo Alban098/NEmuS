@@ -303,7 +303,7 @@ public class PPU_2C02 {
                 break;
             case 0x0002: // Status
                 //When reading the Status Register, the unused bits are filled with le last data that was read
-                data = (status_register.get() & 0xE0) | (ppu_data_buffer & 0x1F);
+                data = (status_register.get() & 0xF0) | (ppu_data_buffer & 0x1F);
                 //The Vertical Blank Flag is reset
                 status_register.setVerticalBlank(false);
                 //The address_latch is also reset to ensure proper write for the next time
@@ -653,7 +653,7 @@ public class PPU_2C02 {
             }
 
             //At the end of a scanline, we fetch the sprite that will be visible on the next scanline
-            if (cycle == 257 && scanline >= 0) {
+            if (cycle == 320 && scanline >= 0) {
                 //We clear all visible Object Attribute
                 for (ObjectAttribute visible_oam : visible_oams) visible_oam.clear(0xFF);
                 //And reset the scripte count
@@ -669,7 +669,7 @@ public class PPU_2C02 {
                 spriteZeroHitPossible = false;
 
                 //We read all OAM and break if we hit the max number of sprite for one scanline
-                while (oam_entry < 64 && sprite_count < 8) {
+                while (oam_entry < 64 && sprite_count <= 8) {
                     //We compute if the sprite is in the current scanline
                     int diff = scanline - oams[oam_entry].getY();
                     if (diff >= 0 && diff < (control_register.isSpriteSizeSet() ? 16 : 8)) {
@@ -688,7 +688,7 @@ public class PPU_2C02 {
                 }
                 //If we hit a 9th sprite on the scanline, we set the sprite overflow flag to 1
                 status_register.setSpriteOverflow(sprite_count >= 8);
-                if (sprite_count >= 8) sprite_count = 8;
+                if (sprite_count > 8) sprite_count = 8;
             }
             //At the end of the horizontal blank, we fetch all the relevant sprite data for the next scanline
             //This is really done one multiple cycles, but it's easier to do it all in one go and doesn't change the overall behaviour of the rendering process
