@@ -1,6 +1,5 @@
 package gui.lwjgui.windows;
 
-import core.NES;
 import gui.lwjgui.NEmuSUnified;
 import gui.lwjgui.NEmuSWindow;
 import javafx.application.Application;
@@ -10,10 +9,11 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import utils.AudioSampleCollection;
+import utils.Dialogs;
 
 import java.net.URL;
 import java.util.Queue;
@@ -24,7 +24,6 @@ public class APUViewer extends Application  implements Initializable {
     private static APUViewer instance;
 
     private NEmuSWindow emulator;
-    private NES nes;
     private Stage stage;
 
     @FXML
@@ -42,7 +41,6 @@ public class APUViewer extends Application  implements Initializable {
 
     public APUViewer() {
         this.emulator = NEmuSUnified.getInstance().getEmulator();
-        this.nes = emulator.getNes();
     }
 
     public static boolean hasInstance() {
@@ -87,35 +85,43 @@ public class APUViewer extends Application  implements Initializable {
     }
 
     private void updateImages() {
-        long next_frame = 0;
         while(instance != null) {
-            if (emulator.isEmulationRunning() && System.currentTimeMillis() >= next_frame) {
-                next_frame = System.currentTimeMillis() + 33;
+            if (emulator.isEmulationRunning()) {
                 Platform.runLater(() -> {
-                    drawWaveForm(nes.getApu().getPulse1VisualizerQueue(), pulse_1_canvas);
-                    drawWaveForm(nes.getApu().getPulse2VisualizerQueue(), pulse_2_canvas);
-                    drawWaveForm(nes.getApu().getTriangleVisualizerQueue(), triangle_canvas);
-                    drawWaveForm(nes.getApu().getNoiseVisualizerQueue(), noise_canvas);
-                    drawWaveForm(nes.getApu().getDmcVisualizerQueue(), dmc_canvas);
-                    drawWaveForm(nes.getApu().getMixerVisualizerQueue(), mixer_canvas);
-
+                    Queue<AudioSampleCollection> samples = emulator.getNes().getApu().getAudioVisualizerQueue();
+                    pulse_1_canvas.getGraphicsContext2D().fillRect(0, 0, 512, 100);
+                    pulse_2_canvas.getGraphicsContext2D().fillRect(0, 0, 512, 100);
+                    triangle_canvas.getGraphicsContext2D().fillRect(0, 0, 512, 100);
+                    noise_canvas.getGraphicsContext2D().fillRect(0, 0, 512, 100);
+                    dmc_canvas.getGraphicsContext2D().fillRect(0, 0, 512, 100);
+                    mixer_canvas.getGraphicsContext2D().fillRect(0, 0, 512, 100);
+                    pulse_1_canvas.getGraphicsContext2D().setStroke(Color.WHITE);
+                    pulse_2_canvas.getGraphicsContext2D().setStroke(Color.WHITE);
+                    triangle_canvas.getGraphicsContext2D().setStroke(Color.WHITE);
+                    noise_canvas.getGraphicsContext2D().setStroke(Color.WHITE);
+                    dmc_canvas.getGraphicsContext2D().setStroke(Color.WHITE);
+                    mixer_canvas.getGraphicsContext2D().setStroke(Color.WHITE);
+                    int index = 0;
+                    AudioSampleCollection last = samples.poll();
+                    for (AudioSampleCollection sample : samples) {
+                        if (last != null) {
+                            pulse_1_canvas.getGraphicsContext2D().strokeLine(index, 90 - last.pulse1 * 110, index + 2, 90 - sample.pulse1 * 110);
+                            pulse_2_canvas.getGraphicsContext2D().strokeLine(index, 90 - last.pulse2 * 110, index + 2, 90 - sample.pulse2 * 110);
+                            triangle_canvas.getGraphicsContext2D().strokeLine(index, 90 - last.triangle * 110, index + 2, 90 - sample.triangle * 110);
+                            noise_canvas.getGraphicsContext2D().strokeLine(index, 90 - last.noise * 110, index + 2, 90 - sample.noise * 110);
+                            dmc_canvas.getGraphicsContext2D().strokeLine(index, 90 - last.dmc * 110, index + 2, 90 - sample.dmc * 110);
+                            mixer_canvas.getGraphicsContext2D().strokeLine(index, 90 - last.mixer * 110, index + 2, 90 - sample.mixer * 110);
+                        }
+                        index += 2;
+                        last = sample;
+                    }
                 });
             }
-        }
-    }
-
-    private void drawWaveForm(Queue<Double> waveform, Canvas canvas) {
-        GraphicsContext g = canvas.getGraphicsContext2D();
-        g.setFill(Color.BLACK);
-        g.fillRect(0, 0, 512, 100);
-        g.setStroke(Color.WHITE);
-        int index = 0;
-        Double last = waveform.poll();
-        for (double sample : waveform) {
-            if (last != null)
-                g.strokeLine(index, 90 - last * 110, index+4, 90 - sample*110);
-            index += 4;
-            last = sample;
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Dialogs.showError("CPU Viewer Loop Error", "Error while drawing CPU Viewer");
+            }
         }
     }
 }

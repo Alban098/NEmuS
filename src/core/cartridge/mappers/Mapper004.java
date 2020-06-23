@@ -61,7 +61,6 @@ public class Mapper004 extends Mapper {
      */
     @Override
     public boolean cpuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
-        addr &= 0xFFFF;
         //The CPU try to read from internal RAM
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
@@ -99,9 +98,6 @@ public class Mapper004 extends Mapper {
      */
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
-        addr &= 0xFFFF;
-        data &= 0xFF;
-
         //The CPU try to write to internal RAM
         if (addr >= 0x6000 && addr <= 0x7FFF) {
             mapped.value = -1;
@@ -195,7 +191,6 @@ public class Mapper004 extends Mapper {
      */
     @Override
     public boolean ppuMapRead(int addr, IntegerWrapper mapped, IntegerWrapper data) {
-        addr &= 0xFFFF;
         //We select the appropriate CHR bank using the provided address
         if (addr <= 0x03FF) {
             mapped.value = chr_banks[0] + (addr & 0x03FF);

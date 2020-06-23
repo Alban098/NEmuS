@@ -73,10 +73,6 @@ public class PPU_2C02 {
     private Runnable updateShifter;
     private Runnable loadBackgroundShifter;
 
-    public int getOamAddr() {
-        return oam_addr;
-    }
-
     /**
      * Create a new PPU, instantiate its components and fill up the palettes
      */
@@ -273,34 +269,31 @@ public class PPU_2C02 {
      */
     public int cpuRead(int addr, boolean readOnly) {
         int data = 0x00;
-        addr &= 0xFFFF;
         if (readOnly) {
-            //If in read only, the data access is Thread safe and don't alter the PPU state used for debug purposes
-            synchronized (this) {
-                switch (addr) {
-                    case 0x0000: // Control
-                        data = control_register.get();
-                        break;
-                    case 0x0001: // Mask
-                        data = mask_register.get();
-                        break;
-                    case 0x0002: // Status
-                        data = status_register.get();
-                        break;
-                    case 0x0003: // OAM Address
-                        break;
-                    case 0x0004: // OAM Data
-                        data = getOamData();
-                        break;
-                    case 0x0005: // Scroll
-                        break;
-                    case 0x0006: // PPU Address
-                        break;
-                    case 0x0007: // PPU Data
-                        break;
-                }
-                return data & 0xFF;
+            //If in read only, don't alter the PPU state
+            switch (addr) {
+                case 0x0000: // Control
+                    data = control_register.get();
+                    break;
+                case 0x0001: // Mask
+                    data = mask_register.get();
+                    break;
+                case 0x0002: // Status
+                    data = status_register.get();
+                    break;
+                case 0x0003: // OAM Address
+                    break;
+                case 0x0004: // OAM Data
+                    data = getOamData();
+                    break;
+                case 0x0005: // Scroll
+                    break;
+                case 0x0006: // PPU Address
+                    break;
+                case 0x0007: // PPU Data
+                    break;
             }
+            return data & 0xFF;
         }
         switch (addr) {
             case 0x0000: // Control
@@ -349,8 +342,6 @@ public class PPU_2C02 {
      * @param data the data to write
      */
     public void cpuWrite(int addr, int data) {
-        data &= 0xFF;
-        addr &= 0xFFFF;
         switch (addr) {
             case 0x0000: // Control
                 control_register.set(data);
@@ -418,54 +409,13 @@ public class PPU_2C02 {
         }
     }
 
-    public synchronized int ppuDebugRead(int addr) {
-        addr &= 0x3FFF;
-        //A Wrapper used to store the data gathered by the Cartridge
-        IntegerWrapper data = new IntegerWrapper();
-        //If the address is mapped by the cartridge, let it handle and return read value
-        if (!cartridge.ppuRead(addr, data)) {
-            if (addr <= 0x1FFF) { //Read from pattern table
-                data.value = patterntable_memory[(addr & 0x1000) >> 12][addr & 0x0FFF];
-            } else if (addr <= 0x3EFF) { //Read from nametable
-                addr &= 0x0FFF;
-                if (cartridge.getMirror() == Mirror.VERTICAL) {
-                    if (addr <= 0x03FF)
-                        data.value = nametable_memory[0][addr & 0x03FF];
-                    if (addr >= 0x0400 && addr <= 0x07FF)
-                        data.value = nametable_memory[1][addr & 0x03FF];
-                    if (addr >= 0x0800 && addr <= 0x0BFF)
-                        data.value = nametable_memory[0][addr & 0x03FF];
-                    if (addr >= 0x0C00)
-                        data.value = nametable_memory[1][addr & 0x03FF];
-                } else if (cartridge.getMirror() == Mirror.HORIZONTAL) {
-                    if (addr <= 0x03FF)
-                        data.value = nametable_memory[0][addr & 0x03FF];
-                    if (addr >= 0x0400 && addr <= 0x07FF)
-                        data.value = nametable_memory[0][addr & 0x03FF];
-                    if (addr >= 0x0800 && addr <= 0x0BFF)
-                        data.value = nametable_memory[1][addr & 0x03FF];
-                    if (addr >= 0x0C00)
-                        data.value = nametable_memory[1][addr & 0x03FF];
-                }
-            } else { //Read from palette memory
-                addr &= 0x1F;
-                if (addr == 0x0010) addr = 0x0000;
-                if (addr == 0x0014) addr = 0x0004;
-                if (addr == 0x0018) addr = 0x0008;
-                if (addr == 0x001C) addr = 0x000C;
-                data.value = palette_memory[addr] & (mask_register.isGrayscaleSet() ? 0x30 : 0x3F);
-            }
-        }
-        return data.value & 0xFF;
-    }
-
     /**
      * Called when the PPU wants to read from its Memory
      *
      * @param addr the address to read from
      * @return the read data
      */
-    private int ppuRead(int addr) {
+    public int ppuRead(int addr) {
         addr &= 0x3FFF;
         //A Wrapper used to store the data gathered by the Cartridge
         IntegerWrapper data = new IntegerWrapper();
@@ -578,7 +528,7 @@ public class PPU_2C02 {
      * @param pixel     the pixel ID
      * @return the corresponding Color
      */
-    private Color getColorFromPalette(int paletteId, int pixel) {
+    public Color getColorFromPalette(int paletteId, int pixel) {
         return system_palette[ppuRead(0x3F00 + ((paletteId << 2) & 0x00FF) + (pixel & 0x00FF))];
     }
 
@@ -922,7 +872,7 @@ public class PPU_2C02 {
      *
      * @return an array of ObjectAttribute containing all the OAM
      */
-    public synchronized ObjectAttribute[] getOams() {
+    public ObjectAttribute[] getOams() {
         return oams;
     }
 
@@ -933,7 +883,7 @@ public class PPU_2C02 {
      * @param paletteId the paletteId to be used
      * @param dest      the image where to store the patternTable
      */
-    public synchronized void getPatternTable(int i, int paletteId, WritableImage dest) {
+    public void getPatternTable(int i, int paletteId, WritableImage dest) {
         //Create a temporary buffer because the pixels are not calculated in screen order
         //For each row of tiles starting at the top
         for (int tileY = 0; tileY < 16; tileY++) {
@@ -955,7 +905,7 @@ public class PPU_2C02 {
                         tile_lsb >>= 1;
                         tile_msb >>= 1;
                         //We populate the image by getting the right color from the palette using the palette and pixel IDs
-                        dest.getPixelWriter().setColor((tileX * 8 + (7 - col)), (tileY * 8 + row), threadSafeGetColorFromPalette(paletteId, pixel));
+                        dest.getPixelWriter().setColor((tileX * 8 + (7 - col)), (tileY * 8 + row), getColorFromPalette(paletteId, pixel));
                     }
                 }
             }
@@ -968,8 +918,7 @@ public class PPU_2C02 {
      * @param i    the pattern table index
      * @param dest the image where to store the nametable
      */
-    public synchronized void getNametable(int i, WritableImage dest) {
-
+    public void getNametable(int i, WritableImage dest) {
         //For each row of tiles starting at the top
         for (int y = 0; y < 30; y++) {
             //For each tile starting at the left
@@ -1008,22 +957,10 @@ public class PPU_2C02 {
                         tile_lsb = (tile_lsb << 1) & 0xFFFF;
                         tile_msb = (tile_msb << 1) & 0xFFFF;
                         //We populate the image by getting the right color from the palette using the palette and pixel IDs
-                        dest.getPixelWriter().setColor((x * 8 + (col)), (y * 8 + row), threadSafeGetColorFromPalette(pid, pixel));
+                        dest.getPixelWriter().setColor((x * 8 + (col)), (y * 8 + row), getColorFromPalette(pid, pixel));
                     }
                 }
             }
         }
-    }
-
-    /**
-     * Return a palette color given a palette ID and a pixel ID
-     * Thread safe, used by the Debug Window
-     *
-     * @param paletteId the palette ID
-     * @param pixel     the pixel ID
-     * @return the corresponding Color
-     */
-    public synchronized Color threadSafeGetColorFromPalette(int paletteId, int pixel) {
-        return system_palette[ppuRead(0x3F00 + ((paletteId << 2) & 0xFF) + (pixel & 0xFF)) & 0x3F];
     }
 }

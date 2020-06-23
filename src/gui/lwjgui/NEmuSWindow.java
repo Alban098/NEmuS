@@ -253,10 +253,10 @@ public class NEmuSWindow implements Renderer {
     public synchronized void frameStepEvent() {
         if (!emulation_running && started) {
             do {
-                nes.debugClock();
+                nes.clock();
             } while (!nes.getPpu().frame_complete);
             do {
-                nes.debugClock();
+                nes.clock();
             } while (nes.getCpu().complete());
             nes.getPpu().frame_complete = false;
             redraw = true;
@@ -269,10 +269,10 @@ public class NEmuSWindow implements Renderer {
     public synchronized void cpuStepEvent() {
         if (!emulation_running && started) {
             do {
-                nes.debugClock();
+                nes.clock();
             } while (!nes.getCpu().complete());
             do {
-                nes.debugClock();
+                nes.clock();
             } while (nes.getCpu().complete());
             if (nes.getPpu().frame_complete) {
                 frame_count++;

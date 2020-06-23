@@ -110,7 +110,6 @@ public class Cartridge {
      * @return was the data searched in the Cartridge
      */
     public boolean cpuRead(int addr, IntegerWrapper data) {
-        addr &= 0xFFFF;
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.cpuMapRead(addr, mapped, data)) {
             if (mapped.value == -1) return true;
@@ -129,8 +128,6 @@ public class Cartridge {
      * @return was the data for the Cartridge
      */
     public boolean cpuWrite(int addr, int data) {
-        addr &= 0xFFFF;
-        data &= 0xFF;
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.cpuMapWrite(addr, mapped, data)) {
             if (mapped.value == -1) return true;
@@ -166,8 +163,6 @@ public class Cartridge {
      * @return was the data for the Cartridge
      */
     public boolean ppuWrite(int addr, int data) {
-        addr &= 0xFFFF;
-        data &= 0xFF;
         IntegerWrapper mapped = new IntegerWrapper();
         if (mapper.ppuMapWrite(addr, mapped, data)) {
             chr_memory[mapped.value] = (byte) data;

@@ -5,6 +5,7 @@ import core.apu.channels.DMCChannel;
 import core.apu.channels.NoiseChannel;
 import core.apu.channels.PulseChannel;
 import core.apu.channels.TriangleChannel;
+import utils.AudioSampleCollection;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -15,7 +16,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class APU_2A03 {
 
-    private static final int VISUALIZER_SAMPLE_SIZE = 128;
+    private static final int VISUALIZER_SAMPLE_SIZE = 256;
 
     private static final double clock_time = .333333333 / 1789773.0;
     public static int[] length_table = {10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30};
@@ -43,12 +44,7 @@ public class APU_2A03 {
     private boolean triangle_rendered = true;
     private boolean dmc_rendered = true;
 
-    private Queue<Double> pulse_1_visualizer_queue;
-    private Queue<Double> pulse_2_visualizer_queue;
-    private Queue<Double> noise_visualizer_queue;
-    private Queue<Double> triangle_visualizer_queue;
-    private Queue<Double> dmc_visualizer_queue;
-    private Queue<Double> mixer_visualizer_queue;
+    private Queue<AudioSampleCollection> audio_visualizer_queue;
 
     private int cycles_until_visualizer_sample = 0;
 
@@ -61,12 +57,7 @@ public class APU_2A03 {
         triangle = new TriangleChannel();
         noise = new NoiseChannel();
         dmc = new DMCChannel(nes);
-        pulse_1_visualizer_queue = new ConcurrentLinkedQueue<>();
-        pulse_2_visualizer_queue = new ConcurrentLinkedQueue<>();
-        triangle_visualizer_queue = new ConcurrentLinkedQueue<>();
-        noise_visualizer_queue = new ConcurrentLinkedQueue<>();
-        dmc_visualizer_queue = new ConcurrentLinkedQueue<>();
-        mixer_visualizer_queue = new ConcurrentLinkedQueue<>();
+        audio_visualizer_queue = new ConcurrentLinkedQueue<>();
     }
 
     /**
@@ -83,7 +74,7 @@ public class APU_2A03 {
      *
      * @param volume the volume to set between 0 and 1
      */
-    public static synchronized void setVolume(double volume) {
+    public static void setVolume(double volume) {
         APU_2A03.volume = volume;
     }
 
@@ -95,29 +86,16 @@ public class APU_2A03 {
     public double getSample() {
         double sample = ((0.00752 * (((pulse_1_rendered ? pulse_1.sample : 0) * 15) + ((pulse_2_rendered ? pulse_2.sample : 0) * 15))) + (0.00851 * (triangle_rendered ? triangle.sample : 0) * 15) + (0.00494 * (noise_rendered ? noise.sample : 0) * 15) + 0.00335 * (dmc_rendered ? dmc.output : 0) * 128);
         if (cycles_until_visualizer_sample == 0) {
-            if (pulse_1_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
-                pulse_1_visualizer_queue.poll();
-            pulse_1_visualizer_queue.offer((pulse_1_rendered ? pulse_1.sample : 0));
-
-            if (pulse_2_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
-                pulse_2_visualizer_queue.poll();
-            pulse_2_visualizer_queue.offer((pulse_2_rendered ? pulse_2.sample : 0));
-
-            if (triangle_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
-                triangle_visualizer_queue.poll();
-            triangle_visualizer_queue.offer((triangle_rendered ? triangle.sample : 0));
-
-            if (noise_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
-                noise_visualizer_queue.poll();
-            noise_visualizer_queue.offer((noise_rendered ? noise.sample : 0));
-
-            if (dmc_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
-                dmc_visualizer_queue.poll();
-            dmc_visualizer_queue.offer((dmc_rendered ? dmc.output : 0));
-
-            if (mixer_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
-                mixer_visualizer_queue.poll();
-            mixer_visualizer_queue.offer(sample * 2.5);
+            if (audio_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
+                audio_visualizer_queue.poll();
+            AudioSampleCollection sampleCollection = new AudioSampleCollection();
+            sampleCollection.pulse1 = pulse_1_rendered ? pulse_1.sample : 0;
+            sampleCollection.pulse2 = pulse_2_rendered ? pulse_2.sample : 0;
+            sampleCollection.triangle = triangle_rendered ? triangle.sample : 0;
+            sampleCollection.noise = noise_rendered ? noise.sample : 0;
+            sampleCollection.dmc = dmc_rendered ? dmc.output : 0;
+            sampleCollection.mixer = sample * 2.5;
+            audio_visualizer_queue.offer(sampleCollection);
 
             cycles_until_visualizer_sample = 1280 / VISUALIZER_SAMPLE_SIZE;
         }
@@ -125,28 +103,8 @@ public class APU_2A03 {
         return sample * 2 * volume;
     }
 
-    public Queue<Double> getPulse1VisualizerQueue() {
-        return pulse_1_visualizer_queue;
-    }
-
-    public Queue<Double> getPulse2VisualizerQueue() {
-        return pulse_2_visualizer_queue;
-    }
-
-    public Queue<Double> getNoiseVisualizerQueue() {
-        return noise_visualizer_queue;
-    }
-
-    public Queue<Double> getTriangleVisualizerQueue() {
-        return triangle_visualizer_queue;
-    }
-
-    public Queue<Double> getDmcVisualizerQueue() {
-        return dmc_visualizer_queue;
-    }
-
-    public Queue<Double> getMixerVisualizerQueue() {
-        return mixer_visualizer_queue;
+    public Queue<AudioSampleCollection> getAudioVisualizerQueue() {
+        return audio_visualizer_queue;
     }
 
     /**
@@ -225,8 +183,6 @@ public class APU_2A03 {
      * @param addr the address to write to
      */
     public void cpuWrite(int addr, int data) {
-        addr &= 0xFFFF;
-        data &= 0xFF;
         switch (addr) {
             case 0x4000:
                 pulse_1.writeDutyCycle(data);

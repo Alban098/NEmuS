@@ -15,6 +15,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import utils.Dialogs;
 
 import java.net.URL;
 import java.util.LinkedList;
@@ -132,11 +133,9 @@ public class CPUViewer extends Application implements Initializable {
     }
 
     private void updateRAM() {
-        long next_frame = 0;
         while(instance != null) {
-            if (emulator.isEmulationRunning() && System.currentTimeMillis() >= next_frame || redraw && emulator.isStarted()) {
+            if (emulator.isEmulationRunning() || redraw && emulator.isStarted()) {
                 redraw = false;
-                next_frame = System.currentTimeMillis() + 100;
                 if (ram_tab.isSelected()) {
                     Platform.runLater(() -> {
                         int base_addr = (int) (ram_scroll.getValue()) << 4;
@@ -149,15 +148,15 @@ public class CPUViewer extends Application implements Initializable {
                             ram_fields[0][i].setText(String.format("%04X", base_addr + (i << 4)));
                     });
                 } else if (cpu_tab.isSelected()) {
-                    int pc = emulator.getNes().getCpu().threadSafeGetPc();
+                    int pc = emulator.getNes().getCpu().getProgramCounter();
                     decompiled = emulator.getNes().getCpu().disassemble(pc - 30, pc + 30, "!");
                     Platform.runLater(() -> {
-                        a_field.setText(String.format("$%02X", emulator.getNes().getCpu().threadSafeGetA()) + "[" + emulator.getNes().getCpu().threadSafeGetA() + "]");
-                        x_field.setText(String.format("$%02X", emulator.getNes().getCpu().threadSafeGetX()) + "[" + emulator.getNes().getCpu().threadSafeGetX() + "]");
-                        y_field.setText(String.format("$%02X", emulator.getNes().getCpu().threadSafeGetY()) + "[" + emulator.getNes().getCpu().threadSafeGetY() + "]");
-                        stkp_field.setText(String.format("$%02X", emulator.getNes().getCpu().threadSafeGetStkp()) + "[" + emulator.getNes().getCpu().threadSafeGetStkp() + "]");
-                        pc_field.setText(String.format("$%02X", emulator.getNes().getCpu().threadSafeGetPc()) + "[" + emulator.getNes().getCpu().threadSafeGetPc() + "]");
-                        int status = emulator.getNes().getCpu().threadSafeGetStatus();
+                        a_field.setText(String.format("$%02X", emulator.getNes().getCpu().getAccumulator()) + "[" + emulator.getNes().getCpu().getAccumulator() + "]");
+                        x_field.setText(String.format("$%02X", emulator.getNes().getCpu().getXRegister()) + "[" + emulator.getNes().getCpu().getXRegister() + "]");
+                        y_field.setText(String.format("$%02X", emulator.getNes().getCpu().getYRegister()) + "[" + emulator.getNes().getCpu().getYRegister() + "]");
+                        stkp_field.setText(String.format("$%02X", emulator.getNes().getCpu().getStackPointer()) + "[" + emulator.getNes().getCpu().getStackPointer() + "]");
+                        pc_field.setText(String.format("$%02X", emulator.getNes().getCpu().getProgramCounter()) + "[" + emulator.getNes().getCpu().getProgramCounter() + "]");
+                        int status = emulator.getNes().getCpu().getStatus();
                         n_label.setStyle("-fx-text-fill: " + ((status & 0x80) == 0x80 ? "green" : "red"));
                         v_label.setStyle("-fx-text-fill: " + ((status & 0x40) == 0x40 ? "green" : "red"));
                         u_label.setStyle("-fx-text-fill: " + ((status & 0x20) == 0x20 ? "green" : "red"));
@@ -211,6 +210,11 @@ public class CPUViewer extends Application implements Initializable {
                             }
                         }
                     });
+                }
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    Dialogs.showError("CPU Viewer Loop Error", "Error while drawing CPU Viewer");
                 }
             }
         }

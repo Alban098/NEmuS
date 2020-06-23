@@ -2,10 +2,6 @@ package core.cpu;
 
 import core.NES;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +12,6 @@ import java.util.TreeMap;
  */
 public class CPU_6502 {
 
-    private static final boolean LOG_MODE = false;
     private final List<Instruction> opcodes;
     private NES nes;
     private int accumulator = 0x00;
@@ -2387,7 +2382,7 @@ public class CPU_6502 {
      * @param flag the Flag to get
      * @return is the Flag set to 1
      */
-    private boolean getFlag(Flags flag) {
+    public boolean getFlag(Flags flag) {
         return (status & flag.value) == flag.value;
     }
 
@@ -3630,7 +3625,6 @@ public class CPU_6502 {
         if (cycles <= 0) {
             //Fetch the Operation Code
             opcode = read(program_counter);
-            int log_pc = program_counter;
             setFlag(Flags.U, true);
             //Increment the Program Counter
             program_counter++;
@@ -3645,25 +3639,6 @@ public class CPU_6502 {
             //If the Instruction is susceptible of requiring an extra cycle and the addressing mode require one, the the Instruction require an extra cycle
             cycles += (additional_cycle_1 & additional_cycle_2);
             setFlag(Flags.U, true);
-
-
-            if (LOG_MODE) {
-                try {
-                    String log_entry = String.format("%10d:%02d PC:%04X %s A:%02X X:%02X Y:%02X %s%s%s%s%s%s%s%s STKP:%02X\n",
-                            cpu_clock, 0, log_pc, instr.name, accumulator, x_register, y_register,
-                            getFlag(Flags.N) ? "N" : ".", getFlag(Flags.V) ? "V" : ".", getFlag(Flags.U) ? "U" : ".",
-                            getFlag(Flags.B) ? "B" : ".", getFlag(Flags.D) ? "D" : ".", getFlag(Flags.I) ? "I" : ".",
-                            getFlag(Flags.Z) ? "Z" : ".", getFlag(Flags.C) ? "C" : ".", stack_pointer);
-                    File logfile = new File("log.txt");
-                    FileWriter fr = new FileWriter(logfile, true);
-                    BufferedWriter br = new BufferedWriter(fr);
-                    br.write(log_entry);
-                    br.close();
-                    fr.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
         //Decrement the remaining busy cycle index
         cpu_clock++;
@@ -3817,7 +3792,7 @@ public class CPU_6502 {
      *
      * @param start range start address
      * @param end   range end address
-     * @param separator
+     * @param separator separator sequence put between each element
      * @return a Map with addresses as Keys and Instructions as Values
      */
     public Map<Integer, String> disassemble(int start, int end, String separator) {
@@ -3908,92 +3883,73 @@ public class CPU_6502 {
 
     /**
      * Return whether or not the current instruction is complete
-     * Thread safe
      *
      * @return is the current instruction complete
      */
-    public synchronized boolean complete() {
+    public boolean complete() {
         return cycles == 0;
     }
 
     /**
      * Return the current Accumulator value as an 8bit unsigned value
-     * Thread safe
      *
      * @return the current Y Accumulator value as an 8bit unsigned value
      */
-    public synchronized int threadSafeGetA() {
+    public int getAccumulator() {
         return accumulator;
     }
 
     /**
      * Return the current X Register value as an 8bit unsigned value
-     * Thread safe
      *
      * @return the current X Register value as an 8bit unsigned value
      */
-    public synchronized int threadSafeGetX() {
+    public int getXRegister() {
         return x_register;
     }
 
     /**
      * Return the current Y Register value as an 8bit unsigned value
-     * Thread safe
      *
      * @return the current Y Register value as an 8bit unsigned value
      */
-    public synchronized int threadSafeGetY() {
+    public int getYRegister() {
         return y_register;
     }
 
     /**
      * Return the current Stack Pointer as an 8bit unsigned value
-     * Thread safe
      *
      * @return the current Stack Pointer as an 8bit unsigned value
      */
-    public synchronized int threadSafeGetStkp() {
+    public int getStackPointer() {
         return stack_pointer;
     }
 
     /**
-     * Return the current state of a CPU Flag
-     * Thread safe
-     *
-     * @param flag the Flag to get the value of
-     * @return a boolean representing the current value of the selected Flag
-     */
-    public synchronized boolean threadSafeGetState(Flags flag) {
-        return (status & flag.value) == flag.value;
-    }
-
-    /**
      * Return the current Program Counter
-     * Thread safe
      *
      * @return the current Program Counter
      */
-    public synchronized int threadSafeGetStatus() {
+    public int getStatus() {
         return status;
     }
 
     /**
      * Return the current Program Counter as a 16bit unsigned value
-     * Thread safe
      *
      * @return the current Program Counter as a 16bit unsigned value
      */
-    public synchronized int threadSafeGetPc() {
+    public int getProgramCounter() {
         return program_counter;
     }
 
     /**
      * Return the number of CPU cycles from system startup
-     * Thread Safe
      *
      * @return total number of CPU cycles
      */
-    public synchronized long threadSafeGetCpuClock() {
+    public long getCpuClock() {
         return cpu_clock;
     }
 }

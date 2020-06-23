@@ -240,7 +240,7 @@ public class NEmuS_Debug extends NEmuS_Runnable {
         //The code is decompiled around the current program counter address
         //we need to do it at runtime because ROM bank can be switched
         //and the code at a given address is subject to change and need to be re-fetched
-        int pc = nes.getCpu().threadSafeGetPc();
+        int pc = nes.getCpu().getProgramCounter();
         decompiled = nes.getCpu().disassemble(pc - 50, pc + 50, " ");
         // ================================= PPU Memory Visualization =================================
         nes.getPpu().getNametable(0, (WritableImage) nametable1_render_target);
@@ -259,37 +259,37 @@ public class NEmuS_Debug extends NEmuS_Runnable {
         g.setFont(Font.font("monospaced", FontWeight.BOLD, 12));
         g.setFill(Color.WHITE);
         g.fillText("STATUS:", 10, 60);
-        if (nes.getCpu().threadSafeGetState(Flags.N)) g.setFill(Color.LIMEGREEN);
+        if (nes.getCpu().getFlag(Flags.N)) g.setFill(Color.LIMEGREEN);
         else g.setFill(Color.RED);
         g.fillText("N", 67, 60);
-        if (nes.getCpu().threadSafeGetState(Flags.V)) g.setFill(Color.LIMEGREEN);
+        if (nes.getCpu().getFlag(Flags.V)) g.setFill(Color.LIMEGREEN);
         else g.setFill(Color.RED);
         g.fillText("V", 80, 60);
-        if (nes.getCpu().threadSafeGetState(Flags.U)) g.setFill(Color.LIMEGREEN);
+        if (nes.getCpu().getFlag(Flags.U)) g.setFill(Color.LIMEGREEN);
         else g.setFill(Color.RED);
         g.fillText("-", 93, 60);
-        if (nes.getCpu().threadSafeGetState(Flags.B)) g.setFill(Color.LIMEGREEN);
+        if (nes.getCpu().getFlag(Flags.B)) g.setFill(Color.LIMEGREEN);
         else g.setFill(Color.RED);
         g.fillText("B", 106, 60);
-        if (nes.getCpu().threadSafeGetState(Flags.D)) g.setFill(Color.LIMEGREEN);
+        if (nes.getCpu().getFlag(Flags.D)) g.setFill(Color.LIMEGREEN);
         else g.setFill(Color.RED);
         g.fillText("D", 119, 60);
-        if (nes.getCpu().threadSafeGetState(Flags.I)) g.setFill(Color.LIMEGREEN);
+        if (nes.getCpu().getFlag(Flags.I)) g.setFill(Color.LIMEGREEN);
         else g.setFill(Color.RED);
         g.fillText("I", 132, 60);
-        if (nes.getCpu().threadSafeGetState(Flags.Z)) g.setFill(Color.LIMEGREEN);
+        if (nes.getCpu().getFlag(Flags.Z)) g.setFill(Color.LIMEGREEN);
         else g.setFill(Color.RED);
         g.fillText("Z", 145, 60);
-        if (nes.getCpu().threadSafeGetState(Flags.C)) g.setFill(Color.LIMEGREEN);
+        if (nes.getCpu().getFlag(Flags.C)) g.setFill(Color.LIMEGREEN);
         else g.setFill(Color.RED);
         g.fillText("C", 160, 60);
         g.setFill(Color.WHITE);
         g.fillText("Program C  : $" + String.format("%02X", pc), 10, 170);
-        g.fillText("A Register : $" + String.format("%02X", nes.getCpu().threadSafeGetA()) + "[" + nes.getCpu().threadSafeGetA() + "]", 10, 185);
-        g.fillText("X Register : $" + String.format("%02X", nes.getCpu().threadSafeGetX()) + "[" + nes.getCpu().threadSafeGetX() + "]", 10, 200);
-        g.fillText("Y Register : $" + String.format("%02X", nes.getCpu().threadSafeGetY()) + "[" + nes.getCpu().threadSafeGetY() + "]", 10, 215);
-        g.fillText("Stack Ptr  : $" + String.format("%04X", nes.getCpu().threadSafeGetStkp()), 10, 230);
-        g.fillText("Ticks  : " + nes.getCpu().threadSafeGetCpuClock(), 10, 310);
+        g.fillText("A Register : $" + String.format("%02X", nes.getCpu().getAccumulator()) + "[" + nes.getCpu().getAccumulator() + "]", 10, 185);
+        g.fillText("X Register : $" + String.format("%02X", nes.getCpu().getXRegister()) + "[" + nes.getCpu().getXRegister() + "]", 10, 200);
+        g.fillText("Y Register : $" + String.format("%02X", nes.getCpu().getYRegister()) + "[" + nes.getCpu().getYRegister() + "]", 10, 215);
+        g.fillText("Stack Ptr  : $" + String.format("%04X", nes.getCpu().getStackPointer()), 10, 230);
+        g.fillText("Ticks  : " + nes.getCpu().getCpuClock(), 10, 310);
         g.fillText("Frames : " + frame_count, 10, 325);
 
         // ================================= RAM =================================
@@ -299,7 +299,7 @@ public class NEmuS_Debug extends NEmuS_Runnable {
         for (int row = 0; row < 16; row++) {
             StringBuilder sOffset = new StringBuilder(String.format("$%04X:", nAddr));
             for (int col = 0; col < 16; col++) {
-                sOffset.append(" ").append(String.format("%02X", nes.threadSafeCpuRead(nAddr)));
+                sOffset.append(" ").append(String.format("%02X", nes.cpuRead(nAddr, true)));
                 nAddr += 1;
             }
             g.fillText(sOffset.toString(), nRamX, nRamY);
@@ -380,7 +380,7 @@ public class NEmuS_Debug extends NEmuS_Runnable {
         g.fillRect(855 + selected_palette * (4 * palette_size + 10) - 5, 551, palette_size * 4 + 10, 4 * palette_size + 10);
         for (int p = 0; p < 8; p++) {
             for (int s = 0; s < 4; s++) {
-                g.setFill(nes.getPpu().threadSafeGetColorFromPalette(p, s));
+                g.setFill(nes.getPpu().getColorFromPalette(p, s));
                 g.fillRect(855 + s * palette_size + p * (4 * palette_size + 10), 556, palette_size, 4 * palette_size);
             }
         }
@@ -428,10 +428,10 @@ public class NEmuS_Debug extends NEmuS_Runnable {
     public synchronized void cpuStepEvent() {
         if (!emulation_running) {
             do {
-                nes.debugClock();
+                nes.clock();
             } while (!nes.getCpu().complete());
             do {
-                nes.debugClock();
+                nes.clock();
             } while (nes.getCpu().complete());
             if (nes.getPpu().frame_complete) {
                 frame_count++;

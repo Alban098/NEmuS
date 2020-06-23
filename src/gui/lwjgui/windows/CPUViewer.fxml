@@ -174,7 +174,7 @@
                               <RowConstraints maxHeight="20.0" minHeight="20.0" prefHeight="20.0" vgrow="SOMETIMES" />
                           </rowConstraints>
                         </GridPane>
-                        <ScrollBar fx:id="ram_scroll" blockIncrement="1.0" layoutX="465.0" layoutY="44.0" max="4080.0" orientation="VERTICAL" prefHeight="323.0" prefWidth="14.0" visibleAmount="16.0" />
+                        <ScrollBar fx:id="ram_scroll" blockIncrement="1.0" layoutX="465.0" layoutY="44.0" max="4080.0" onDragDetected="#scrollEvent" orientation="VERTICAL" prefHeight="323.0" prefWidth="14.0" visibleAmount="16.0" />
                      </children></AnchorPane>
             </content>
           </Tab>

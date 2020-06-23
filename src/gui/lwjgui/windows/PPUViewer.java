@@ -20,6 +20,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import utils.Dialogs;
 import utils.NumberUtils;
 
 import java.net.URL;
@@ -141,10 +142,8 @@ public class PPUViewer extends Application implements Initializable {
     }
 
     private void updateImages() {
-        long next_frame = 0;
         while(instance != null) {
-            if (emulator.isEmulationRunning() && System.currentTimeMillis() >= next_frame) {
-                next_frame = System.currentTimeMillis() + 100;
+            if (emulator.isEmulationRunning()) {
                 Platform.runLater(() -> {
                     if (nt_tab.isSelected()) {
                         nes.getPpu().getNametable(0, (WritableImage) nametable1_render_target);
@@ -163,7 +162,7 @@ public class PPUViewer extends Application implements Initializable {
                         for (int i = 0; i < 8; i++) {
                             GraphicsContext g = palette_images[i].getGraphicsContext2D();
                             for (int j = 0; j < 4; j++) {
-                                g.setFill(nes.getPpu().threadSafeGetColorFromPalette(i, j));
+                                g.setFill(nes.getPpu().getColorFromPalette(i, j));
                                 g.fillRect((j & 1) == 0 ? 0 : palette_images[i].getWidth()/2, (j & 2) == 0 ? 0 : palette_images[i].getHeight()/2, palette_images[i].getWidth()/2, palette_images[i].getHeight()/2);
                             }
                             if (i == selected_palette) {
@@ -193,8 +192,8 @@ public class PPUViewer extends Application implements Initializable {
                                             sprite_pattern_addr_low = (((control & 0x20) == 0x20) ? 1 << 12 : 0) | (entry.getId() << 4) | (7 - row);
 
                                         sprite_pattern_addr_high = (sprite_pattern_addr_low + 8) & 0xFFFF;
-                                        sprite_pattern_low = nes.getPpu().ppuDebugRead(sprite_pattern_addr_low);
-                                        sprite_pattern_high = nes.getPpu().ppuDebugRead(sprite_pattern_addr_high);
+                                        sprite_pattern_low = nes.getPpu().ppuRead(sprite_pattern_addr_low);
+                                        sprite_pattern_high = nes.getPpu().ppuRead(sprite_pattern_addr_high);
 
                                         if ((entry.getAttribute() & 0x40) == 0x40) {
                                             sprite_pattern_low = NumberUtils.byteFlip(sprite_pattern_low);
@@ -203,7 +202,7 @@ public class PPUViewer extends Application implements Initializable {
                                         for (int col = 0; col < 8; col++) {
                                             int px = ((sprite_pattern_low & 0x80) == 0x80 ? 0x1 : 0x0) | ((((sprite_pattern_high & 0x80) == 0x80 ? 0x1 : 0x0)) << 1);
                                             int pal = (entry.getAttribute() & 0x3) + 4;
-                                            g.setFill(nes.getPpu().threadSafeGetColorFromPalette(px == 0 ? 0 : pal, px));
+                                            g.setFill(nes.getPpu().getColorFromPalette(px == 0 ? 0 : pal, px));
                                             g.fillRect(((i & 0x7) << 5) | (col << 2), ((i >> 3) << 5) | (row << 2), 4, 4);
                                             sprite_pattern_high <<= 1;
                                             sprite_pattern_low <<= 1;
@@ -239,8 +238,8 @@ public class PPUViewer extends Application implements Initializable {
                                                 sprite_pattern_addr_low = ((entry.getId() & 0x1) << 12) | ((entry.getId() & 0xFE) << 4) | (7 - row + 8);
                                         }
                                         sprite_pattern_addr_high = (sprite_pattern_addr_low + 8) & 0xFFFF;
-                                        sprite_pattern_low = nes.getPpu().ppuDebugRead(sprite_pattern_addr_low);
-                                        sprite_pattern_high = nes.getPpu().ppuDebugRead(sprite_pattern_addr_high);
+                                        sprite_pattern_low = nes.getPpu().ppuRead(sprite_pattern_addr_low);
+                                        sprite_pattern_high = nes.getPpu().ppuRead(sprite_pattern_addr_high);
 
                                         if ((entry.getAttribute() & 0x40) == 0x40) {
                                             sprite_pattern_low = NumberUtils.byteFlip(sprite_pattern_low);
@@ -249,7 +248,7 @@ public class PPUViewer extends Application implements Initializable {
                                         for (int col = 0; col < 8; col++) {
                                             int px = ((sprite_pattern_low & 0x80) == 0x80 ? 0x1 : 0x0) | ((((sprite_pattern_high & 0x80) == 0x80 ? 0x1 : 0x0)) << 1);
                                             int pal = (entry.getAttribute() & 0x3) + 4;
-                                            g.setFill(nes.getPpu().threadSafeGetColorFromPalette(px == 0 ? 0 : pal, px));
+                                            g.setFill(nes.getPpu().getColorFromPalette(px == 0 ? 0 : pal, px));
                                             g.fillRect(((i & 0x7) << 5) | (col << 2), ((i >> 3) << 6) | (row << 2), 4, 4);
 
                                             sprite_pattern_high <<= 1;
@@ -271,6 +270,11 @@ public class PPUViewer extends Application implements Initializable {
                         oam_list.getSelectionModel().select(selectedIndex);
                     }
                 });
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Dialogs.showError("PPU Viewer Loop Error", "Error while drawing PPU Viewer");
             }
         }
     }

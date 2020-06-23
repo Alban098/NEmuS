@@ -290,10 +290,10 @@ public abstract class NEmuS_Runnable {
     public synchronized void frameStepEvent() {
         if (!emulation_running) {
             do {
-                nes.debugClock();
+                nes.clock();
             } while (!nes.getPpu().frame_complete);
             do {
-                nes.debugClock();
+                nes.clock();
             } while (nes.getCpu().complete());
             nes.getPpu().frame_complete = false;
             redraw = true;
