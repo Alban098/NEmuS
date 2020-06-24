@@ -33,6 +33,7 @@ public class Mapper001 extends Mapper {
      *
      * @param nPRGBanks number of Program ROM Banks
      * @param nCHRBanks number of Character ROM Banks
+     * @param saveFile  the name of the RAM dump file
      */
     public Mapper001(int nPRGBanks, int nCHRBanks, String saveFile) {
         super(nPRGBanks, nCHRBanks);
@@ -47,7 +48,9 @@ public class Mapper001 extends Mapper {
     }
 
     /**
-     * Map the provided address from CPU space to the Cartridge Memory space if relevant
+     * The address is mapped as follows
+     * 0x6000 - 0x7FFF : Cartridge RAM
+     * 0x8000 - 0xFFFF : The selected 32Kb (or 2 16Kb) PRG Bank(s)
      *
      * @param addr   the PPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address
@@ -163,7 +166,8 @@ public class Mapper001 extends Mapper {
     }
 
     /**
-     * Map the provided address from PPU space to the Cartridge Memory space if relevant
+     * The address is mapped as follows
+     * 0x0000 - 0x1FFF : The selected 8Kb (or 2 4Kb) CHR Bank(s)
      *
      * @param addr   the PPU Address to map
      * @param mapped the Wrapper where to store the Mapped Address

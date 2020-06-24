@@ -94,6 +94,14 @@ public abstract class Mapper {
     public void notifyScanline() {}
 
     /**
+     * Update the latch if the mapper has some
+     * used in Mapper 009
+     *
+     * @param addr the address the PPU has read from
+     */
+    public void updateLatch(int addr) {}
+
+    /**
      * Reset the Mapper if it has processing capabilities
      */
     public void reset() {}

@@ -323,7 +323,7 @@ public class PPU_2C02 {
                 //When reading the last fetched data is returned and the next is fetched
                 int last_addr = vram_addr.get();
                 data = ppu_data_buffer;
-                ppu_data_buffer = ppuRead(vram_addr.get());
+                ppu_data_buffer = ppuRead(vram_addr.get(), false);
                 //Except palette, here their is no delay
                 if (vram_addr.get() >= 0x3F00) data = ppu_data_buffer;
                 //The vram address is incremented (horizontally or vertically depending on the Control Register)
@@ -415,7 +415,7 @@ public class PPU_2C02 {
      * @param addr the address to read from
      * @return the read data
      */
-    public int ppuRead(int addr) {
+    public int ppuRead(int addr, boolean readOnly) {
         addr &= 0x3FFF;
         //A Wrapper used to store the data gathered by the Cartridge
         IntegerWrapper data = new IntegerWrapper();
@@ -453,6 +453,8 @@ public class PPU_2C02 {
                 data.value = palette_memory[addr] & (mask_register.isGrayscaleSet() ? 0x30 : 0x3F);
             }
         }
+        if (!readOnly)
+            cartridge.getMapper().updateLatch(addr);
         return data.value & 0xFF;
     }
 
@@ -529,7 +531,7 @@ public class PPU_2C02 {
      * @return the corresponding Color
      */
     public Color getColorFromPalette(int paletteId, int pixel) {
-        return system_palette[ppuRead(0x3F00 + ((paletteId << 2) & 0x00FF) + (pixel & 0x00FF))];
+        return system_palette[ppuRead(0x3F00 + ((paletteId << 2) & 0x00FF) + (pixel & 0x00FF), false)];
     }
 
     /**
@@ -607,11 +609,11 @@ public class PPU_2C02 {
                         //At the beginning of a tile we load the Background Shifters with the previously fetched tile ID and tile attribute
                         loadBackgroundShifter.run();
                         //We fetch the next tile ID
-                        bg_next_tile_id = ppuRead(0x2000 | (vram_addr.get() & 0x0FFF));
+                        bg_next_tile_id = ppuRead(0x2000 | (vram_addr.get() & 0x0FFF), false);
                         break;
                     case 2:
                         //We then fetch the next tile attribute
-                        bg_next_tile_attrib = ppuRead(0x23C0 | (vram_addr.isNametableYSet() ? 0x1 << 11 : 0x0) | (vram_addr.isNametableXSet() ? 0x1 << 10 : 0x0) | ((vram_addr.getCoarseY() >> 2) << 3) | (vram_addr.getCoarseX() >> 2));
+                        bg_next_tile_attrib = ppuRead(0x23C0 | (vram_addr.isNametableYSet() ? 0x1 << 11 : 0x0) | (vram_addr.isNametableXSet() ? 0x1 << 10 : 0x0) | ((vram_addr.getCoarseY() >> 2) << 3) | (vram_addr.getCoarseX() >> 2), false);
                         //We use the Coarses 2 lsb to get select the correct 2 bits of the attribute depending on the position of the tile in the 4*4 grid
                         if ((vram_addr.getCoarseY() & 0x02) == 0x02)
                             bg_next_tile_attrib = (bg_next_tile_attrib >> 4) & 0xFF;
@@ -622,11 +624,11 @@ public class PPU_2C02 {
                         break;
                     case 4:
                         //We use the next tile ID and row index (fineY) to fetch the next 8 pixels lsb
-                        bg_next_tile_lsb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY());
+                        bg_next_tile_lsb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY(), false);
                         break;
                     case 6:
                         //Same but we fetch the msb
-                        bg_next_tile_msb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY() + 8);
+                        bg_next_tile_msb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY() + 8, false);
                         break;
                     case 7:
                         //We pass to next tile rendering
@@ -645,7 +647,7 @@ public class PPU_2C02 {
             }
 
             if (cycle == 338 || cycle == 340) {
-                bg_next_tile_id = ppuRead(0x2000 | (vram_addr.get() & 0x0FFF));
+                bg_next_tile_id = ppuRead(0x2000 | (vram_addr.get() & 0x0FFF), false);
             }
             //At the start of a new frame we reset the Y coordinates to the top of the screen
             if (scanline == -1 && cycle >= 280 && cycle < 305) {
@@ -717,8 +719,8 @@ public class PPU_2C02 {
                     }
                     //We compute the complete address and fetch the the sprite's bitplane
                     sprite_pattern_addr_high = (sprite_pattern_addr_low + 8) & 0xFFFF;
-                    sprite_pattern_low = ppuRead(sprite_pattern_addr_low);
-                    sprite_pattern_high = ppuRead(sprite_pattern_addr_high);
+                    sprite_pattern_low = ppuRead(sprite_pattern_addr_low, false);
+                    sprite_pattern_high = ppuRead(sprite_pattern_addr_high, false);
 
                     //If the sprite is flipped horizontally, the sprite bitplane are flipped
                     if ((visible_oams[i].getAttribute() & 0x40) == 0x40) {
@@ -894,9 +896,9 @@ public class PPU_2C02 {
                 //For each row of the tile
                 for (byte row = 0; row < 8; row++) {
                     //We get the lsb of the pixels of the row
-                    int tile_lsb = ppuRead(i * 0x1000 + offset + row);
+                    int tile_lsb = ppuRead(i * 0x1000 + offset + row, true);
                     //We get the msb of the pixels of the row
-                    int tile_msb = ppuRead(i * 0x1000 + offset + row + 8);
+                    int tile_msb = ppuRead(i * 0x1000 + offset + row + 8, true);
                     //for each pixel of the row
                     for (int col = 0; col < 8; col++) {
                         //We compute the pixel id
@@ -927,9 +929,9 @@ public class PPU_2C02 {
                 for (int row = 0; row < 8; row++) {
                     //We read the tile ID by selecting the correct nametable using the mirroring mode
                     int offset = 0x0400 * (i & 0x3);
-                    int tile_id = ppuRead(0x2000 | offset | (y << 5) | x);
+                    int tile_id = ppuRead(0x2000 | offset | (y << 5) | x, true);
                     //We read the tile attribute starting at offset 0x03C0 of the selected nametable, the attribute offset is calculated using the tile pos divided by 4
-                    int tile_attrib = ppuRead(0x23C0 | offset | ((y >> 2) << 3) | (x >> 2));
+                    int tile_attrib = ppuRead(0x23C0 | offset | ((y >> 2) << 3) | (x >> 2), true);
                     //We select the right attribute depending on the tile pos inside the current 4x4 tile grid
                     if ((y & 0x02) == 0x02)
                         tile_attrib = (tile_attrib >> 4) & 0x00FF;
@@ -938,9 +940,9 @@ public class PPU_2C02 {
                     //We only keep the 2 lsb of the attribute
                     tile_attrib &= 0x03;
                     //We use the tile id and the current row index to get the lsb of the 8 pixel IDs of the row (low bitplane)
-                    int tile_lsb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row);
+                    int tile_lsb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row, true);
                     //We use the tile id and the current row index to get the msb of the 8 pixels of the row (high bitplane)
-                    int tile_msb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row + 8);
+                    int tile_msb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row + 8, true);
                     //We use the attribute to determinate the tile palette
                     int palette = tile_attrib & 0b11;
                     int pid;

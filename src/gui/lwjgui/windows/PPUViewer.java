@@ -136,6 +136,7 @@ public class PPUViewer extends Application implements Initializable {
         pt_1_canvas.getGraphicsContext2D().fillRect(0, 0, pt_1_canvas.getWidth(), pt_1_canvas.getHeight());
         pt_2_canvas.getGraphicsContext2D().fillRect(0, 0, pt_2_canvas.getWidth(), pt_2_canvas.getHeight());
         oam_canvas.getGraphicsContext2D().fillRect(0, 0, oam_canvas.getWidth(), oam_canvas.getHeight());
+        preview_canvas.getGraphicsContext2D().fillRect(0, 0, preview_canvas.getWidth(), preview_canvas.getHeight());
         new Thread(this::updateImages).start();
     }
 
@@ -205,7 +206,9 @@ public class PPUViewer extends Application implements Initializable {
                         GraphicsContext g = oam_canvas.getGraphicsContext2D();
                         GraphicsContext preview = preview_canvas.getGraphicsContext2D();
                         preview.setFill(Color.GREY);
-                        preview.fillRect(0, 0, 256, 240);
+                        preview.fillRect(0, 0, preview_canvas.getWidth(), preview_canvas.getHeight());
+                        g.setFill(Color.GREY);
+                        g.fillRect(0, 0, oam_canvas.getWidth(), oam_canvas.getHeight());
                         //We get the current state of the PPU Control Register
                         int control = nes.getPpu().cpuRead(0, true);
                         switch (control & 0x20) {
@@ -229,8 +232,8 @@ public class PPUViewer extends Application implements Initializable {
                                         //The high bit plane one is offset by 8 from the low bit plane
                                         sprite_pattern_addr_high = (sprite_pattern_addr_low + 8) & 0xFFFF;
                                         //We read the 2 bit planes
-                                        sprite_pattern_low = nes.getPpu().ppuRead(sprite_pattern_addr_low);
-                                        sprite_pattern_high = nes.getPpu().ppuRead(sprite_pattern_addr_high);
+                                        sprite_pattern_low = nes.getPpu().ppuRead(sprite_pattern_addr_low, true);
+                                        sprite_pattern_high = nes.getPpu().ppuRead(sprite_pattern_addr_high, true);
 
                                         //If the sprite is flipped horizontally
                                         if ((entry.getAttribute() & 0x40) == 0x40) {
@@ -290,8 +293,8 @@ public class PPUViewer extends Application implements Initializable {
                                                 sprite_pattern_addr_low = ((entry.getId() & 0x1) << 12) | ((entry.getId() & 0xFE) << 4) | (7 - row + 8);
                                         }
                                         sprite_pattern_addr_high = (sprite_pattern_addr_low + 8) & 0xFFFF;
-                                        sprite_pattern_low = nes.getPpu().ppuRead(sprite_pattern_addr_low);
-                                        sprite_pattern_high = nes.getPpu().ppuRead(sprite_pattern_addr_high);
+                                        sprite_pattern_low = nes.getPpu().ppuRead(sprite_pattern_addr_low, true);
+                                        sprite_pattern_high = nes.getPpu().ppuRead(sprite_pattern_addr_high, true);
 
                                         if ((entry.getAttribute() & 0x40) == 0x40) {
                                             sprite_pattern_low = NumberUtils.byteFlip(sprite_pattern_low);

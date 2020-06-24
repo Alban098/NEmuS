@@ -46,14 +46,14 @@ public class Cartridge {
         Header header = new Header(reader);
 
         //Extract the Mapper ID and Mirroring mode
-        int mapperId = ((header.mapper2 >> 4) << 4) | header.mapper1 >> 4;
-        mirror = (header.mapper1 & 0x01) == 0x01 ? Mirror.VERTICAL : Mirror.HORIZONTAL;
+        int mapperId = ((header.flag_7 >> 4) << 4) | (header.flag_6 >> 4);
+        mirror = (header.flag_6 & 0x01) == 0x01 ? Mirror.VERTICAL : Mirror.HORIZONTAL;
 
         //Discard padding if necessary
-        if ((header.mapper1 & 0x04) == 0x04)
+        if ((header.flag_6 & 0x04) == 0x04)
             reader.readBytes(512);
 
-        if ((header.mapper2 & 0x0C) == 0x08)
+        if ((header.flag_7 & 0x0C) == 0x08)
             fileType = 2;
 
         //If it's a iNES 1 file
@@ -70,10 +70,10 @@ public class Cartridge {
         //If it's a iNES 2 file
         if (fileType == 2) {
             //Read Program Memory
-            nb_PRG_banks = (header.prg_ram_size & 0x07) << 8 | (header.prg_rom_chunks & 0xFF);
+            nb_PRG_banks = (header.rom_msb & 0x0F) << 8 | (header.prg_rom_chunks & 0xFF);
             prg_memory = reader.readBytes(nb_PRG_banks * 16384);
             //Read Character Memory
-            nb_CHR_banks = (header.prg_ram_size & 0x38) << 8 | (header.chr_rom_chunks & 0xFF);
+            nb_CHR_banks = (header.rom_msb & 0xF0) | (header.chr_rom_chunks & 0xFF);
             chr_memory = reader.readBytes(nb_CHR_banks * 8192);
             if (nb_CHR_banks == 0)
                 chr_memory = reader.readBytes(8192);
@@ -94,6 +94,9 @@ public class Cartridge {
                 break;
             case 4:
                 mapper = new Mapper004(nb_PRG_banks, nb_CHR_banks, filename + ".sav");
+                break;
+            case 9:
+                mapper = new Mapper009(nb_PRG_banks, nb_CHR_banks, filename + ".sav");
                 break;
             case 66:
                 mapper = new Mapper066(nb_PRG_banks, nb_CHR_banks);

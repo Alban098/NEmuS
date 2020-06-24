@@ -29,6 +29,7 @@
   - [UxROM](https://wiki.nesdev.com/w/index.php/INES_Mapper_002) (002) : Castlevania, DuckTales, Mega Man, Metal Gear
   - [CNROM](https://wiki.nesdev.com/w/index.php/INES_Mapper_003) (003) : Track & Field
   - [MMC3](https://wiki.nesdev.com/w/index.php/INES_Mapper_004) (004) : Super Mario Bros 2, Super Mario Bros 3
+  - [MMC2](https://wiki.nesdev.com/w/index.php/INES_Mapper_009) (009) : Mike Tyson's Punch Out!! (Glass Joe fight not starting, but others do ??)
   - [GxROM](https://wiki.nesdev.com/w/index.php/INES_Mapper_066) (066) : Super Mario Bros + Duck Hunt, Dragon Ball
 ### Controls
 * Fully customizable controllers inputs
