@@ -4,6 +4,7 @@ import openGL.shader.uniform.Uniform;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collection;
 
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindFragDataLocation;
@@ -11,7 +12,7 @@ import static org.lwjgl.opengl.GL30.glBindFragDataLocation;
 /**
  * This class represents a Shader Program containing a Vertex Shader and a Fragment Shader
  */
-public abstract class ShaderProgram {
+public class ShaderProgram {
 
     private final int programId;
 
@@ -127,10 +128,21 @@ public abstract class ShaderProgram {
     /**
      * Allocate the memory on the GPU's RAM for all the Uniforms variables of this shader
      */
-    void storeAllUniformLocations(Uniform ... uniforms){
+    public ShaderProgram storeAllUniformLocations(Uniform ... uniforms){
         for(Uniform uniform : uniforms){
             uniform.storeUniformLocation(programId);
         }
+        return this;
+    }
+
+    /**
+     * Allocate the memory on the GPU's RAM for all the Uniforms variables of this shader
+     */
+    public ShaderProgram storeAllUniformLocations(Collection<Uniform> uniforms){
+        for(Uniform uniform : uniforms){
+            uniform.storeUniformLocation(programId);
+        }
+        return this;
     }
 
     /**

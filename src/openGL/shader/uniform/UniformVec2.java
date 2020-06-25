@@ -7,6 +7,7 @@ public class UniformVec2 extends Uniform {
 
 	private float currentX;
 	private float currentY;
+	private Vector2f defaultValue;
 
 	/**
 	 * Create a new Uniform of type vec2
@@ -14,6 +15,11 @@ public class UniformVec2 extends Uniform {
 	 */
 	public UniformVec2(String name) {
 		super(name);
+		this.defaultValue = defaultValue;
+	}
+
+	public void loadDefault() {
+		loadVec2(defaultValue);
 	}
 
 	/**

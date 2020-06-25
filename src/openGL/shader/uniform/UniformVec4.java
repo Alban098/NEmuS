@@ -3,19 +3,26 @@ package openGL.shader.uniform;
 import org.joml.Vector4f;
 import org.lwjgl.opengl.GL20;
 
+
 public class UniformVec4 extends Uniform {
 
 	private float currentX;
 	private float currentY;
 	private float currentZ;
 	private float currentW;
+	private Vector4f defaultValue;
 
 	/**
 	 * Create a new Uniform of type vec4
 	 * @param name name of the uniform, must be the same as in the Shader program
 	 */
-	public UniformVec4(String name) {
+	public UniformVec4(String name, Vector4f defaultValue) {
 		super(name);
+		this.defaultValue = defaultValue;
+	}
+
+	public void loadDefault() {
+		loadVec4(defaultValue);
 	}
 
 	/**

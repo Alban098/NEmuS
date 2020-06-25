@@ -8,13 +8,19 @@ public class UniformVec3 extends Uniform {
 	private float currentX;
 	private float currentY;
 	private float currentZ;
+	private Vector3f defaultValue;
 
 	/**
 	 * Create a new Uniform of type vec3
 	 * @param name name of the uniform, must be the same as in the Shader program
 	 */
-	public UniformVec3(String name) {
+	public UniformVec3(String name, Vector3f defaultValue) {
 		super(name);
+		this.defaultValue = defaultValue;
+	}
+
+	public void loadDefault() {
+		loadVec3(defaultValue);
 	}
 
 	/**

@@ -11,7 +11,8 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import openGL.postProcessing.PostProcessingStep;
+import openGL.filters.Filter;
+import openGL.filters.FilterInstance;
 
 import java.net.URL;
 import java.util.List;
@@ -28,9 +29,9 @@ public class GraphicsSettings extends Application implements Initializable {
     private Stage stage;
 
     @FXML
-    private ListView<PostProcessingStep> postProcessingList;
+    private ListView<FilterInstance> postProcessingList;
     @FXML
-    private ComboBox<PostProcessingStep> postProcessingComboBox;
+    private ComboBox<Filter> postProcessingComboBox;
 
     /**
      * Create a new instance of GraphicsSettings
@@ -61,8 +62,7 @@ public class GraphicsSettings extends Application implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         instance = this;
-        postProcessingComboBox.getItems().addAll(emulator.getPipeline().getAllSteps());
-
+        postProcessingComboBox.getItems().addAll(Filter.values());
         populateList(emulator.getPipeline().getSteps());
     }
 
@@ -86,7 +86,7 @@ public class GraphicsSettings extends Application implements Initializable {
     public void addProcessingStep() {
         if (postProcessingComboBox.getValue() != null) {
             try {
-                postProcessingList.getItems().add(postProcessingComboBox.getValue());
+                postProcessingList.getItems().add(new FilterInstance(postProcessingComboBox.getValue(), null));
                 postProcessingList.layout();
                 emulator.getPipeline().setSteps(postProcessingList.getItems());
             } catch (Exception e) {
@@ -100,11 +100,11 @@ public class GraphicsSettings extends Application implements Initializable {
      */
     @FXML
     public void shiftLeftPostProcessingStep() {
-        PostProcessingStep selected = postProcessingList.getSelectionModel().getSelectedItem();
+        FilterInstance selected = postProcessingList.getSelectionModel().getSelectedItem();
         int index = postProcessingList.getSelectionModel().getSelectedIndex();
         if (index == 0)
             return;
-        PostProcessingStep switched = postProcessingList.getItems().get(index - 1);
+        FilterInstance switched = postProcessingList.getItems().get(index - 1);
         postProcessingList.getItems().set(index, switched);
         postProcessingList.getItems().set(index - 1, selected);
         postProcessingList.getSelectionModel().select(index - 1);
@@ -116,11 +116,11 @@ public class GraphicsSettings extends Application implements Initializable {
      */
     @FXML
     public void shiftRightPostProcessingStep() {
-        PostProcessingStep selected = postProcessingList.getSelectionModel().getSelectedItem();
+        FilterInstance selected = postProcessingList.getSelectionModel().getSelectedItem();
         int index = postProcessingList.getSelectionModel().getSelectedIndex();
         if (index == postProcessingList.getItems().size() - 1)
             return;
-        PostProcessingStep switched = postProcessingList.getItems().get(index + 1);
+        FilterInstance switched = postProcessingList.getItems().get(index + 1);
         postProcessingList.getItems().set(index, switched);
         postProcessingList.getItems().set(index + 1, selected);
         postProcessingList.getSelectionModel().select(index + 1);
@@ -139,16 +139,9 @@ public class GraphicsSettings extends Application implements Initializable {
     /**
      * Populate the listView with the right PostProcessingSteps
      *
-     * @param steps a list of steps ids to add (orders
+     * @param filters a list of filters to add (orders)
      */
-    private void populateList(List<String> steps) {
-        for (String id : steps) {
-            for (PostProcessingStep step : postProcessingComboBox.getItems()) {
-                if (id.equals(step.toString())) {
-                    postProcessingList.getItems().add(step);
-                    break;
-                }
-            }
-        }
+    private void populateList(List<FilterInstance> filters) {
+          postProcessingList.getItems().addAll(filters);
     }
 }

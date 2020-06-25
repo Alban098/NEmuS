@@ -16,11 +16,9 @@ import net.beadsproject.beads.ugens.Function;
 import net.beadsproject.beads.ugens.WaveShaper;
 import openGL.Fbo;
 import openGL.Quad;
-import openGL.shader.DefaultShader;
+import openGL.filters.Pipeline;
 import openGL.shader.ShaderProgram;
 import openGL.Texture;
-import openGL.postProcessing.PostProcessingPipeline;
-import openGL.shader.VerticalFlipShader;
 import utils.Dialogs;
 import java.io.EOFException;
 
@@ -40,7 +38,7 @@ public class NEmuSContext implements Renderer {
     private final AudioContext ac;
 
     private ShaderProgram default_shader;
-    private PostProcessingPipeline pipeline;
+    private Pipeline pipeline;
     private String requested_rom;
     private boolean load_rom_requested = false;
     private boolean reset_requested = false;
@@ -71,8 +69,8 @@ public class NEmuSContext implements Renderer {
 
         //We initialize the post processing pipeline
         try {
-            pipeline = new PostProcessingPipeline(screen_quad);
-            default_shader = new DefaultShader();
+            pipeline = new Pipeline(screen_quad);
+            default_shader = new ShaderProgram("shaders/vertex.glsl", "shaders/filters/no_filter.glsl");
         } catch (Exception e) {
             Platform.runLater(() -> Dialogs.showException("Shader Error", "An error occur during Shader Compilation", e));
             cleanUp();
@@ -208,7 +206,7 @@ public class NEmuSContext implements Renderer {
         screen_texture.unbind();
         default_shader.unbind();
         fbo.unbindFrameBuffer();
-        pipeline.applyFilters(fbo.getTexture());
+        pipeline.postProcess(fbo.getTexture());
     }
 
     /**
@@ -234,7 +232,7 @@ public class NEmuSContext implements Renderer {
      *
      * @return the post processing pipeline
      */
-    public PostProcessingPipeline getPipeline() {
+    public Pipeline getPipeline() {
         return pipeline;
     }
 
