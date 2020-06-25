@@ -1,6 +1,7 @@
 package openGL.postProcessing;
 
 import openGL.Quad;
+import openGL.shader.GaussianHorizontalShader;
 
 /**
  * This class represents a filter that will apply a horizontal Gaussian Blur
@@ -14,8 +15,8 @@ class GaussianHorizontal extends PostProcessingStep {
      * @param width  the width of the FBO
      * @param height the height of the FBO
      */
-    GaussianHorizontal(Quad quad, int width, int height) {
-        super(quad, "shaders/vertex.glsl", "shaders/filters/gaussian_horizontal.glsl", width, height);
+    GaussianHorizontal(Quad quad, int width, int height) throws Exception {
+        super(quad, new GaussianHorizontalShader(), width, height);
     }
 
     /**
@@ -24,7 +25,7 @@ class GaussianHorizontal extends PostProcessingStep {
      * @return a copy of the filter
      */
     @Override
-    PostProcessingStep cloneFilter() {
+    PostProcessingStep cloneFilter() throws Exception {
         return new GaussianHorizontal(quad, fbo.getWidth(), fbo.getHeight());
     }
 

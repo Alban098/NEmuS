@@ -10,7 +10,6 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-
 <AnchorPane maxHeight="356.0" maxWidth="828.0" minHeight="303.0" minWidth="828.0" prefHeight="303.0" prefWidth="828.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.lwjgui.windows.GraphicsSettings">
    <children>
       <ListView fx:id="postProcessingList" layoutY="122.0" orientation="HORIZONTAL" prefHeight="167.0" prefWidth="829.0" />

@@ -2,7 +2,7 @@ package openGL.postProcessing;
 
 import openGL.Fbo;
 import openGL.Quad;
-import openGL.ShaderProgram;
+import openGL.shader.ShaderProgram;
 
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.glBindTexture;
@@ -13,7 +13,7 @@ import static org.lwjgl.opengl.GL11.glBindTexture;
 public abstract class PostProcessingStep {
 
     final Quad quad;
-    private ShaderProgram shader;
+    ShaderProgram shader;
     Fbo fbo;
 
     /**
@@ -22,32 +22,22 @@ public abstract class PostProcessingStep {
      * @param quad     the Quad where to render
      *
      */
-    PostProcessingStep(Quad quad) {
+    PostProcessingStep(Quad quad, ShaderProgram shader) {
         this.quad = quad;
-        try {
-            shader = new ShaderProgram("shaders/v_flip_vertex.glsl", "shaders/filters/no_filter.glsl");
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(-1);
-        }
+        this.shader = shader;
     }
 
     /**
      * Create a new Filter from specific shaders that will be rendered in an FBO of a specific size
      *
      * @param quad     the Quad where to render
-     * @param vertex   the vertex shader file
-     * @param fragment the fragment shader file
+     * @param shader   the shader program
      * @param width    the width of the FBO
      * @param height   the height of the FBO
      */
-    PostProcessingStep(Quad quad, String vertex, String fragment, int width, int height) {
+    PostProcessingStep(Quad quad, ShaderProgram shader, int width, int height) {
         this.quad = quad;
-        try {
-            shader = new ShaderProgram(vertex, fragment);
-        } catch (Exception e) {
-            System.exit(-1);
-        }
+        this.shader = shader;
         fbo = new Fbo(width, height);
     }
 
@@ -72,7 +62,7 @@ public abstract class PostProcessingStep {
             fbo.bindFrameBuffer();
         shader.bind();
         glBindTexture(GL_TEXTURE_2D, textureId);
-
+        loadUniforms();
         quad.render(width, height);
 
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -81,6 +71,8 @@ public abstract class PostProcessingStep {
         if (fbo != null)
             fbo.unbindFrameBuffer();
     }
+
+    void loadUniforms() { }
 
     /**
      * Return the FBO texture if it exist
@@ -98,5 +90,5 @@ public abstract class PostProcessingStep {
      *
      * @return a copy of the filter
      */
-    abstract PostProcessingStep cloneFilter();
+    abstract PostProcessingStep cloneFilter() throws Exception;
 }

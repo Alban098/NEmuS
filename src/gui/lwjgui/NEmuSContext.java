@@ -16,9 +16,11 @@ import net.beadsproject.beads.ugens.Function;
 import net.beadsproject.beads.ugens.WaveShaper;
 import openGL.Fbo;
 import openGL.Quad;
-import openGL.ShaderProgram;
+import openGL.shader.DefaultShader;
+import openGL.shader.ShaderProgram;
 import openGL.Texture;
 import openGL.postProcessing.PostProcessingPipeline;
+import openGL.shader.VerticalFlipShader;
 import utils.Dialogs;
 import java.io.EOFException;
 
@@ -70,7 +72,7 @@ public class NEmuSContext implements Renderer {
         //We initialize the post processing pipeline
         try {
             pipeline = new PostProcessingPipeline(screen_quad);
-            default_shader = new ShaderProgram("shaders/vertex.glsl", "shaders/filters/no_filter.glsl");
+            default_shader = new DefaultShader();
         } catch (Exception e) {
             Platform.runLater(() -> Dialogs.showException("Shader Error", "An error occur during Shader Compilation", e));
             cleanUp();

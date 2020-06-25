@@ -1,12 +1,16 @@
 package openGL.postProcessing;
 
 import openGL.Quad;
-import openGL.shader.DiagonalFlipTLShader;
+import openGL.shader.FishEyeShader;
+import openGL.shader.ToonifyShader;
 
 /**
  * This class represents a filter that flip the screen along the diagonal starting from the top left
  */
-class DiagonalFlipTL extends PostProcessingStep {
+public class Toonify extends PostProcessingStep {
+
+    public float edge_low = 0.2f;
+    public float edge_high = 5.0f;
 
     /**
      * Create a new Filter from specific shaders that will be rendered in an FBO of a specific size
@@ -15,8 +19,14 @@ class DiagonalFlipTL extends PostProcessingStep {
      * @param width  the width of the FBO
      * @param height the height of the FBO
      */
-    DiagonalFlipTL(Quad quad, int width, int height) throws Exception {
-        super(quad, new DiagonalFlipTLShader(), width, height);
+    Toonify(Quad quad, int width, int height) throws Exception {
+        super(quad, new ToonifyShader(), width, height);
+    }
+
+    @Override
+    void loadUniforms() {
+        ((ToonifyShader)shader).edge_low.loadFloat(edge_low);
+        ((ToonifyShader)shader).edge_high.loadFloat(edge_high);
     }
 
     /**
@@ -26,11 +36,14 @@ class DiagonalFlipTL extends PostProcessingStep {
      */
     @Override
     PostProcessingStep cloneFilter() throws Exception {
-        return new DiagonalFlipTL(quad, fbo.getWidth(), fbo.getHeight());
+        Toonify copy = new Toonify(quad, fbo.getWidth(), fbo.getHeight());
+        copy.edge_low = edge_low;
+        copy.edge_high = edge_high;
+        return copy;
     }
 
     @Override
     public String toString() {
-        return "Diagonal Flip Top Left";
+        return "Toonify";
     }
 }

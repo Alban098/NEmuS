@@ -1,6 +1,7 @@
 package openGL.postProcessing;
 
 import openGL.Quad;
+import openGL.shader.VerticalFlipShader;
 
 /**
  * This class represents a filter that flip the screen vertically
@@ -13,8 +14,8 @@ class VerticalFlip extends PostProcessingStep {
      *
      * @param quad the Quad where to render
      */
-    VerticalFlip(Quad quad) {
-        super(quad);
+    VerticalFlip(Quad quad) throws Exception {
+        super(quad, new VerticalFlipShader());
     }
 
     /**
@@ -24,8 +25,8 @@ class VerticalFlip extends PostProcessingStep {
      * @param width  the width of the FBO
      * @param height the height of the FBO
      */
-    VerticalFlip(Quad quad, int width, int height) {
-        super(quad, "shaders/v_flip_vertex.glsl", "shaders/filters/no_filter.glsl", width, height);
+    VerticalFlip(Quad quad, int width, int height) throws Exception {
+        super(quad, new VerticalFlipShader(), width, height);
     }
 
     /**
@@ -34,7 +35,7 @@ class VerticalFlip extends PostProcessingStep {
      * @return a copy of the filter
      */
     @Override
-    PostProcessingStep cloneFilter() {
+    PostProcessingStep cloneFilter() throws Exception {
         return new VerticalFlip(quad, fbo.getWidth(), fbo.getHeight());
     }
 

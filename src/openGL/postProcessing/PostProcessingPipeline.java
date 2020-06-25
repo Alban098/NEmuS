@@ -4,6 +4,7 @@ import core.ppu.PPU_2C02;
 import gui.lwjgui.NEmuSUnified;
 import openGL.Quad;
 import org.lwjgl.opengl.GL11;
+import utils.Dialogs;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ public class PostProcessingPipeline {
     //So we use a buffer variable to store the list of filters to apply
     private List<PostProcessingStep> requestedSteps;
 
-    private final PostProcessingStep default_filter;
+    private PostProcessingStep default_filter;
 
     private volatile boolean locked = false;
 
@@ -35,15 +36,21 @@ public class PostProcessingPipeline {
     public PostProcessingPipeline(Quad quad) {
         steps = new ArrayList<>();
         allSteps = new ArrayList<>();
-        allSteps.add(new GaussianHorizontal(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
-        allSteps.add(new GaussianVertical(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
-        allSteps.add(new VerticalFlip(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
-        allSteps.add(new HorizontalFlip(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
-        allSteps.add(new DiagonalFlipTR(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
-        allSteps.add(new DiagonalFlipTL(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
+        try {
+            allSteps.add(new GaussianHorizontal(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
+            allSteps.add(new GaussianVertical(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
+            allSteps.add(new VerticalFlip(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
+            allSteps.add(new HorizontalFlip(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
+            allSteps.add(new DiagonalFlipTR(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
+            allSteps.add(new DiagonalFlipTL(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
+            allSteps.add(new Fisheye(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
+            allSteps.add(new Toonify(quad, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT));
 
-        //We need to apply a vertical flip because the PPU render from the top thus inverting the y component of the initial texture
-        default_filter = new VerticalFlip(quad);
+            //We need to apply a vertical flip because the PPU render from the top thus inverting the y component of the initial texture
+            default_filter = new VerticalFlip(quad);
+        } catch (Exception e) {
+            Dialogs.showException("Filter initialization error", "An error has occurred when initializing filters", e);
+        }
     }
 
     /**
@@ -60,7 +67,11 @@ public class PostProcessingPipeline {
                 step.cleanUp();
             steps.clear();
             for (PostProcessingStep step : requestedSteps) {
-                steps.add(step.cloneFilter());
+                try {
+                    steps.add(step.cloneFilter());
+                } catch (Exception e) {
+                    Dialogs.showException("Filter copy error", "An error has occurred when copying filter", e);
+                }
             }
             requestedSteps = null;
         }
@@ -72,17 +83,11 @@ public class PostProcessingPipeline {
             steps.get(0).render(texture, PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
             for (int i = 1; i < steps.size(); i++)
                 steps.get(i).render(steps.get(i - 1).getOutputTexture(), PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
-            if (NEmuSUnified.getInstance() != null)
-                default_filter.render(steps.get(steps.size() - 1).getOutputTexture(), NEmuSUnified.getInstance().getWidth() ,  NEmuSUnified.getInstance().getHeight());
-            else
-                default_filter.render(steps.get(steps.size() - 1).getOutputTexture(), 512, 480);
-            //TODO remove when unified finished
+            default_filter.render(steps.get(steps.size() - 1).getOutputTexture(), NEmuSUnified.getInstance().getWidth() ,  NEmuSUnified.getInstance().getHeight());
 
         } else {
             if (NEmuSUnified.getInstance() != null)
                 default_filter.render(texture, NEmuSUnified.getInstance().getWidth(), NEmuSUnified.getInstance().getHeight());
-            else
-                default_filter.render(texture, 512, 480);
         }
         end();
     }

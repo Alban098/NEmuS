@@ -1,4 +1,6 @@
-package openGL;
+package openGL.shader;
+
+import openGL.shader.uniform.Uniform;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -9,7 +11,7 @@ import static org.lwjgl.opengl.GL30.glBindFragDataLocation;
 /**
  * This class represents a Shader Program containing a Vertex Shader and a Fragment Shader
  */
-public class ShaderProgram {
+public abstract class ShaderProgram {
 
     private final int programId;
 
@@ -99,6 +101,8 @@ public class ShaderProgram {
             glDetachShader(programId, fragmentShaderId);
         }
 
+        storeAllUniformLocations();
+
         glValidateProgram(programId);
         if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
             System.err.println("Warning validating Shader code: " + glGetProgramInfoLog(programId, 1024));
@@ -118,6 +122,15 @@ public class ShaderProgram {
      */
     public void unbind() {
         glUseProgram(0);
+    }
+
+    /**
+     * Allocate the memory on the GPU's RAM for all the Uniforms variables of this shader
+     */
+    void storeAllUniformLocations(Uniform ... uniforms){
+        for(Uniform uniform : uniforms){
+            uniform.storeUniformLocation(programId);
+        }
     }
 
     /**

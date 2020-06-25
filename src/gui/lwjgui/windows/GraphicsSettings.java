@@ -62,6 +62,7 @@ public class GraphicsSettings extends Application implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         instance = this;
         postProcessingComboBox.getItems().addAll(emulator.getPipeline().getAllSteps());
+
         populateList(emulator.getPipeline().getSteps());
     }
 
@@ -107,7 +108,7 @@ public class GraphicsSettings extends Application implements Initializable {
         postProcessingList.getItems().set(index, switched);
         postProcessingList.getItems().set(index - 1, selected);
         postProcessingList.getSelectionModel().select(index - 1);
-       emulator.getPipeline().setSteps(postProcessingList.getItems());
+        emulator.getPipeline().setSteps(postProcessingList.getItems());
     }
 
     /**

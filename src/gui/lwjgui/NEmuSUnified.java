@@ -32,6 +32,9 @@ public class NEmuSUnified extends LWJGUIApplication {
 
     public static void main(String[] args) {
         ModernOpenGL = false;
+        //Just to initialize JavaFX
+        new JFXPanel();
+        Platform.setImplicitExit(false);
         launch(args);
     }
 
@@ -45,9 +48,6 @@ public class NEmuSUnified extends LWJGUIApplication {
         this.window = window;
         emulator = new NEmuSContext(window.getContext().getWindowHandle());
 
-        //Just to initialize JavaFX
-        new JFXPanel();
-        Platform.setImplicitExit(false);
 
         //We initialize the Menu and its behaviour
         BorderPane root = new BorderPane();

@@ -1,12 +1,13 @@
 package openGL.postProcessing;
 
 import openGL.Quad;
-import openGL.shader.DiagonalFlipTLShader;
+import openGL.shader.FishEyeShader;
 
 /**
  * This class represents a filter that flip the screen along the diagonal starting from the top left
  */
-class DiagonalFlipTL extends PostProcessingStep {
+public class Fisheye extends PostProcessingStep {
+
 
     /**
      * Create a new Filter from specific shaders that will be rendered in an FBO of a specific size
@@ -15,8 +16,8 @@ class DiagonalFlipTL extends PostProcessingStep {
      * @param width  the width of the FBO
      * @param height the height of the FBO
      */
-    DiagonalFlipTL(Quad quad, int width, int height) throws Exception {
-        super(quad, new DiagonalFlipTLShader(), width, height);
+    Fisheye(Quad quad, int width, int height) throws Exception {
+        super(quad, new FishEyeShader(), width, height);
     }
 
     /**
@@ -26,11 +27,11 @@ class DiagonalFlipTL extends PostProcessingStep {
      */
     @Override
     PostProcessingStep cloneFilter() throws Exception {
-        return new DiagonalFlipTL(quad, fbo.getWidth(), fbo.getHeight());
+        return new Fisheye(quad, fbo.getWidth(), fbo.getHeight());
     }
 
     @Override
     public String toString() {
-        return "Diagonal Flip Top Left";
+        return "Fish Eye";
     }
 }

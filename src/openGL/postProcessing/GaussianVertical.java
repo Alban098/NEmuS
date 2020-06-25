@@ -1,6 +1,7 @@
 package openGL.postProcessing;
 
 import openGL.Quad;
+import openGL.shader.GaussianVerticalShader;
 
 /**
  * This class represents a filter that will apply a vertical Gaussian Blur
@@ -14,8 +15,8 @@ class GaussianVertical extends PostProcessingStep {
      * @param width  the width of the FBO
      * @param height the height of the FBO
      */
-    GaussianVertical(Quad quad, int width, int height) {
-        super(quad, "shaders/vertex.glsl", "shaders/filters/gaussian_vertical.glsl", width, height);
+    GaussianVertical(Quad quad, int width, int height) throws Exception {
+        super(quad, new GaussianVerticalShader(), width, height);
     }
 
     /**
@@ -24,7 +25,7 @@ class GaussianVertical extends PostProcessingStep {
      * @return a copy of the filter
      */
     @Override
-    PostProcessingStep cloneFilter() {
+    PostProcessingStep cloneFilter() throws Exception {
         return new GaussianVertical(quad, fbo.getWidth(), fbo.getHeight());
     }
 
