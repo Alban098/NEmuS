@@ -1,10 +1,13 @@
-#version 150
+#version 330
+
+
+in vec2 pass_textureCoords;
+
+out vec4 FragColor;
+
 uniform sampler2D tex;
 uniform float edge_low;
 uniform float edge_high;
-
-in vec2 pass_textureCoords;
-out vec4 FragColor;
 
 #define HueLevCount 6
 #define SatLevCount 7

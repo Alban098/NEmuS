@@ -1,5 +1,7 @@
 package gui.lwjgui.windows;
 
+import javafx.geometry.Pos;
+import utils.javafx.*;
 import gui.lwjgui.NEmuSUnified;
 import gui.lwjgui.NEmuSContext;
 import javafx.application.Application;
@@ -16,9 +18,6 @@ import javafx.stage.StageStyle;
 import openGL.filters.Filter;
 import openGL.filters.FilterInstance;
 import openGL.filters.Parameter;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import java.net.URL;
 import java.util.List;
@@ -80,109 +79,37 @@ public class GraphicsSettings extends Application implements Initializable {
                 filter_desc.setText(newValue.filter.getDescription());
                 for (Parameter param : newValue.parameters) {
                     Label title = new Label(param.name);
-                    TextField field1, field2, field3, field4;
                     VBox field_pane = new VBox();
+                    field_pane.alignmentProperty().setValue(Pos.TOP_CENTER);
                     field_pane.getChildren().add(title);
                     field_pane.setPadding(new Insets(5,5,5,5));
                     switch (param.type) {
+                        case BOOLEAN:
+                            field_pane.getChildren().add(new BooleanField(param));
+                            break;
                         case INTEGER:
-                            field1 = new TextField(param.value.toString());
-                            field1.textProperty().addListener((observable, oldValue1, newValue1) -> {
-                                if (!newValue1.matches("\\d+"))
-                                    field1.setText(oldValue1);
-                                param.value = Integer.parseInt(field1.getText());
-                            });
-                            field_pane.getChildren().add(field1);
+                            field_pane.getChildren().add(new IntegerField(param));
                             break;
                         case FLOAT:
-                            field1 = new TextField(param.value.toString());
-                            field1.textProperty().addListener((observable, oldValue1, newValue1) -> {
-                                if (!newValue1.matches("\\d{0,7}([.]\\d{0,4})?"))
-                                    field1.setText(oldValue1);
-                                param.value = Float.parseFloat(field1.getText().equals("") ? "0" : field1.getText());
-                            });
-                            field_pane.getChildren().add(field1);
+                            field_pane.getChildren().add(new FloatField(param));
                             break;
                         case VEC2:
-                            Vector2f v2f = (Vector2f) param.value;
-                            field1 = new TextField(String.valueOf(v2f.x));
-                            field2 = new TextField(String.valueOf(v2f.y));
-                            field1.textProperty().addListener((observable, oldValue1, newValue1) -> {
-                                if (!newValue1.matches("\\d{0,7}([.]\\d{0,4})?"))
-                                    field1.setText(oldValue1);
-                                v2f.x = Float.parseFloat(field1.getText().equals("") ? "0" : field1.getText());
-                                param.value = v2f;
-                            });
-                            field2.textProperty().addListener((observable, oldValue1, newValue1) -> {
-                                if (!newValue1.matches("\\d{0,7}([.]\\d{0,4})?"))
-                                    field2.setText(oldValue1);
-                                v2f.y = Float.parseFloat(field2.getText().equals("") ? "0" : field2.getText());
-                                param.value = v2f;
-                            });
-                            field_pane.getChildren().add(field1);
-                            field_pane.getChildren().add(field2);
+                            field_pane.getChildren().add(new Vec2Field(param));
                             break;
                         case VEC3:
-                            Vector3f v3f = (Vector3f) param.value;
-                            field1 = new TextField(String.valueOf(v3f.x));
-                            field2 = new TextField(String.valueOf(v3f.y));
-                            field3 = new TextField(String.valueOf(v3f.z));
-                            field1.textProperty().addListener((observable, oldValue1, newValue1) -> {
-                                if (!newValue1.matches("\\d{0,7}([.]\\d{0,4})?"))
-                                    field1.setText(oldValue1);
-                                v3f.x = Float.parseFloat(field1.getText().equals("") ? "0" : field1.getText());
-                                param.value = v3f;
-                            });
-                            field2.textProperty().addListener((observable, oldValue1, newValue1) -> {
-                                if (!newValue1.matches("\\d{0,7}([.]\\d{0,4})?"))
-                                    field2.setText(oldValue1);
-                                v3f.y = Float.parseFloat(field2.getText().equals("") ? "0" : field2.getText());
-                                param.value = v3f;
-                            });
-                            field3.textProperty().addListener((observable, oldValue1, newValue1) -> {
-                                if (!newValue1.matches("\\d{0,7}([.]\\d{0,4})?"))
-                                    field3.setText(oldValue1);
-                                v3f.z = Float.parseFloat(field3.getText().equals("") ? "0" : field3.getText());
-                                param.value = v3f;
-                            });
-                            field_pane.getChildren().add(field1);
-                            field_pane.getChildren().add(field2);
-                            field_pane.getChildren().add(field3);
+                            field_pane.getChildren().add(new Vec3Field(param));
                             break;
                         case VEC4:
-                            Vector4f v4f = (Vector4f) param.value;
-                            field1 = new TextField(String.valueOf(v4f.x));
-                            field2 = new TextField(String.valueOf(v4f.y));
-                            field3 = new TextField(String.valueOf(v4f.z));
-                            field4 = new TextField(String.valueOf(v4f.w));
-                            field1.textProperty().addListener((observable, oldValue1, newValue1) -> {
-                                if (!newValue1.matches("\\d{0,7}([.]\\d{0,4})?"))
-                                    field1.setText(oldValue1);
-                                v4f.x = Float.parseFloat(field1.getText().equals("") ? "0" : field1.getText());
-                                param.value = v4f;
-                            });
-                            field2.textProperty().addListener((observable, oldValue1, newValue1) -> {
-                                if (!newValue1.matches("\\d{0,7}([.]\\d{0,4})?"))
-                                    field2.setText(oldValue1);
-                                v4f.y = Float.parseFloat(field2.getText().equals("") ? "0" : field2.getText());
-                                param.value = v4f;
-                            });
-                            field3.textProperty().addListener((observable, oldValue1, newValue1) -> {
-                                if (!newValue1.matches("\\d{0,7}([.]\\d{0,4})?"))
-                                    field3.setText(oldValue1);
-                                v4f.z = Float.parseFloat(field3.getText().equals("") ? "0" : field3.getText());
-                                param.value = v4f;
-                            });
-                            field4.textProperty().addListener((observable, oldValue1, newValue1) -> {
-                                if (!newValue1.matches("\\d{0,7}([.]\\d{0,4})?"))
-                                    field4.setText(oldValue1);
-                                v4f.w = Float.parseFloat(field4.getText().equals("") ? "0" : field4.getText());
-                                param.value = v4f;
-                            });
-                            field_pane.getChildren().add(field1);
-                            field_pane.getChildren().add(field2);
-                            field_pane.getChildren().add(field3);
-                            field_pane.getChildren().add(field4);
+                            field_pane.getChildren().add(new Vec4Field(param));
+                            break;
+                        case MAT2:
+                            field_pane.getChildren().add(new Mat2Field(param));
+                            break;
+                        case MAT3:
+                            field_pane.getChildren().add(new Mat3Field(param));
+                            break;
+                        case MAT4:
+                            field_pane.getChildren().add(new Mat4Field(param));
                             break;
                     }
                     filter_panel.getChildren().add(field_pane);

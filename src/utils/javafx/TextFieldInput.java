@@ -1,5 +1,6 @@
-package gui.inputs;
+package utils.javafx;
 
+import gui.inputs.NESInputs;
 import javafx.scene.control.TextField;
 
 /**

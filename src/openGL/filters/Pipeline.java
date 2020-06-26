@@ -121,6 +121,10 @@ public class Pipeline {
                 for (Parameter param : parameters) {
                     Uniform u = filter.getUniform(param.name);
                     switch (param.type) {
+                        case BOOLEAN:
+                            if (u instanceof UniformBoolean)
+                                ((UniformBoolean) u).loadBoolean((Boolean) param.value);
+                            break;
                         case INTEGER:
                             if (u instanceof UniformInteger)
                                 ((UniformInteger) u).loadInteger((Integer) param.value);

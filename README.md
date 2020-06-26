@@ -62,7 +62,55 @@
 * APU Viewer Window showing you the waveform of each channel and the mixer in realtime
 
 ## How to Use
-- To launch the Emulator set the Main Class to ```NEmuSUnified.java```
+### Launch
+To launch the Emulator set the Main Class to ```NEmuSUnified.java```
+### Add custom Filters
+To add a new Filter the following steps are needed :
+* Write the shaders
+  - Write the vertex shader or reuse the default one : ```shaders/vertex.glsl```
+      ```glsl
+        //Example vertex shaders
+        //this shader will flip the UVs
+        #version 330
+        
+        layout(location = 0) in vec2 position;  //the vertex coords
+        
+        out vec2 pass_textureCoords;            //the UVs that are passed to the fragment
+        
+        void main() {
+         pass_textureCoords = position * 0.5 + 0.5;           //the UVs are calculated from the vertex coords
+         gl_Position = vec4(position.x, -position.y, 0, 1.0); //the position is set but the Y coords is flipped
+        }
+      ```
+  - Write the fragment shader 
+      ```glsl
+        //Example fragment shaders
+        //this shader will replace color that are brighter than a threshold with black
+        #version 330
+        
+        in vec2 pass_textureCoords; //UVs
+        out vec4 fragColor;         //pixel color
+        
+        uniform sampler2D tex;      //sampled texture (Name is important)
+        uniform float threshold;    //uniform variable
+        
+        void main() {
+          vec3 color = texture2D(tex, pass_textureCoords).rgb; //sample the texture at the passed UVs coords
+          if (0.3 * color.r + 0.59 * color.g + 0.11 * color.b > threshold)
+              color = vec3(0);
+          fragColor = vec4(color, 1.0);
+        }
+      ```
+  - When your shaders are ready you can register the filter in ```Filter.java``` as follows
+      ```java
+        public enum Filter {
+            ...
+            //If uniforms are declared either in the vertex or fragment shader, you need to add them with the same exact name, and a default value (you can add as many as you want)
+            EXAMPLE_FILTER("My Filter name", "shader/myVertex.glsl", "shader/myFragment.glsl", "My Filter description", new UniformFloat("threshold", 1f));
+            ...
+        }   
+      ```
+  - That's it, your Filter will appear in the Graphics Settings along with a section that will let you edit the uniforms to tweak the filter at runtime
 
 ## Screenshots
 <img src="img/cpu.gif" width="50%" alt="CPU Viewer"><img src="img/ppu.gif" width="50%" alt="PPU Viewer">

@@ -1,32 +1,32 @@
-#version 120
-uniform sampler2D tex;
+#version 330
 
-varying vec2 pass_textureCoords;
+in vec2 pass_textureCoords;
+
+out vec4 fragColor;
+
+uniform sampler2D tex;
+uniform float strength;
+
 const float PI = 3.1415926535;
+
+vec2 distort(vec2 p)
+{
+    float theta  = atan(p.y, p.x);
+    float radius = length(p);
+    radius = pow(radius, strength);
+    p.x = radius * cos(theta);
+    p.y = radius * sin(theta);
+    return 0.5 * (p + 1.0);
+}
 
 void main()
 {
-    float aperture = 178.0;
-    float apertureHalf = 0.5 * aperture * (PI / 180.0);
-    float maxFactor = sin(apertureHalf);
-
-    vec2 uv;
     vec2 xy = 2.0 * pass_textureCoords.xy - 1.0;
+    vec2 uv;
     float d = length(xy);
-    if (d < (2.0-maxFactor))
-    {
-        d = length(xy * maxFactor);
-        float z = sqrt(1.0 - d * d);
-        float r = atan(d, z) / PI;
-        float phi = atan(xy.y, xy.x);
-
-        uv.x = r * cos(phi) + 0.5;
-        uv.y = r * sin(phi) + 0.5;
-    }
+    if (d < 1.0)
+        uv = distort(xy);
     else
-    {
         uv = pass_textureCoords.xy;
-    }
-    vec4 c = texture2D(tex, uv);
-    gl_FragColor = c;
+    fragColor = texture2D(tex, uv);
 }

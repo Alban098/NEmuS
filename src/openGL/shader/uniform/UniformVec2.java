@@ -13,7 +13,7 @@ public class UniformVec2 extends Uniform {
 	 * Create a new Uniform of type vec2
 	 * @param name name of the uniform, must be the same as in the Shader program
 	 */
-	public UniformVec2(String name) {
+	public UniformVec2(String name, Vector2f defaultValue) {
 		super(name);
 		this.defaultValue = defaultValue;
 	}

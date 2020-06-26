@@ -8,7 +8,7 @@
 <?import javafx.scene.text.Font?>
 
 
-<?import gui.inputs.TextFieldInput?>
+<?import utils.javafx.TextFieldInput?>
 <AnchorPane maxHeight="317.0" maxWidth="500.0" minHeight="317.0" minWidth="503.0" prefHeight="317.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.lwjgui.windows.ControllerSettings">
    <children>
       <SplitPane dividerPositions="0.14429530201342283" orientation="VERTICAL" prefHeight="300.0" prefWidth="500.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">

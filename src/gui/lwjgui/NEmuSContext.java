@@ -191,7 +191,8 @@ public class NEmuSContext implements Renderer {
             if (redraw)
                 redraw = false;
         }
-        renderGameScreen();
+        if (started)
+            renderGameScreen();
     }
 
     /**

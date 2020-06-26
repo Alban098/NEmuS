@@ -2,7 +2,7 @@ package gui.lwjgui.windows;
 
 import gui.inputs.KeyTuple;
 import gui.inputs.NESInputs;
-import gui.inputs.TextFieldInput;
+import utils.javafx.TextFieldInput;
 import gui.lwjgui.NEmuSUnified;
 import gui.lwjgui.NEmuSContext;
 import javafx.application.Application;

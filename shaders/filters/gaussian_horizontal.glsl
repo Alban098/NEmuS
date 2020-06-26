@@ -2,11 +2,10 @@
 
 in vec2 pass_textureCoords;
 
-uniform float dispersion;
-uniform int kernel_size;
-
 out vec4 fragColor;
 
+uniform float dispersion;
+uniform int kernel_size;
 uniform sampler2D tex;
 
 void main() {
