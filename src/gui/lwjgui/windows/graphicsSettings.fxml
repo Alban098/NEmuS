@@ -5,12 +5,14 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.effect.Blend?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="356.0" maxWidth="828.0" minHeight="303.0" minWidth="828.0" prefHeight="303.0" prefWidth="828.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.lwjgui.windows.GraphicsSettings">
+<AnchorPane maxHeight="486.0" maxWidth="828.0" minHeight="303.0" minWidth="828.0" prefHeight="486.0" prefWidth="828.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.lwjgui.windows.GraphicsSettings">
    <children>
       <ListView fx:id="postProcessingList" layoutY="122.0" orientation="HORIZONTAL" prefHeight="167.0" prefWidth="829.0" />
       <Button layoutX="494.0" layoutY="75.0" mnemonicParsing="false" onAction="#addProcessingStep" text="Add">
@@ -52,5 +54,18 @@
             <Font name="System Bold" size="18.0" />
          </font>
       </Label>
+      <HBox fx:id="filter_panel" alignment="CENTER" layoutX="10.0" layoutY="356.0" prefHeight="130.0" prefWidth="805.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="270.0" />
+      <TextArea fx:id="filter_desc" editable="false" layoutX="578.0" layoutY="306.0" maxHeight="130.0" maxWidth="250.0" minHeight="130.0" minWidth="250.0" prefHeight="130.0" prefWidth="250.0" wrapText="true" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0" />
+      <Label layoutX="225.0" layoutY="310.0" text="Filter Settings">
+         <font>
+            <Font name="System Bold" size="18.0" />
+         </font>
+      </Label>
+      <Label layoutX="620.0" layoutY="310.0" text="Filter Description">
+         <font>
+            <Font name="System Bold" size="18.0" />
+         </font>
+      </Label>
+      <Separator layoutX="-8.0" layoutY="301.0" prefWidth="828.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
    </children>
 </AnchorPane>

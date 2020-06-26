@@ -96,57 +96,59 @@ public class Pipeline {
     }
 
     private void applyFilter(Filter filter, Parameter[] parameters, int texture, int width, int height, boolean toScreen) {
-        if (fboLatch) {
+        if (shaders.get(filter) != null) {
+            if (fboLatch) {
+                if (!toScreen)
+                    fbo1.bindFrameBuffer();
+                glBindTexture(GL_TEXTURE_2D, fbo2.getTexture());
+            } else {
+                if (!toScreen)
+                    fbo2.bindFrameBuffer();
+                glBindTexture(GL_TEXTURE_2D, fbo1.getTexture());
+            }
             if (!toScreen)
-                fbo1.bindFrameBuffer();
-            glBindTexture(GL_TEXTURE_2D, fbo2.getTexture());
-        } else {
-            if (!toScreen)
-                fbo2.bindFrameBuffer();
-            glBindTexture(GL_TEXTURE_2D, fbo1.getTexture());
-        }
-        if (!toScreen)
-            fboLatch = !fboLatch;
-        if (texture > 0)
-            glBindTexture(GL_TEXTURE_2D, texture);
+                fboLatch = !fboLatch;
+            if (texture > 0)
+                glBindTexture(GL_TEXTURE_2D, texture);
 
-        shaders.get(filter).bind();
+            shaders.get(filter).bind();
 
-        //Preload default value in case parameters are missing
-        for (Uniform u : filter.getAllUniforms())
-            u.loadDefault();
+            //Preload default value in case parameters are missing
+            for (Uniform u : filter.getAllUniforms())
+                u.loadDefault();
 
-        if (parameters != null) {
-            for (Parameter param : parameters) {
-                Uniform u = filter.getUniform(param.name);
-                switch (param.type) {
-                    case INTEGER:
-                        if (u instanceof UniformInteger)
-                            ((UniformInteger) u).loadInteger((Integer) param.value);
-                        break;
-                    case FLOAT:
-                        if (u instanceof UniformFloat)
-                            ((UniformFloat) u).loadFloat((Float) param.value);
-                        break;
-                    case VEC2:
-                        if (u instanceof UniformVec2)
-                            ((UniformVec2) u).loadVec2((Vector2f) param.value);
-                        break;
-                    case VEC3:
-                        if (u instanceof UniformVec3)
-                            ((UniformVec3) u).loadVec3((Vector3f) param.value);
-                        break;
-                    case VEC4:
-                        if (u instanceof UniformVec4)
-                            ((UniformVec4) u).loadVec4((Vector4f) param.value);
-                        break;
+            if (parameters != null) {
+                for (Parameter param : parameters) {
+                    Uniform u = filter.getUniform(param.name);
+                    switch (param.type) {
+                        case INTEGER:
+                            if (u instanceof UniformInteger)
+                                ((UniformInteger) u).loadInteger((Integer) param.value);
+                            break;
+                        case FLOAT:
+                            if (u instanceof UniformFloat)
+                                ((UniformFloat) u).loadFloat((Float) param.value);
+                            break;
+                        case VEC2:
+                            if (u instanceof UniformVec2)
+                                ((UniformVec2) u).loadVec2((Vector2f) param.value);
+                            break;
+                        case VEC3:
+                            if (u instanceof UniformVec3)
+                                ((UniformVec3) u).loadVec3((Vector3f) param.value);
+                            break;
+                        case VEC4:
+                            if (u instanceof UniformVec4)
+                                ((UniformVec4) u).loadVec4((Vector4f) param.value);
+                            break;
+                    }
                 }
             }
+            quad.render(width, height);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            fbo1.unbindFrameBuffer();
+            shaders.get(filter).unbind();
         }
-        quad.render(width, height);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        fbo1.unbindFrameBuffer();
-        shaders.get(filter).unbind();
     }
 
     /**

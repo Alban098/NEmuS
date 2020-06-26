@@ -2,8 +2,8 @@ package openGL.filters;
 
 public class FilterInstance {
 
-    Filter filter;
-    Parameter[] parameters;
+    public Filter filter;
+    public Parameter[] parameters;
 
     public FilterInstance(Filter filter, Parameter[] parameters) {
         this.filter = filter;

@@ -18,6 +18,11 @@ public class UniformVec2 extends Uniform {
 		this.defaultValue = defaultValue;
 	}
 
+	@Override
+	public Object getDefault() {
+		return defaultValue;
+	}
+
 	public void loadDefault() {
 		loadVec2(defaultValue);
 	}

@@ -36,6 +36,8 @@ public abstract class Uniform {
 		return location;
 	}
 
+	public abstract Object getDefault();
+
 	public abstract void loadDefault();
 
 	public String getName() {
