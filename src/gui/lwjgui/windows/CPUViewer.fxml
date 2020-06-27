@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="406.0" prefWidth="487.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.lwjgui.windows.CPUViewer">
+<AnchorPane prefHeight="406.0" prefWidth="586.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.lwjgui.windows.CPUViewer">
    <children>
       <TabPane prefHeight="400.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <tabs>
@@ -21,12 +21,15 @@
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <GridPane fx:id="code_area" layoutX="212.0" layoutY="17.0" prefHeight="354.0" prefWidth="263.0">
+                        <GridPane fx:id="code_area" layoutX="212.0" layoutY="17.0" prefHeight="340.0" prefWidth="360.0">
                           <columnConstraints>
-                              <ColumnConstraints hgrow="SOMETIMES" maxWidth="66.0" minWidth="10.0" prefWidth="58.0" />
-                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="74.0" minWidth="10.0" prefWidth="45.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" maxWidth="66.0" minWidth="10.0" prefWidth="35.0" />
+                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="74.0" minWidth="0.0" prefWidth="30.0" />
                               <ColumnConstraints hgrow="SOMETIMES" maxWidth="101.0" minWidth="10.0" prefWidth="101.0" />
                             <ColumnConstraints hgrow="SOMETIMES" maxWidth="77.0" minWidth="10.0" prefWidth="58.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" maxWidth="25.0" minWidth="25.0" prefWidth="25.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" maxWidth="25.0" minWidth="10.0" prefWidth="25.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" maxWidth="25.0" minWidth="25.0" prefWidth="43.0" />
                           </columnConstraints>
                           <rowConstraints>
                               <RowConstraints maxHeight="20.0" minHeight="20.0" prefHeight="20.0" vgrow="SOMETIMES" />
@@ -126,6 +129,7 @@
                         </Label>
                         <Button layoutX="52.0" layoutY="264.0" mnemonicParsing="false" onAction="#cpuStepEvent" text="Assembly Step" />
                         <Button layoutX="63.0" layoutY="312.0" mnemonicParsing="false" onAction="#frameStepEvent" text="Frame Step" />
+                        <Separator layoutX="477.0" layoutY="17.0" orientation="VERTICAL" prefHeight="340.0" />
                      </children>
                   </AnchorPane>
             </content>
@@ -134,7 +138,7 @@
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <GridPane fx:id="ram_area" layoutX="15.0" layoutY="15.0" snapToPixel="false">
+                        <GridPane fx:id="ram_area" layoutX="61.0" layoutY="13.0" snapToPixel="false">
                           <columnConstraints>
                               <ColumnConstraints hgrow="SOMETIMES" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" />
                               <ColumnConstraints hgrow="SOMETIMES" maxWidth="25.0" minWidth="25.0" prefWidth="25.0" />
@@ -174,7 +178,7 @@
                               <RowConstraints maxHeight="20.0" minHeight="20.0" prefHeight="20.0" vgrow="SOMETIMES" />
                           </rowConstraints>
                         </GridPane>
-                        <ScrollBar fx:id="ram_scroll" blockIncrement="1.0" layoutX="465.0" layoutY="44.0" max="4080.0" onDragDetected="#scrollEvent" orientation="VERTICAL" prefHeight="323.0" prefWidth="14.0" visibleAmount="16.0" />
+                        <ScrollBar fx:id="ram_scroll" blockIncrement="1.0" layoutX="511.0" layoutY="42.0" max="4080.0" onDragDetected="#scrollEvent" orientation="VERTICAL" prefHeight="323.0" prefWidth="14.0" visibleAmount="16.0" />
                      </children></AnchorPane>
             </content>
           </Tab>

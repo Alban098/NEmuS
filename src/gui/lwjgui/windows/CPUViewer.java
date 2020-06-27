@@ -104,7 +104,7 @@ public class CPUViewer extends Application implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         instance = this;
-        code_fields = new Label[code_area.getRowCount()][4];
+        code_fields = new Label[code_area.getRowCount()][7];
         ram_fields = new Label[17][16];
         for (int i = 1; i <= 0x10; i++) {
             Label t1 = new Label(String.format("%02X", i - 1));
@@ -128,17 +128,26 @@ public class CPUViewer extends Application implements Initializable {
         for (int i = 0; i < code_area.getRowCount(); i++) {
             Label addr = new Label(String.format("%04X", i));
             addr.setStyle("-fx-text-fill: #007306; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
-            Label code = new Label("NOP");
+            Label code = new Label("BRK");
             code.setStyle("-fx-text-fill: #0000ff; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
-            Label operand = new Label("");
+            Label operand = new Label("$00");
             operand.setStyle("-fx-text-fill: #0000ff; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
-            Label mode = new Label("{IMP}");
+            Label mode = new Label("{IMM}");
             mode.setStyle("-fx-text-fill: #0000ff; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
+            Label hex1 = new Label("00");
+            hex1.setStyle("-fx-text-fill: #000000; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
+            Label hex2 = new Label("00");
+            hex2.setStyle("-fx-text-fill: #000000; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
+            Label hex3 = new Label("");
+            hex3.setStyle("-fx-text-fill: #000000; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
             code_area.add(addr, 0, i);
             code_area.add(code, 1, i);
             code_area.add(operand, 2, i);
             code_area.add(mode, 3, i);
-            code_fields[i] = new Label[]{addr, code, operand, mode};
+            code_area.add(hex1, 4, i);
+            code_area.add(hex2, 5, i);
+            code_area.add(hex3, 6, i);
+            code_fields[i] = new Label[]{addr, code, operand, mode, hex1, hex2, hex3};
         }
         for (Label l : code_fields[code_area.getRowCount()/2])
             l.setStyle("-fx-text-fill: #ff0000; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
@@ -209,6 +218,9 @@ public class CPUViewer extends Application implements Initializable {
                                 code_fields[i][1].setText(split[1]);
                                 code_fields[i][2].setText(split[2]);
                                 code_fields[i][3].setText(split[3]);
+                                code_fields[i][4].setText(split[4]);
+                                code_fields[i][5].setText(split.length > 5 ? split[5] : "");
+                                code_fields[i][6].setText(split.length > 6 ? split[6] : "");
                                 i++;
                             }
                             String[] split = currentLine.split("!");
@@ -216,6 +228,9 @@ public class CPUViewer extends Application implements Initializable {
                             code_fields[i][1].setText(split[1]);
                             code_fields[i][2].setText(split[2]);
                             code_fields[i][3].setText(split[3]);
+                            code_fields[i][4].setText(split[4]);
+                            code_fields[i][5].setText(split.length > 5 ? split[5] : "");
+                            code_fields[i][6].setText(split.length > 6 ? split[6] : "");
                             i++;
                             for (String line : after) {
                                 split = line.split("!");
@@ -223,6 +238,9 @@ public class CPUViewer extends Application implements Initializable {
                                 code_fields[i][1].setText(split[1]);
                                 code_fields[i][2].setText(split[2]);
                                 code_fields[i][3].setText(split[3]);
+                                code_fields[i][4].setText(split[4]);
+                                code_fields[i][5].setText(split.length > 5 ? split[5] : "");
+                                code_fields[i][6].setText(split.length > 6 ? split[6] : "");
                                 i++;
                             }
                         }

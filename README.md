@@ -113,7 +113,7 @@ To add a new Filter the following steps are needed :
   - That's it, your Filter will appear in the Graphics Settings along with a section that will let you edit the uniforms to tweak the filter at runtime
 
 ## Screenshots
-<img src="img/cpu.gif" width="50%" alt="CPU Viewer"><img src="img/ppu.gif" width="50%" alt="PPU Viewer">
+<img src="img/cpu.gif" width="58%" alt="CPU Viewer"><img src="img/ppu.gif" width="42%" alt="PPU Viewer">
 <img src="img/apu.gif" width="100%" alt="APU Viewer">
 <img src="img/controls.png" width="50%" alt="Controls"><img src="img/audio.png" width="50%" alt="Audio">
 <img src="img/graphics.png" width="100%" alt="Graphics">

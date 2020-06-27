@@ -33,2319 +33,263 @@ public class CPU_6502 {
      */
     public CPU_6502() {
         opcodes = new ArrayList<>();
-        opcodes.add(new Instruction("BRK", "IMM", 7) {
-            public int operate() {
-                return brk();
-            }
-
-            public int addrmode() {
-                return imm();
-            }
-        });
-        opcodes.add(new Instruction("ORA", "IZX", 6) {
-            public int operate() {
-                return ora();
-            }
-
-            public int addrmode() {
-                return izx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 8) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 3) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("ORA", "ZP0", 3) {
-            public int operate() {
-                return ora();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("ASL", "ZP0", 5) {
-            public int operate() {
-                return asl();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 5) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("PHP", "IMP", 3) {
-            public int operate() {
-                return php();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("ORA", "IMM", 2) {
-            public int operate() {
-                return ora();
-            }
-
-            public int addrmode() {
-                return imm();
-            }
-        });
-        opcodes.add(new Instruction("ASL", "IMP", 2) {
-            public int operate() {
-                return asl();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("ORA", "ABS", 4) {
-            public int operate() {
-                return ora();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("ASL", "ABS", 6) {
-            public int operate() {
-                return asl();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("BPL", "REL", 2) {
-            public int operate() {
-                return bpl();
-            }
-
-            public int addrmode() {
-                return rel();
-            }
-        });
-        opcodes.add(new Instruction("ORA", "IZY", 5) {
-            public int operate() {
-                return ora();
-            }
-
-            public int addrmode() {
-                return izy();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 8) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("ORA", "ZPX", 4) {
-            public int operate() {
-                return ora();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("ASL", "ZPX", 6) {
-            public int operate() {
-                return asl();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CLC", "IMP", 2) {
-            public int operate() {
-                return clc();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("ORA", "ABY", 4) {
-            public int operate() {
-                return ora();
-            }
-
-            public int addrmode() {
-                return aby();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("ORA", "ABX", 4) {
-            public int operate() {
-                return ora();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("ASL", "ABX", 7) {
-            public int operate() {
-                return asl();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("JSR", "ABS", 6) {
-            public int operate() {
-                return jsr();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("AND", "IZX", 6) {
-            public int operate() {
-                return and();
-            }
-
-            public int addrmode() {
-                return izx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 8) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("BIT", "ZP0", 3) {
-            public int operate() {
-                return bit();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("AND", "ZP0", 3) {
-            public int operate() {
-                return and();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("ROL", "ZP0", 5) {
-            public int operate() {
-                return rol();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 5) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("PLP", "IMP", 4) {
-            public int operate() {
-                return plp();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("AND", "IMM", 2) {
-            public int operate() {
-                return and();
-            }
-
-            public int addrmode() {
-                return imm();
-            }
-        });
-        opcodes.add(new Instruction("ROL", "IMP", 2) {
-            public int operate() {
-                return rol();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("BIT", "ABS", 4) {
-            public int operate() {
-                return bit();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("AND", "ABS", 4) {
-            public int operate() {
-                return and();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("ROL", "ABS", 6) {
-            public int operate() {
-                return rol();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("BMI", "REL", 2) {
-            public int operate() {
-                return bmi();
-            }
-
-            public int addrmode() {
-                return rel();
-            }
-        });
-        opcodes.add(new Instruction("AND", "IZY", 5) {
-            public int operate() {
-                return and();
-            }
-
-            public int addrmode() {
-                return izy();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 8) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("AND", "ZPX", 4) {
-            public int operate() {
-                return and();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("ROL", "ZPX", 6) {
-            public int operate() {
-                return rol();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("SEC", "IMP", 2) {
-            public int operate() {
-                return sec();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("AND", "ABY", 4) {
-            public int operate() {
-                return and();
-            }
-
-            public int addrmode() {
-                return aby();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("AND", "ABX", 4) {
-            public int operate() {
-                return and();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("ROL", "ABX", 7) {
-            public int operate() {
-                return rol();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("RTI", "IMP", 6) {
-            public int operate() {
-                return rti();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("EOR", "IZX", 6) {
-            public int operate() {
-                return eor();
-            }
-
-            public int addrmode() {
-                return izx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 8) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 3) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("EOR", "ZP0", 3) {
-            public int operate() {
-                return eor();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("LSR", "ZP0", 5) {
-            public int operate() {
-                return lsr();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 5) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("PHA", "IMP", 3) {
-            public int operate() {
-                return pha();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("EOR", "IMM", 2) {
-            public int operate() {
-                return eor();
-            }
-
-            public int addrmode() {
-                return imm();
-            }
-        });
-        opcodes.add(new Instruction("LSR", "IMP", 2) {
-            public int operate() {
-                return lsr();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("JMP", "ABS", 3) {
-            public int operate() {
-                return jmp();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("EOR", "ABS", 4) {
-            public int operate() {
-                return eor();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("LSR", "ABS", 6) {
-            public int operate() {
-                return lsr();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("BVC", "REL", 2) {
-            public int operate() {
-                return bvc();
-            }
-
-            public int addrmode() {
-                return rel();
-            }
-        });
-        opcodes.add(new Instruction("EOR", "IZY", 5) {
-            public int operate() {
-                return eor();
-            }
-
-            public int addrmode() {
-                return izy();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 8) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("EOR", "ZPX", 4) {
-            public int operate() {
-                return eor();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("LSR", "ZPX", 6) {
-            public int operate() {
-                return lsr();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CLI", "IMP", 2) {
-            public int operate() {
-                return cli();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("EOR", "ABY", 4) {
-            public int operate() {
-                return eor();
-            }
-
-            public int addrmode() {
-                return aby();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("EOR", "ABX", 4) {
-            public int operate() {
-                return eor();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("LSR", "ABX", 7) {
-            public int operate() {
-                return lsr();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("RTS", "IMP", 6) {
-            public int operate() {
-                return rts();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("ADC", "IZX", 6) {
-            public int operate() {
-                return adc();
-            }
-
-            public int addrmode() {
-                return izx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 8) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 3) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("ADC", "ZP0", 3) {
-            public int operate() {
-                return adc();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("ROR", "ZP0", 5) {
-            public int operate() {
-                return ror();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 5) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("PLA", "IMP", 4) {
-            public int operate() {
-                return pla();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("ADC", "IMM", 2) {
-            public int operate() {
-                return adc();
-            }
-
-            public int addrmode() {
-                return imm();
-            }
-        });
-        opcodes.add(new Instruction("ROR", "IMP", 2) {
-            public int operate() {
-                return ror();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("JMP", "IND", 5) {
-            public int operate() {
-                return jmp();
-            }
-
-            public int addrmode() {
-                return ind();
-            }
-        });
-        opcodes.add(new Instruction("ADC", "ABS", 4) {
-            public int operate() {
-                return adc();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("ROR", "ABS", 6) {
-            public int operate() {
-                return ror();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("BVS", "REL", 2) {
-            public int operate() {
-                return bvs();
-            }
-
-            public int addrmode() {
-                return rel();
-            }
-        });
-        opcodes.add(new Instruction("ADC", "IZY", 5) {
-            public int operate() {
-                return adc();
-            }
-
-            public int addrmode() {
-                return izy();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 8) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("ADC", "ZPX", 4) {
-            public int operate() {
-                return adc();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("ROR", "ZPX", 6) {
-            public int operate() {
-                return ror();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("SEI", "IMP", 2) {
-            public int operate() {
-                return sei();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("ADC", "ABY", 4) {
-            public int operate() {
-                return adc();
-            }
-
-            public int addrmode() {
-                return aby();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("ADC", "ABX", 4) {
-            public int operate() {
-                return adc();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("ROR", "ABX", 7) {
-            public int operate() {
-                return ror();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("STA", "IZX", 6) {
-            public int operate() {
-                return sta();
-            }
-
-            public int addrmode() {
-                return izx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("STY", "ZP0", 3) {
-            public int operate() {
-                return sty();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("STA", "ZP0", 3) {
-            public int operate() {
-                return sta();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("STX", "ZP0", 3) {
-            public int operate() {
-                return stx();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 3) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("DEY", "IMP", 2) {
-            public int operate() {
-                return dey();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("TXA", "IMP", 2) {
-            public int operate() {
-                return txa();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("STY", "ABS", 4) {
-            public int operate() {
-                return sty();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("STA", "ABS", 4) {
-            public int operate() {
-                return sta();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("STX", "ABS", 4) {
-            public int operate() {
-                return stx();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("BCC", "REL", 2) {
-            public int operate() {
-                return bcc();
-            }
-
-            public int addrmode() {
-                return rel();
-            }
-        });
-        opcodes.add(new Instruction("STA", "IZY", 6) {
-            public int operate() {
-                return sta();
-            }
-
-            public int addrmode() {
-                return izy();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("STY", "ZPX", 4) {
-            public int operate() {
-                return sty();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("STA", "ZPX", 4) {
-            public int operate() {
-                return sta();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("STX", "ZPY", 4) {
-            public int operate() {
-                return stx();
-            }
-
-            public int addrmode() {
-                return zpy();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("TYA", "IMP", 2) {
-            public int operate() {
-                return tya();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("STA", "ABY", 5) {
-            public int operate() {
-                return sta();
-            }
-
-            public int addrmode() {
-                return aby();
-            }
-        });
-        opcodes.add(new Instruction("TXS", "IMP", 2) {
-            public int operate() {
-                return txs();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 5) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 5) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("STA", "ABX", 5) {
-            public int operate() {
-                return sta();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 5) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 5) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("LDY", "IMM", 2) {
-            public int operate() {
-                return ldy();
-            }
-
-            public int addrmode() {
-                return imm();
-            }
-        });
-        opcodes.add(new Instruction("LDA", "IZX", 6) {
-            public int operate() {
-                return lda();
-            }
-
-            public int addrmode() {
-                return izx();
-            }
-        });
-        opcodes.add(new Instruction("LDX", "IMM", 2) {
-            public int operate() {
-                return ldx();
-            }
-
-            public int addrmode() {
-                return imm();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("LDY", "ZP0", 3) {
-            public int operate() {
-                return ldy();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("LDA", "ZP0", 3) {
-            public int operate() {
-                return lda();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("LDX", "ZP0", 3) {
-            public int operate() {
-                return ldx();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 3) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("TAY", "IMP", 2) {
-            public int operate() {
-                return tay();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("LDA", "IMM", 2) {
-            public int operate() {
-                return lda();
-            }
-
-            public int addrmode() {
-                return imm();
-            }
-        });
-        opcodes.add(new Instruction("TAX", "IMP", 2) {
-            public int operate() {
-                return tax();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("LDY", "ABS", 4) {
-            public int operate() {
-                return ldy();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("LDA", "ABS", 4) {
-            public int operate() {
-                return lda();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("LDX", "ABS", 4) {
-            public int operate() {
-                return ldx();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("BCS", "REL", 2) {
-            public int operate() {
-                return bcs();
-            }
-
-            public int addrmode() {
-                return rel();
-            }
-        });
-        opcodes.add(new Instruction("LDA", "IZY", 5) {
-            public int operate() {
-                return lda();
-            }
-
-            public int addrmode() {
-                return izy();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 5) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("LDY", "ZPX", 4) {
-            public int operate() {
-                return ldy();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("LDA", "ZPX", 4) {
-            public int operate() {
-                return lda();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("LDX", "ZPY", 4) {
-            public int operate() {
-                return ldx();
-            }
-
-            public int addrmode() {
-                return zpy();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CLV", "IMP", 2) {
-            public int operate() {
-                return clv();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("LDA", "ABY", 4) {
-            public int operate() {
-                return lda();
-            }
-
-            public int addrmode() {
-                return aby();
-            }
-        });
-        opcodes.add(new Instruction("TSX", "IMP", 2) {
-            public int operate() {
-                return tsx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("LDY", "ABX", 4) {
-            public int operate() {
-                return ldy();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("LDA", "ABX", 4) {
-            public int operate() {
-                return lda();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("LDX", "ABY", 4) {
-            public int operate() {
-                return ldx();
-            }
-
-            public int addrmode() {
-                return aby();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CPY", "IMM", 2) {
-            public int operate() {
-                return cpy();
-            }
-
-            public int addrmode() {
-                return imm();
-            }
-        });
-        opcodes.add(new Instruction("CMP", "IZX", 6) {
-            public int operate() {
-                return cmp();
-            }
-
-            public int addrmode() {
-                return izx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 8) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CPY", "ZP0", 3) {
-            public int operate() {
-                return cpy();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("CMP", "ZP0", 3) {
-            public int operate() {
-                return cmp();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("DEC", "ZP0", 5) {
-            public int operate() {
-                return dec();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 5) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("INY", "IMP", 2) {
-            public int operate() {
-                return iny();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CMP", "IMM", 2) {
-            public int operate() {
-                return cmp();
-            }
-
-            public int addrmode() {
-                return imm();
-            }
-        });
-        opcodes.add(new Instruction("DEX", "IMP", 2) {
-            public int operate() {
-                return dex();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CPY", "ABS", 4) {
-            public int operate() {
-                return cpy();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("CMP", "ABS", 4) {
-            public int operate() {
-                return cmp();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("DEC", "ABS", 6) {
-            public int operate() {
-                return dec();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("BNE", "REL", 2) {
-            public int operate() {
-                return bne();
-            }
-
-            public int addrmode() {
-                return rel();
-            }
-        });
-        opcodes.add(new Instruction("CMP", "IZY", 5) {
-            public int operate() {
-                return cmp();
-            }
-
-            public int addrmode() {
-                return izy();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 8) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CMP", "ZPX", 4) {
-            public int operate() {
-                return cmp();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("DEC", "ZPX", 6) {
-            public int operate() {
-                return dec();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CLD", "IMP", 2) {
-            public int operate() {
-                return cld();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CMP", "ABY", 4) {
-            public int operate() {
-                return cmp();
-            }
-
-            public int addrmode() {
-                return aby();
-            }
-        });
-        opcodes.add(new Instruction("NOP", "IMP", 2) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CMP", "ABX", 4) {
-            public int operate() {
-                return cmp();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("DEC", "ABX", 7) {
-            public int operate() {
-                return dec();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CPX", "IMM", 2) {
-            public int operate() {
-                return cpx();
-            }
-
-            public int addrmode() {
-                return imm();
-            }
-        });
-        opcodes.add(new Instruction("SBC", "IZX", 6) {
-            public int operate() {
-                return sbc();
-            }
-
-            public int addrmode() {
-                return izx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 8) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CPX", "ZP0", 3) {
-            public int operate() {
-                return cpx();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("SBC", "ZP0", 3) {
-            public int operate() {
-                return sbc();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("INC", "ZP0", 5) {
-            public int operate() {
-                return inc();
-            }
-
-            public int addrmode() {
-                return zp0();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 5) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("INX", "IMP", 2) {
-            public int operate() {
-                return inx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("SBC", "IMM", 2) {
-            public int operate() {
-                return sbc();
-            }
-
-            public int addrmode() {
-                return imm();
-            }
-        });
-        opcodes.add(new Instruction("NOP", "IMP", 2) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return sbc();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("CPX", "ABS", 4) {
-            public int operate() {
-                return cpx();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("SBC", "ABS", 4) {
-            public int operate() {
-                return sbc();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("INC", "ABS", 6) {
-            public int operate() {
-                return inc();
-            }
-
-            public int addrmode() {
-                return abs();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("BEQ", "REL", 2) {
-            public int operate() {
-                return beq();
-            }
-
-            public int addrmode() {
-                return rel();
-            }
-        });
-        opcodes.add(new Instruction("SBC", "IZY", 5) {
-            public int operate() {
-                return sbc();
-            }
-
-            public int addrmode() {
-                return izy();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 2) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 8) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("SBC", "ZPX", 4) {
-            public int operate() {
-                return sbc();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("INC", "ZPX", 6) {
-            public int operate() {
-                return inc();
-            }
-
-            public int addrmode() {
-                return zpx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 6) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("SED", "IMP", 2) {
-            public int operate() {
-                return sed();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("SBC", "ABY", 4) {
-            public int operate() {
-                return sbc();
-            }
-
-            public int addrmode() {
-                return aby();
-            }
-        });
-        opcodes.add(new Instruction("NOP", "IMP", 2) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 4) {
-            public int operate() {
-                return nop();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("SBC", "ABX", 4) {
-            public int operate() {
-                return sbc();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("INC", "ABX", 7) {
-            public int operate() {
-                return inc();
-            }
-
-            public int addrmode() {
-                return abx();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
-        opcodes.add(new Instruction("???", "IMP", 7) {
-            public int operate() {
-                return xxx();
-            }
-
-            public int addrmode() {
-                return imp();
-            }
-        });
+        opcodes.add(new Instruction(OPCode.BRK, AddressingMode.IMM, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.ORA, AddressingMode.IZX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.ORA, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.ASL, AddressingMode.ZP0, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.PHP, AddressingMode.IMP, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.ORA, AddressingMode.IMM, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ASL, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ORA, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ASL, AddressingMode.ABS, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.BPL, AddressingMode.REL, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ORA, AddressingMode.IZY, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ORA, AddressingMode.ZPX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ASL, AddressingMode.ZPX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.CLC, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ORA, AddressingMode.ABY, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ORA, AddressingMode.ABX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ASL, AddressingMode.ABX, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.JSR, AddressingMode.ABS, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.AND, AddressingMode.IZX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.BIT, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.AND, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.ROL, AddressingMode.ZP0, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.PLP, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.AND, AddressingMode.IMM, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ROL, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.BIT, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.AND, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ROL, AddressingMode.ABS, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.BMI, AddressingMode.REL, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.AND, AddressingMode.IZY, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.AND, AddressingMode.ZPX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ROL, AddressingMode.ZPX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.SEC, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.AND, AddressingMode.ABY, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.AND, AddressingMode.ABX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ROL, AddressingMode.ABX, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.RTI, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.EOR, AddressingMode.IZX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.EOR, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.LSR, AddressingMode.ZP0, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.PHA, AddressingMode.IMP, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.EOR, AddressingMode.IMM, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.LSR, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.JMP, AddressingMode.ABS, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.EOR, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LSR, AddressingMode.ABS, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.BVC, AddressingMode.REL, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.EOR, AddressingMode.IZY, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.EOR, AddressingMode.ZPX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LSR, AddressingMode.ZPX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.CLI, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.EOR, AddressingMode.ABY, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.EOR, AddressingMode.ABX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LSR, AddressingMode.ABX, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.RTS, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.ADC, AddressingMode.IZX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.ADC, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.ROR, AddressingMode.ZP0, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.PLA, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ADC, AddressingMode.IMM, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ROR, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.JMP, AddressingMode.IND, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.ADC, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ROR, AddressingMode.ABS, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.BVS, AddressingMode.REL, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ADC, AddressingMode.IZY, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ADC, AddressingMode.ZPX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ROR, AddressingMode.ZPX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.SEI, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ADC, AddressingMode.ABY, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ADC, AddressingMode.ABX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ROR, AddressingMode.ABX, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.STA, AddressingMode.IZX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.STY, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.STA, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.STX, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.DEY, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.TXA, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.STY, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.STA, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.STX, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.BCC, AddressingMode.REL, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.STA, AddressingMode.IZY, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.STY, AddressingMode.ZPX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.STA, AddressingMode.ZPX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.STX, AddressingMode.ZPY, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.TYA, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.STA, AddressingMode.ABY, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.TXS, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.STA, AddressingMode.ABX, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.LDY, AddressingMode.IMM, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.LDA, AddressingMode.IZX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.LDX, AddressingMode.IMM, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.LDY, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.LDA, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.LDX, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.TAY, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.LDA, AddressingMode.IMM, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.TAX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.LDY, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LDA, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LDX, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.BCS, AddressingMode.REL, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.LDA, AddressingMode.IZY, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.LDY, AddressingMode.ZPX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LDA, AddressingMode.ZPX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LDX, AddressingMode.ZPY, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.CLV, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.LDA, AddressingMode.ABY, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.TSX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LDY, AddressingMode.ABX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LDA, AddressingMode.ABX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LDX, AddressingMode.ABY, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.CPY, AddressingMode.IMM, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.CMP, AddressingMode.IZX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.CPY, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.CMP, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.DEC, AddressingMode.ZP0, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.INY, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.CMP, AddressingMode.IMM, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.DEX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.CPY, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.CMP, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.DEC, AddressingMode.ABS, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.BNE, AddressingMode.REL, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.CMP, AddressingMode.IZY, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.CMP, AddressingMode.ZPX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.DEC, AddressingMode.ZPX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.CLD, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.CMP, AddressingMode.ABY, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.NOP, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.CMP, AddressingMode.ABX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.DEC, AddressingMode.ABX, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.CPX, AddressingMode.IMM, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.SBC, AddressingMode.IZX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.CPX, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.SBC, AddressingMode.ZP0, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.INC, AddressingMode.ZP0, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.INX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.SBC, AddressingMode.IMM, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.NOP, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.CPX, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.SBC, AddressingMode.ABS, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.INC, AddressingMode.ABS, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.BEQ, AddressingMode.REL, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.SBC, AddressingMode.IZY, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.SBC, AddressingMode.ZPX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.INC, AddressingMode.ZPX, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.SED, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.SBC, AddressingMode.ABY, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.NOP, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.SBC, AddressingMode.ABX, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.INC, AddressingMode.ABX, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
     }
 
     /**
@@ -2407,7 +351,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int imp() {
+    int imp() {
         fetched = accumulator & 0xFF;
 
         return 0;
@@ -2422,7 +366,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int zp0() {
+    int zp0() {
         addr_abs = read(program_counter++);
         program_counter &= 0xFFFF;
 
@@ -2440,7 +384,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int zpy() {
+    int zpy() {
         addr_abs = read(program_counter++) + y_register;
         addr_abs &= 0x00FF;
         program_counter &= 0xFFFF;
@@ -2454,7 +398,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int abs() {
+    int abs() {
         int low = read(program_counter++);
         program_counter &= 0xFFFF;
         int high = read(program_counter++);
@@ -2472,7 +416,7 @@ public class CPU_6502 {
      *
      * @return 1 if a page Boundary is crossed when adding Y Register, 0 otherwise
      */
-    private int aby() {
+    int aby() {
         int low = read(program_counter++);
         program_counter &= 0xFFFF;
         int high = read(program_counter++);
@@ -2499,7 +443,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int izx() {
+    int izx() {
         int ptr = read(program_counter++);
         program_counter &= 0xFFFF;
 
@@ -2518,7 +462,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int imm() {
+    int imm() {
         addr_abs = program_counter++;
         program_counter &= 0xFFFF;
 
@@ -2536,7 +480,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int zpx() {
+    int zpx() {
         addr_abs = read(program_counter++) + x_register;
         addr_abs &= 0x00FF;
         program_counter &= 0xFFFF;
@@ -2551,7 +495,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int rel() {
+    int rel() {
         addr_rel = read(program_counter++);
         program_counter &= 0xFFFF;
 
@@ -2567,7 +511,7 @@ public class CPU_6502 {
      *
      * @return 1 if a page boundary is crossed when adding X Register, 0 otherwise
      */
-    private int abx() {
+    int abx() {
         int low = read(program_counter++);
         program_counter &= 0xFFFF;
         int high = read(program_counter++);
@@ -2577,7 +521,7 @@ public class CPU_6502 {
         addr_abs &= 0xFFFF;
 
         //Dummy read
-        if (low + x_register > 0xFF || opcodes.get(opcode).name.equals("ROL"))
+        if (low + x_register > 0xFF || opcodes.get(opcode).assembly == OPCode.ROL)
             read(((high << 8) & 0xFF00) | (addr_abs & 0xFF));
         if ((addr_abs & 0xFF00) != (high << 8)) return 1;
 
@@ -2603,7 +547,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required (because no page boundary cross can occur)
      */
-    private int ind() {
+    int ind() {
         int low = read(program_counter++);
         program_counter &= 0xFFFF;
         int high = read(program_counter++);
@@ -2632,7 +576,7 @@ public class CPU_6502 {
      *
      * @return 1 If when adding Y we cross a page boundary 0 otherwise
      */
-    private int izy() {
+    int izy() {
         int ptr = read(program_counter++);
         program_counter &= 0xFFFF;
 
@@ -2666,7 +610,7 @@ public class CPU_6502 {
      *
      * @return 1 An extra cycle can be required depending on the addressing mode
      */
-    private int adc() {
+    int adc() {
         fetch();
         tmp = (accumulator + fetched + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF;
 
@@ -2688,7 +632,7 @@ public class CPU_6502 {
      *
      * @return 1 Extra cycle may be required
      */
-    private int and() {
+    int and() {
         fetch();
         accumulator = accumulator & fetched;
         accumulator &= 0xFF;
@@ -2707,7 +651,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int asl() {
+    int asl() {
         fetch();
         tmp = fetched << 1;
 
@@ -2715,7 +659,7 @@ public class CPU_6502 {
         setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
 
-        if (opcodes.get(opcode).addr_mode.equals("IMP")) accumulator = tmp & 0xFF;
+        if (opcodes.get(opcode).addr_mode == AddressingMode.IMP) accumulator = tmp & 0xFF;
         else write(addr_abs, tmp & 0xFF);
 
         return 0;
@@ -2727,7 +671,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int bcc() {
+    int bcc() {
         if (!getFlag(Flags.C)) {
             cycles++;
             addr_abs = program_counter + addr_rel;
@@ -2745,7 +689,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int bcs() {
+    int bcs() {
         if (getFlag(Flags.C)) {
             cycles++;
             addr_abs = program_counter + addr_rel;
@@ -2763,7 +707,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int beq() {
+    int beq() {
         if (getFlag(Flags.Z)) {
             cycles++;
             addr_abs = program_counter + addr_rel;
@@ -2783,7 +727,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int bit() {
+    int bit() {
         fetch();
         tmp = (accumulator & fetched);
 
@@ -2800,7 +744,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int bmi() {
+    int bmi() {
         if (getFlag(Flags.N)) {
             cycles++;
             addr_abs = program_counter + addr_rel;
@@ -2818,7 +762,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int bne() {
+    int bne() {
         if (!getFlag(Flags.Z)) {
             cycles++;
             addr_abs = program_counter + addr_rel;
@@ -2836,7 +780,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int bpl() {
+    int bpl() {
         if (!getFlag(Flags.N)) {
             cycles++;
             addr_abs = program_counter + addr_rel;
@@ -2855,7 +799,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int brk() {
+    int brk() {
         //Dummy Read
         read((program_counter - 1) & 0xFFFF);
         pushStack((program_counter >> 8) & 0xFF);
@@ -2874,7 +818,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int bvc() {
+    int bvc() {
         if (!getFlag(Flags.V)) {
             cycles++;
             addr_abs = program_counter + addr_rel;
@@ -2892,7 +836,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int bvs() {
+    int bvs() {
         if (getFlag(Flags.V)) {
             cycles++;
             addr_abs = program_counter + addr_rel;
@@ -2910,7 +854,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int clc() {
+    int clc() {
         setFlag(Flags.C, false);
         return 0;
     }
@@ -2921,7 +865,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int cld() {
+    int cld() {
         setFlag(Flags.D, false);
         return 0;
     }
@@ -2932,7 +876,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int cli() {
+    int cli() {
         setFlag(Flags.I, false);
         return 0;
     }
@@ -2943,7 +887,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int clv() {
+    int clv() {
         setFlag(Flags.V, false);
         return 0;
     }
@@ -2956,7 +900,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int cmp() {
+    int cmp() {
         fetch();
         tmp = accumulator - fetched;
 
@@ -2975,7 +919,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int cpx() {
+    int cpx() {
         fetch();
         tmp = x_register - fetched;
 
@@ -2994,7 +938,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int cpy() {
+    int cpy() {
         fetch();
         tmp = y_register - fetched;
 
@@ -3013,7 +957,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int dec() {
+    int dec() {
         fetch();
         tmp = (fetched - 1) & 0xFF;
         write(addr_abs, tmp);
@@ -3032,7 +976,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int dex() {
+    int dex() {
         x_register--;
         x_register &= 0xFF;
 
@@ -3050,7 +994,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int dey() {
+    int dey() {
         y_register--;
         y_register &= 0xFF;
 
@@ -3068,7 +1012,7 @@ public class CPU_6502 {
      *
      * @return 1 Extra cycle may be required
      */
-    private int eor() {
+    int eor() {
         fetch();
         accumulator = (accumulator ^ fetched) & 0x00FF;
 
@@ -3086,7 +1030,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int inc() {
+    int inc() {
         fetch();
         tmp = (fetched + 1) & 0xFF;
         write(addr_abs, tmp);
@@ -3105,7 +1049,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int inx() {
+    int inx() {
         x_register++;
         x_register &= 0xFF;
 
@@ -3123,7 +1067,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int iny() {
+    int iny() {
         y_register++;
         y_register &= 0xFF;
 
@@ -3139,7 +1083,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int jmp() {
+    int jmp() {
         program_counter = addr_abs & 0xFFFF;
         return 0;
     }
@@ -3151,7 +1095,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int jsr() {
+    int jsr() {
         program_counter--;
         program_counter &= 0xFFFF;
 
@@ -3169,7 +1113,7 @@ public class CPU_6502 {
      *
      * @return 1 Extra cycle may be required depending on the addressing mode
      */
-    private int lda() {
+    int lda() {
         fetch();
         accumulator = fetched & 0xFF;
 
@@ -3186,7 +1130,7 @@ public class CPU_6502 {
      *
      * @return 1 Extra cycle may be required depending on the addressing mode
      */
-    private int ldx() {
+    int ldx() {
         fetch();
         x_register = fetched & 0xFF;
 
@@ -3203,7 +1147,7 @@ public class CPU_6502 {
      *
      * @return 1 Extra cycle may be required depending on the addressing mode
      */
-    private int ldy() {
+    int ldy() {
         fetch();
         y_register = fetched & 0xFF;
 
@@ -3220,7 +1164,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int lsr() {
+    int lsr() {
         fetch();
         setFlag(Flags.C, (fetched & 0x01) == 0x01);
         tmp = (fetched >> 1);
@@ -3228,7 +1172,7 @@ public class CPU_6502 {
         setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
 
-        if (opcodes.get(opcode).addr_mode.equals("IMP")) accumulator = tmp & 0xFF;
+        if (opcodes.get(opcode).addr_mode == AddressingMode.IMP) accumulator = tmp & 0xFF;
         else write(addr_abs, tmp & 0xFF);
 
         return 0;
@@ -3239,7 +1183,7 @@ public class CPU_6502 {
      *
      * @return 1 if OPCode in { 0x1C; Ox3C; 0x5C, 0x7C, 0xDC, 0xFC} 0 otherwise
      */
-    private int nop() {
+    int nop() {
         switch (opcode) {
             case 0x1C:
             case 0x3C:
@@ -3260,7 +1204,7 @@ public class CPU_6502 {
      *
      * @return 1 Extra cycle may be required
      */
-    private int ora() {
+    int ora() {
         fetch();
         accumulator = (accumulator | fetched) & 0xFF;
 
@@ -3276,7 +1220,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int pha() {
+    int pha() {
         pushStack(accumulator);
         return 0;
     }
@@ -3288,7 +1232,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int php() {
+    int php() {
         pushStack((status | Flags.U.value | Flags.B.value) & 0xFF);
 
         setFlag(Flags.B, false);
@@ -3304,7 +1248,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int pla() {
+    int pla() {
         accumulator = popStack();
 
         setFlag(Flags.Z, accumulator == 0x00);
@@ -3320,7 +1264,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int plp() {
+    int plp() {
         status = popStack();
 
         setFlag(Flags.U, true);
@@ -3337,7 +1281,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int rol() {
+    int rol() {
         fetch();
         tmp = (getFlag(Flags.C) ? 1 : 0) | (fetched << 1);
 
@@ -3345,7 +1289,7 @@ public class CPU_6502 {
         setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
 
-        if (opcodes.get(opcode).addr_mode.equals("IMP")) accumulator = tmp & 0xFF;
+        if (opcodes.get(opcode).addr_mode == AddressingMode.IMP) accumulator = tmp & 0xFF;
         else write(addr_abs, tmp & 0xFF);
 
         return 0;
@@ -3360,7 +1304,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int ror() {
+    int ror() {
         fetch();
         tmp = ((getFlag(Flags.C) ? 1 << 7 : 0) | fetched >> 1);
 
@@ -3368,7 +1312,7 @@ public class CPU_6502 {
         setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
         setFlag(Flags.N, (tmp & 0x80) == 0x80);
 
-        if (opcodes.get(opcode).addr_mode.equals("IMP")) accumulator = tmp & 0xFF;
+        if (opcodes.get(opcode).addr_mode == AddressingMode.IMP) accumulator = tmp & 0xFF;
         else write(addr_abs, tmp & 0xFF);
 
         return 0;
@@ -3382,7 +1326,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int rti() {
+    int rti() {
         //Dummy read
         read(program_counter);
         status = popStack();
@@ -3402,7 +1346,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int rts() {
+    int rts() {
         //Dummy read
         read(program_counter);
         program_counter = popStack();
@@ -3422,7 +1366,7 @@ public class CPU_6502 {
      *
      * @return 1 An extra cycle can be required depending on the addressing mode
      */
-    private int sbc() {
+    int sbc() {
         fetch();
         int complement = (fetched ^ 0xFF);
         tmp = ((accumulator + complement + (getFlag(Flags.C) ? 0x1 : 0x0)) & 0x01FF);
@@ -3443,7 +1387,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int sec() {
+    int sec() {
         setFlag(Flags.C, true);
         return 0;
     }
@@ -3454,7 +1398,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int sed() {
+    int sed() {
         setFlag(Flags.D, true);
         return 0;
     }
@@ -3465,7 +1409,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int sei() {
+    int sei() {
         setFlag(Flags.I, true);
         return 0;
     }
@@ -3476,7 +1420,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int sta() {
+    int sta() {
         write(addr_abs, accumulator);
         return 0;
     }
@@ -3487,7 +1431,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int stx() {
+    int stx() {
         write(addr_abs, x_register);
         return 0;
     }
@@ -3498,7 +1442,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int sty() {
+    int sty() {
         write(addr_abs, y_register);
         return 0;
     }
@@ -3510,7 +1454,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int tax() {
+    int tax() {
         x_register = accumulator;
         x_register &= 0xFF;
 
@@ -3527,7 +1471,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int tay() {
+    int tay() {
         y_register = accumulator;
         y_register &= 0xFF;
 
@@ -3544,7 +1488,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int tsx() {
+    int tsx() {
         x_register = stack_pointer;
         x_register &= 0xFF;
 
@@ -3561,7 +1505,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int txa() {
+    int txa() {
         accumulator = x_register;
         accumulator &= 0xFF;
 
@@ -3577,7 +1521,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int txs() {
+    int txs() {
         stack_pointer = x_register;
         stack_pointer &= 0xFF;
 
@@ -3591,7 +1535,7 @@ public class CPU_6502 {
      *
      * @return 0 No extra cycle required
      */
-    private int tya() {
+    int tya() {
         accumulator = y_register;
         accumulator &= 0xFF;
 
@@ -3607,7 +1551,7 @@ public class CPU_6502 {
      *
      * @return always 0
      */
-    private int xxx() {
+    int xxx() {
         return 0;
     }
 
@@ -3721,7 +1665,7 @@ public class CPU_6502 {
      * Update the fetched data used according to the current Instruction addressing mode
      */
     private void fetch() {
-        if (!opcodes.get(opcode).addr_mode.equals("IMP"))
+        if (opcodes.get(opcode).addr_mode != AddressingMode.IMP)
             fetched = read(addr_abs);
     }
 
@@ -3805,73 +1749,76 @@ public class CPU_6502 {
             int opcode = nes.cpuRead(addr, true);
             addr = (addr + 1) & 0x1FFFF;
             Instruction instr = opcodes.get(opcode);
-            line += instr.name + separator;
+            if (instr.assembly != OPCode.XXX)
+                line += instr.assembly + separator;
+            else
+                line += "???" + separator;
             switch (instr.addr_mode) {
-                case "IMP":
-                    line += separator + "{IMP}";
+                case IMP:
+                    line += separator + "{IMP}" + separator + String.format("%02X", instr.opcode);
                     break;
-                case "IMM":
+                case IMM:
                     value = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("#$%02X" + separator + "{IMM}", value);
+                    line += String.format("#$%02X" + separator + "{IMM}", value) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", value);
                     break;
-                case "ZP0":
+                case ZP0:
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%02X" + separator + "{ZP0}", low);
+                    line += String.format("$%02X" + separator + "{ZP0}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
                     break;
-                case "ZPX":
+                case ZPX:
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%02X, X" + separator + "{ZPX}", low);
+                    line += String.format("$%02X, X" + separator + "{ZPX}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
                     break;
-                case "ZPY":
+                case ZPY:
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%02X, Y" + separator + "{ZPY}", low);
+                    line += String.format("$%02X, Y" + separator + "{ZPY}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
                     break;
-                case "IZX":
+                case IZX:
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("($%02X, X)" + separator + "{IZX}", low);
+                    line += String.format("($%02X, X)" + separator + "{IZX}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
                     break;
-                case "IZY":
+                case IZY:
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("($%02X), Y" + separator + "{IZY}", low);
+                    line += String.format("($%02X), Y" + separator + "{IZY}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
                     break;
-                case "ABS":
-                    low = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    high = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%04X" + separator + "{ABS}", (high << 8) | low);
-                    break;
-                case "ABX":
+                case ABS:
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     high = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%04X, X" + separator + "{ABX}", (high << 8) | low);
+                    line += String.format("$%04X" + separator + "{ABS}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
                     break;
-                case "ABY":
+                case ABX:
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     high = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%04X, Y" + separator + "{ABY}", (high << 8) | low);
+                    line += String.format("$%04X, X" + separator + "{ABX}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
                     break;
-                case "IND":
+                case ABY:
                     low = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
                     high = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("($%04X)" + separator + "{IND}", (high << 8) | low);
+                    line += String.format("$%04X, Y" + separator + "{ABY}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
                     break;
-                case "REL":
+                case IND:
+                    low = nes.cpuRead(addr, true);
+                    addr = (addr + 1) & 0x1FFFF;
+                    high = nes.cpuRead(addr, true);
+                    addr = (addr + 1) & 0x1FFFF;
+                    line += String.format("($%04X)" + separator + "{IND}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
+                    break;
+                case REL:
                     value = nes.cpuRead(addr, true);
                     addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%02X ", value) + String.format("[$%04X]" + separator + "{IND}", addr + (byte) (value));
+                    line += String.format("$%02X ", value) + String.format("[$%04X]" + separator + "{IND}", addr + (byte) (value)) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", value);
             }
             code.put(line_addr, line);
         }
@@ -3940,35 +1887,4 @@ public class CPU_6502 {
     public int getProgramCounter() {
         return program_counter;
     }
-
-}
-
-/**
- * This class represent an Instruction that can be fetched and executed by the CPU
- */
-abstract class Instruction {
-
-    final String name;
-    final String addr_mode;
-    final int cycles;
-
-    Instruction(String name, String addr_mode, int cycles) {
-        this.name = name;
-        this.addr_mode = addr_mode;
-        this.cycles = cycles;
-    }
-
-    /**
-     * Execute the instruction
-     *
-     * @return 1 if the operation is susceptible of requiring an extra cycle 0 otherwise
-     */
-    abstract int operate();
-
-    /**
-     * Fetch the appropriate data
-     *
-     * @return 1 if the data gathering require an extra cycle 0 otherwise
-     */
-    abstract int addrmode();
 }
