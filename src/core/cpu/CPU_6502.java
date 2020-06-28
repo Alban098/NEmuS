@@ -1732,96 +1732,99 @@ public class CPU_6502 {
      * Disassemble an address range into readable 6502 assembly
      *
      * @param start range start address
-     * @param end   range end address
      * @param separator separator sequence put between each element
      * @return a Map with addresses as Keys and Instructions as Values
      */
-    public Map<Integer, String> disassemble(int start, int end, String separator) {
-        int addr = start;
+    public Map<Integer, String> disassemble(int start, int before, int after, String separator) {
+        int addr = start - 3*before;
+        int start_addr = addr;
         int line_addr;
         int value, low, high;
 
         Map<Integer, String> code = new TreeMap<>();
-
-        while (addr < end) {
-            line_addr = addr;
-            String line = String.format("$%04X:" + separator, addr);
-            int opcode = nes.cpuRead(addr, true);
-            addr = (addr + 1) & 0x1FFFF;
-            Instruction instr = opcodes.get(opcode);
-            if (instr.assembly != OPCode.XXX)
-                line += instr.assembly + separator;
-            else
-                line += "???" + separator;
-            switch (instr.addr_mode) {
-                case IMP:
-                    line += separator + "{IMP}" + separator + String.format("%02X", instr.opcode);
-                    break;
-                case IMM:
-                    value = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("#$%02X" + separator + "{IMM}", value) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", value);
-                    break;
-                case ZP0:
-                    low = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%02X" + separator + "{ZP0}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
-                    break;
-                case ZPX:
-                    low = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%02X, X" + separator + "{ZPX}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
-                    break;
-                case ZPY:
-                    low = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%02X, Y" + separator + "{ZPY}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
-                    break;
-                case IZX:
-                    low = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("($%02X, X)" + separator + "{IZX}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
-                    break;
-                case IZY:
-                    low = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("($%02X), Y" + separator + "{IZY}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
-                    break;
-                case ABS:
-                    low = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    high = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%04X" + separator + "{ABS}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
-                    break;
-                case ABX:
-                    low = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    high = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%04X, X" + separator + "{ABX}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
-                    break;
-                case ABY:
-                    low = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    high = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%04X, Y" + separator + "{ABY}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
-                    break;
-                case IND:
-                    low = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    high = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("($%04X)" + separator + "{IND}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
-                    break;
-                case REL:
-                    value = nes.cpuRead(addr, true);
-                    addr = (addr + 1) & 0x1FFFF;
-                    line += String.format("$%02X ", value) + String.format("[$%04X]" + separator + "{IND}", addr + (byte) (value)) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", value);
+        do {
+            addr = start_addr--;
+            code.clear();
+            while (addr < start + 3*after) {
+                line_addr = addr;
+                String line = String.format("$%04X:" + separator, addr);
+                int opcode = nes.cpuRead(addr, true);
+                addr = (addr + 1) & 0x1FFFF;
+                Instruction instr = opcodes.get(opcode);
+                if (instr.assembly != OPCode.XXX)
+                    line += instr.assembly + separator;
+                else
+                    line += "???" + separator;
+                switch (instr.addr_mode) {
+                    case IMP:
+                        line += separator + "{IMP}" + separator + String.format("%02X", instr.opcode);
+                        break;
+                    case IMM:
+                        value = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        line += String.format("#$%02X" + separator + "{IMM}", value) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", value);
+                        break;
+                    case ZP0:
+                        low = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        line += String.format("$%02X" + separator + "{ZP0}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
+                        break;
+                    case ZPX:
+                        low = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        line += String.format("$%02X, X" + separator + "{ZPX}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
+                        break;
+                    case ZPY:
+                        low = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        line += String.format("$%02X, Y" + separator + "{ZPY}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
+                        break;
+                    case IZX:
+                        low = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        line += String.format("($%02X, X)" + separator + "{IZX}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
+                        break;
+                    case IZY:
+                        low = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        line += String.format("($%02X), Y" + separator + "{IZY}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
+                        break;
+                    case ABS:
+                        low = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        high = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        line += String.format("$%04X" + separator + "{ABS}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
+                        break;
+                    case ABX:
+                        low = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        high = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        line += String.format("$%04X, X" + separator + "{ABX}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
+                        break;
+                    case ABY:
+                        low = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        high = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        line += String.format("$%04X, Y" + separator + "{ABY}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
+                        break;
+                    case IND:
+                        low = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        high = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        line += String.format("($%04X)" + separator + "{IND}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
+                        break;
+                    case REL:
+                        value = nes.cpuRead(addr, true);
+                        addr = (addr + 1) & 0x1FFFF;
+                        line += String.format("$%02X ", value) + String.format("[$%04X]" + separator + "{IND}", addr + (byte) (value)) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", value);
+                }
+                code.put(line_addr, line);
             }
-            code.put(line_addr, line);
-        }
+        } while(!code.containsKey(start));
         return code;
     }
 

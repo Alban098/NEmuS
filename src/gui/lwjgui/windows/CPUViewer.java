@@ -175,14 +175,19 @@ public class CPUViewer extends Application implements Initializable {
                     });
                 } else if (cpu_tab.isSelected()) {
                     int pc = emulator.getNes().getCpu().getProgramCounter();
-                    decompiled = emulator.getNes().getCpu().disassemble(pc - 30, pc + 30, "!");
+                    int a = emulator.getNes().getCpu().getAccumulator();
+                    int x = emulator.getNes().getCpu().getXRegister();
+                    int y = emulator.getNes().getCpu().getYRegister();
+                    int stkp = emulator.getNes().getCpu().getStackPointer();
+                    int status = emulator.getNes().getCpu().getStatus();
+                    decompiled = emulator.getNes().getCpu().disassemble(pc, 8, 8, "!");
                     Platform.runLater(() -> {
-                        a_field.setText(String.format("$%02X", emulator.getNes().getCpu().getAccumulator()) + "[" + emulator.getNes().getCpu().getAccumulator() + "]");
-                        x_field.setText(String.format("$%02X", emulator.getNes().getCpu().getXRegister()) + "[" + emulator.getNes().getCpu().getXRegister() + "]");
-                        y_field.setText(String.format("$%02X", emulator.getNes().getCpu().getYRegister()) + "[" + emulator.getNes().getCpu().getYRegister() + "]");
-                        stkp_field.setText(String.format("$%02X", emulator.getNes().getCpu().getStackPointer()) + "[" + emulator.getNes().getCpu().getStackPointer() + "]");
-                        pc_field.setText(String.format("$%02X", emulator.getNes().getCpu().getProgramCounter()) + "[" + emulator.getNes().getCpu().getProgramCounter() + "]");
-                        int status = emulator.getNes().getCpu().getStatus();
+                        a_field.setText(String.format("$%02X", a) + "[" + a + "]");
+                        x_field.setText(String.format("$%02X", x) + "[" + x + "]");
+                        y_field.setText(String.format("$%02X", y) + "[" + y + "]");
+                        stkp_field.setText(String.format("$%02X", stkp) + "[" + stkp + "]");
+                        pc_field.setText(String.format("$%02X", pc) + "[" + pc + "]");
+
                         n_label.setStyle("-fx-text-fill: " + ((status & 0x80) == 0x80 ? "green" : "red"));
                         v_label.setStyle("-fx-text-fill: " + ((status & 0x40) == 0x40 ? "green" : "red"));
                         u_label.setStyle("-fx-text-fill: " + ((status & 0x20) == 0x20 ? "green" : "red"));
