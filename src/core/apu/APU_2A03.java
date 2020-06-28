@@ -45,6 +45,7 @@ public class APU_2A03 {
     private boolean noise_rendered = true;
     private boolean triangle_rendered = true;
     private boolean dmc_rendered = true;
+    private boolean linear_out = false;
 
     private int cycles_until_visualizer_sample = 0;
 
@@ -84,8 +85,19 @@ public class APU_2A03 {
      * @return the current audio sample as a value between -1 and 1
      */
     public double getSample() {
-        double sample = ((0.00752 * (((pulse_1_rendered ? pulse_1.sample : 0) * 15) + ((pulse_2_rendered ? pulse_2.sample : 0) * 15))) + (0.00851 * (triangle_rendered ? triangle.sample : 0) * 15) + (0.00494 * (noise_rendered ? noise.sample : 0) * 15) + 0.00335 * (dmc_rendered ? dmc.output : 0) * 128);
-
+        double sample;
+        double p1 = pulse_1_rendered ? pulse_1.sample * 15 : 0;
+        double p2 = pulse_2_rendered ? pulse_2.sample * 15 : 0;
+        double t = triangle_rendered ? triangle.sample * 15 : 0;
+        double n = noise_rendered ? noise.sample * 15 : 0;
+        double d = dmc_rendered ? dmc.output * 128 : 0;
+        if (linear_out)
+            sample = (0.00752*(p1 + p2) + 0.00851*t + 0.00494*n + 0.00335*d) * 1.5;
+        else {
+            double pulse = (p1 + p2 == 0) ? 0 : 95.88 / ((8128.0/(p1 + p2)) + 100);
+            double tnd = (t == 0 && n == 0 && d == 0) ? 0 : 159.79 / (1.0 / (t/8227.0 + n/12241.0 + d/22638.0) + 100);
+            sample = pulse + tnd;
+        }
         if (cycles_until_visualizer_sample == 0) {
             if (audio_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
                 audio_visualizer_queue.poll();
@@ -96,7 +108,7 @@ public class APU_2A03 {
             sampleCollection.triangle = triangle_rendered ? triangle.sample : 0;
             sampleCollection.noise = noise_rendered ? noise.sample : 0;
             sampleCollection.dmc = dmc_rendered ? dmc.output : 0;
-            sampleCollection.mixer = sample * 2.5;
+            sampleCollection.mixer = sample * 1.5;
             audio_visualizer_queue.offer(sampleCollection);
 
             cycles_until_visualizer_sample = 1280 / VISUALIZER_SAMPLE_SIZE;
@@ -483,5 +495,18 @@ public class APU_2A03 {
      */
     public boolean isDMCRendered() {
         return dmc_rendered;
+    }
+
+    /**
+     * Return whether or not the mixer is linearly approximated
+     *
+     * @return is the mixer linearly approximated
+     */
+    public boolean isLinear() {
+        return linear_out;
+    }
+
+    public void setLinear(boolean linear) {
+        linear_out = linear;
     }
 }

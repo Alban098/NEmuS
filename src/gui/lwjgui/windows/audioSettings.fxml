@@ -17,13 +17,14 @@
                   <Slider fx:id="soundQualitySlider" blockIncrement="1.0" layoutX="15.0" layoutY="120.0" majorTickUnit="15.0" max="8.0" minorTickCount="14" prefHeight="24.0" prefWidth="300.0" showTickMarks="true" snapToTicks="true" value="6.0" />
                   <Label layoutX="15.0" layoutY="40.0" text="Volume" />
                   <Label layoutX="15.0" layoutY="100.0" text="Audio Quality" />
-                  <CheckBox fx:id="audioRenderingCheck" layoutX="33.0" layoutY="160.0" mnemonicParsing="false" onAction="#fireAudioRenderingEvent" selected="true" text="Audio Rendering" />
-                  <CheckBox fx:id="rawAudioCheck" layoutX="203.0" layoutY="160.0" mnemonicParsing="false" onAction="#fireRawAudioEvent" text="RAW Audio" />
+                  <CheckBox fx:id="audioRenderingCheck" layoutX="15.0" layoutY="160.0" mnemonicParsing="false" onAction="#fireAudioRenderingEvent" selected="true" text="Audio Rendering" />
+                  <CheckBox fx:id="rawAudioCheck" layoutX="149.0" layoutY="160.0" mnemonicParsing="false" onAction="#fireRawAudioEvent" text="RAW Audio" />
                   <Label layoutX="103.0" layoutY="5.0" text="Audio Settings">
                      <font>
                         <Font name="System Bold" size="18.0" />
                      </font>
                   </Label>
+                  <CheckBox fx:id="linearCheck" layoutX="252.0" layoutY="160.0" mnemonicParsing="false" onAction="#fireLinearEvent" text="Linear" />
                </children>
             </AnchorPane>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="323.0" prefWidth="227.0">

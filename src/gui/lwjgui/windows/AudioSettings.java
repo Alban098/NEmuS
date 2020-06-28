@@ -46,6 +46,8 @@ public class AudioSettings extends Application implements Initializable {
     private CheckBox noiseCheckbox;
     @FXML
     private CheckBox dmcCheckbox;
+    @FXML
+    private CheckBox linearCheck;
 
     /**
      * Create a new instance of AudioSettings
@@ -87,6 +89,7 @@ public class AudioSettings extends Application implements Initializable {
         triangleCheckbox.setSelected(emulator.isTriangleRendered());
         noiseCheckbox.setSelected(emulator.isNoiseRendered());
         dmcCheckbox.setSelected(emulator.isDMCRendered());
+        linearCheck.setSelected(emulator.isLinear());
     }
 
     @Override
@@ -117,6 +120,14 @@ public class AudioSettings extends Application implements Initializable {
     @FXML
     public void fireRawAudioEvent() {
         emulator.fireRawAudioEvent(rawAudioCheck.isSelected());
+    }
+
+    /**
+     * Will trigger a linear event the Emulator
+     */
+    @FXML
+    public void fireLinearEvent() {
+        emulator.linearEvent(linearCheck.isSelected());
     }
 
     /**

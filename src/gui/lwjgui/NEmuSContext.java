@@ -368,6 +368,15 @@ public class NEmuSContext implements Renderer {
     }
 
     /**
+     * Set the mixer emulation mode to linear approximation or non linear approximation
+     *
+     * @param linear should the mixer be linearly approximated
+     */
+    public void linearEvent(boolean linear) {
+        nes.getApu().setLinear(linear);
+    }
+
+    /**
      * Return the current NES of the emulator
      *
      * @return the current NES
@@ -447,5 +456,14 @@ public class NEmuSContext implements Renderer {
      */
     public boolean isDMCRendered() {
         return nes.getApu().isDMCRendered();
+    }
+
+    /**
+     * Return whether or not the mixer is linearly approximated
+     *
+     * @return is the mixer linearly approximated
+     */
+    public boolean isLinear() {
+        return nes.getApu().isLinear();
     }
 }
