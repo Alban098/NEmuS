@@ -1,11 +1,10 @@
 package core.cpu;
 
 import core.NES;
+import utils.IntegerWrapper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * This class represent the CPU of the NES
@@ -27,6 +26,7 @@ public class CPU_6502 {
     private int addr_abs = 0x0000;
     private int addr_rel = 0x00;
     private long cpu_clock = 0L;
+    private boolean halted;
 
     /**
      * Create a new CPU and populate the opcode list
@@ -35,261 +35,260 @@ public class CPU_6502 {
         opcodes = new ArrayList<>();
         opcodes.add(new Instruction(OPCode.BRK, AddressingMode.IMM, opcodes.size(), 7, this));
         opcodes.add(new Instruction(OPCode.ORA, AddressingMode.IZX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.HLT, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ASO, AddressingMode.IZX, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.ORA, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.ASL, AddressingMode.ZP0, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.ASO, AddressingMode.ZP0, opcodes.size(), 5, this));
         opcodes.add(new Instruction(OPCode.PHP, AddressingMode.IMP, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.ORA, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.ASL, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.ANC, AddressingMode.IMM, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.SKW, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ORA, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ASL, AddressingMode.ABS, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.ASO, AddressingMode.ABS, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.BPL, AddressingMode.REL, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.ORA, AddressingMode.IZY, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.HLT, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ASO, AddressingMode.IZY, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ORA, AddressingMode.ZPX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ASL, AddressingMode.ZPX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.ASO, AddressingMode.ZPX, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.CLC, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.ORA, AddressingMode.ABY, opcodes.size(), 4, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.NOP, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ASO, AddressingMode.ABY, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.SKW, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ORA, AddressingMode.ABX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ASL, AddressingMode.ABX, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.ASO, AddressingMode.ABX, opcodes.size(), 7, this));
         opcodes.add(new Instruction(OPCode.JSR, AddressingMode.ABS, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.AND, AddressingMode.IZX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.HLT, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.RLA, AddressingMode.IZX, opcodes.size(), 8, this));
         opcodes.add(new Instruction(OPCode.BIT, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.AND, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.ROL, AddressingMode.ZP0, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.RLA, AddressingMode.ZP0, opcodes.size(), 5, this));
         opcodes.add(new Instruction(OPCode.PLP, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.AND, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.ROL, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ANC, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.BIT, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.AND, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ROL, AddressingMode.ABS, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.RLA, AddressingMode.ABS, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.BMI, AddressingMode.REL, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.AND, AddressingMode.IZY, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.HLT, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.RLA, AddressingMode.IZY, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.AND, AddressingMode.ZPX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ROL, AddressingMode.ZPX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.RLA, AddressingMode.ZPX, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.SEC, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.AND, AddressingMode.ABY, opcodes.size(), 4, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.NOP, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.RLA, AddressingMode.ABY, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.SKW, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.AND, AddressingMode.ABX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ROL, AddressingMode.ABX, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.RLA, AddressingMode.ABX, opcodes.size(), 7, this));
         opcodes.add(new Instruction(OPCode.RTI, AddressingMode.IMP, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.EOR, AddressingMode.IZX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.HLT, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.LSE, AddressingMode.IZX, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.EOR, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.LSR, AddressingMode.ZP0, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.LSE, AddressingMode.ZP0, opcodes.size(), 5, this));
         opcodes.add(new Instruction(OPCode.PHA, AddressingMode.IMP, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.EOR, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.LSR, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ALR, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.JMP, AddressingMode.ABS, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.EOR, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.LSR, AddressingMode.ABS, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.LSE, AddressingMode.ABS, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.BVC, AddressingMode.REL, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.EOR, AddressingMode.IZY, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.HLT, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.LSE, AddressingMode.IZY, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.EOR, AddressingMode.ZPX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.LSR, AddressingMode.ZPX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.LSE, AddressingMode.ZPX, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.CLI, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.EOR, AddressingMode.ABY, opcodes.size(), 4, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.NOP, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.LSE, AddressingMode.ABY, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.SKW, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.EOR, AddressingMode.ABX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.LSR, AddressingMode.ABX, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.LSE, AddressingMode.ABX, opcodes.size(), 7, this));
         opcodes.add(new Instruction(OPCode.RTS, AddressingMode.IMP, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.ADC, AddressingMode.IZX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.HLT, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.RRA, AddressingMode.IZX, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.ADC, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.ROR, AddressingMode.ZP0, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.RRA, AddressingMode.ZP0, opcodes.size(), 5, this));
         opcodes.add(new Instruction(OPCode.PLA, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ADC, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.ROR, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.ARR, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.JMP, AddressingMode.IND, opcodes.size(), 5, this));
         opcodes.add(new Instruction(OPCode.ADC, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ROR, AddressingMode.ABS, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.RRA, AddressingMode.ABS, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.BVS, AddressingMode.REL, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.ADC, AddressingMode.IZY, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.HLT, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.RRA, AddressingMode.IZY, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ADC, AddressingMode.ZPX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ROR, AddressingMode.ZPX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.RRA, AddressingMode.ZPX, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.SEI, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.ADC, AddressingMode.ABY, opcodes.size(), 4, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.NOP, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.RRA, AddressingMode.ABY, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.SKW, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ADC, AddressingMode.ABX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.ROR, AddressingMode.ABX, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.RRA, AddressingMode.ABX, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.STA, AddressingMode.IZX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.AXS, AddressingMode.IZX, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.STY, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.STA, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.STX, AddressingMode.ZP0, opcodes.size(), 3, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.AXS, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.DEY, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.TXA, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.XAA, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.STY, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.STA, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.STX, AddressingMode.ABS, opcodes.size(), 4, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.AXS, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.BCC, AddressingMode.REL, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.STA, AddressingMode.IZY, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.HLT, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.AXA, AddressingMode.IZY, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.STY, AddressingMode.ZPX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.STA, AddressingMode.ZPX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.STX, AddressingMode.ZPY, opcodes.size(), 4, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.AXS, AddressingMode.ZPY, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.TYA, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.STA, AddressingMode.ABY, opcodes.size(), 5, this));
         opcodes.add(new Instruction(OPCode.TXS, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.TAS, AddressingMode.ABY, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.SAY, AddressingMode.ABX, opcodes.size(), 5, this));
         opcodes.add(new Instruction(OPCode.STA, AddressingMode.ABX, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.XAS, AddressingMode.ABY, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.AXA, AddressingMode.ABY, opcodes.size(), 5, this));
         opcodes.add(new Instruction(OPCode.LDY, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.LDA, AddressingMode.IZX, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.LDX, AddressingMode.IMM, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.LAX, AddressingMode.IZX, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.LDY, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.LDA, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.LDX, AddressingMode.ZP0, opcodes.size(), 3, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 3, this));
+        opcodes.add(new Instruction(OPCode.LAX, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.TAY, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.LDA, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.TAX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.OAL, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.LDY, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.LDA, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.LDX, AddressingMode.ABS, opcodes.size(), 4, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LAX, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.BCS, AddressingMode.REL, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.LDA, AddressingMode.IZY, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.HLT, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.LAX, AddressingMode.IZY, opcodes.size(), 5, this));
         opcodes.add(new Instruction(OPCode.LDY, AddressingMode.ZPX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.LDA, AddressingMode.ZPX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.LDX, AddressingMode.ZPY, opcodes.size(), 4, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LAX, AddressingMode.ZPY, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.CLV, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.LDA, AddressingMode.ABY, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.TSX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LAS, AddressingMode.ABY, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.LDY, AddressingMode.ABX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.LDA, AddressingMode.ABX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.LDX, AddressingMode.ABY, opcodes.size(), 4, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.LAX, AddressingMode.ABY, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.CPY, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.CMP, AddressingMode.IZX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.DCM, AddressingMode.IZX, opcodes.size(), 8, this));
         opcodes.add(new Instruction(OPCode.CPY, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.CMP, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.DEC, AddressingMode.ZP0, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.DCM, AddressingMode.ZP0, opcodes.size(), 5, this));
         opcodes.add(new Instruction(OPCode.INY, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.CMP, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.DEX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.SAX, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.CPY, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.CMP, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.DEC, AddressingMode.ABS, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.DCM, AddressingMode.ABS, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.BNE, AddressingMode.REL, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.CMP, AddressingMode.IZY, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.HLT, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.DCM, AddressingMode.IZY, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.CMP, AddressingMode.ZPX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.DEC, AddressingMode.ZPX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.DCM, AddressingMode.ZPX, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.CLD, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.CMP, AddressingMode.ABY, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.NOP, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.DCM, AddressingMode.ABY, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.SKW, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.CMP, AddressingMode.ABX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.DEC, AddressingMode.ABX, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.DCM, AddressingMode.ABX, opcodes.size(), 7, this));
         opcodes.add(new Instruction(OPCode.CPX, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.SBC, AddressingMode.IZX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.INS, AddressingMode.IZX, opcodes.size(), 8, this));
         opcodes.add(new Instruction(OPCode.CPX, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.SBC, AddressingMode.ZP0, opcodes.size(), 3, this));
         opcodes.add(new Instruction(OPCode.INC, AddressingMode.ZP0, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 5, this));
+        opcodes.add(new Instruction(OPCode.INS, AddressingMode.ZP0, opcodes.size(), 5, this));
         opcodes.add(new Instruction(OPCode.INX, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.SBC, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.NOP, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.SBC, AddressingMode.IMM, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.CPX, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.SBC, AddressingMode.ABS, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.INC, AddressingMode.ABS, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.INS, AddressingMode.ABS, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.BEQ, AddressingMode.REL, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.SBC, AddressingMode.IZY, opcodes.size(), 5, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 8, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.HLT, AddressingMode.IMP, opcodes.size(), 2, this));
+        opcodes.add(new Instruction(OPCode.INS, AddressingMode.IZY, opcodes.size(), 8, this));
+        opcodes.add(new Instruction(OPCode.SKB, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.SBC, AddressingMode.ZPX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.INC, AddressingMode.ZPX, opcodes.size(), 6, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 6, this));
+        opcodes.add(new Instruction(OPCode.INS, AddressingMode.ZPX, opcodes.size(), 6, this));
         opcodes.add(new Instruction(OPCode.SED, AddressingMode.IMP, opcodes.size(), 2, this));
         opcodes.add(new Instruction(OPCode.SBC, AddressingMode.ABY, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.NOP, AddressingMode.IMP, opcodes.size(), 2, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 4, this));
+        opcodes.add(new Instruction(OPCode.INS, AddressingMode.ABY, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.SKW, AddressingMode.IMP, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.SBC, AddressingMode.ABX, opcodes.size(), 4, this));
         opcodes.add(new Instruction(OPCode.INC, AddressingMode.ABX, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
-        opcodes.add(new Instruction(OPCode.XXX, AddressingMode.IMP, opcodes.size(), 7, this));
+        opcodes.add(new Instruction(OPCode.INS, AddressingMode.ABX, opcodes.size(), 7, this));
     }
 
     /**
@@ -1545,9 +1544,202 @@ public class CPU_6502 {
         return 0;
     }
 
+    // ========================================================= Illegal OPCodes ========================================================= //
+
+    int aso() {
+        asl();
+        ora();
+        return 0;
+    }
+
+    int rla() {
+        rol();
+        and();
+
+        return 0;
+    }
+
+    int lse() {
+        lsr();
+        eor();
+
+        return 0;
+    }
+
+    int rra() {
+        ror();
+        adc();
+
+        return 0;
+    }
+
+    int axs() {
+        write(addr_abs, accumulator & x_register);
+
+        return 0;
+    }
+
+    int lax() {
+        lda();
+        ldx();
+
+        return 1;
+    }
+
+    int dcm() {
+        dec();
+        cmp();
+
+        return 0;
+    }
+
+    int ins() {
+        inc();
+        sbc();
+
+        return 0;
+    }
+
+    int alr() {
+        and();
+        tmp = (accumulator >> 1);
+
+        setFlag(Flags.C, (accumulator & 0x01) == 0x01);
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
+        accumulator = tmp & 0xFF;
+        return 0;
+    }
+
+    int arr() {
+        and();
+        fetch();
+        tmp = ((getFlag(Flags.C) ? 1 << 7 : 0) | accumulator >> 1);
+
+        setFlag(Flags.C, (accumulator & 0x01) == 0x01);
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
+        accumulator = tmp & 0xFF;
+
+        return 0;
+    }
+
+    int xaa() {
+        txa();
+        and();
+
+        return 0;
+    }
+
+    int oal() {
+        accumulator = (accumulator | read(0x00EE)) & 0xFF;
+
+        setFlag(Flags.Z, accumulator == 0x00);
+        setFlag(Flags.N, (accumulator & 0x80) == 0x80);
+
+        and();
+        tax();
+
+        return 0;
+    }
+
+    int sax() {
+        fetch();
+        tmp = (accumulator & x_register) & 0xFF;
+
+        setFlag(Flags.C, tmp >= fetched);
+        tmp -= fetched;
+        setFlag(Flags.Z, (tmp & 0xFF) == 0x00);
+        setFlag(Flags.N, (tmp & 0x80) == 0x80);
+
+        x_register = tmp & 0xFF;
+
+        return 0;
+    }
+
+    int skb() {
+        program_counter++;
+        program_counter &= 0xFFFF;
+
+        return 0;
+    }
+
+    int skw() {
+        fetch();
+        skb();
+        fetch();
+        skb();
+
+        return 1;
+    }
+
+    int hlt() {
+        halted = true;
+
+        return 0;
+    }
+
+    int tas() {
+        tmp = (accumulator & x_register) & 0xFF;
+        pushStack(tmp);
+        tmp = (tmp & (read(program_counter-1) + 1)) & 0xFF;
+
+        write(addr_abs, tmp);
+
+        return 0;
+    }
+
+    int say() {
+        tmp = (y_register & (read(program_counter-1) + 1)) & 0xFF;
+
+        write(addr_abs, tmp);
+
+        return 0;
+    }
+
+    int xas() {
+        tmp = (x_register & (read(program_counter-1) + 1)) & 0xFF;
+
+        write(addr_abs, tmp);
+
+        return 0;
+    }
+
+    int axa() {
+        tmp = (accumulator & x_register & (read(program_counter-1) + 1)) & 0xFF;
+
+        write(addr_abs, tmp);
+
+        return 0;
+    }
+
+    int anc() {
+        fetch();
+        accumulator = (accumulator & fetched) & 0xFF;
+
+        setFlag(Flags.Z, accumulator == 0x00);
+        setFlag(Flags.N, (accumulator & 0x80) != 0x00);
+        setFlag(Flags.C, (accumulator & 0x80) != 0x00);
+
+        return 0;
+    }
+
+    int las() {
+        fetch();
+        accumulator = (fetched & stack_pointer);
+
+        setFlag(Flags.Z, accumulator == 0x00);
+        setFlag(Flags.N, (accumulator & 0x80) != 0x00);
+
+        return 0;
+    }
+
     /**
      * Every Illegal OPCodes
-     * not implemented yet
+     * not implemented yet setFlag(Flags.Z, accumulator == 0x00);
+     *         setFlag(Flags.N, (accumulator & 0x80) != 0x00);
      *
      * @return always 0
      */
@@ -1562,34 +1754,38 @@ public class CPU_6502 {
      * Execute one tick of the CPU
      */
     public void clock() {
-        //If the CPU has finished the last Instruction
-        if (cycles <= 0) {
-            //Fetch the Operation Code
-            opcode = read(program_counter);
-            setFlag(Flags.U, true);
-            //Increment the Program Counter
-            program_counter++;
-            program_counter &= 0xFFFF;
-            //Get the Instruction
-            Instruction instr = opcodes.get(opcode);
-            //Set the required number of cycle for this instruction
-            cycles = instr.cycles;
-            //Execute the Instruction (Fetch data + treatment)
-            int additional_cycle_1 = instr.addrmode();
-            int additional_cycle_2 = instr.operate();
-            //If the Instruction is susceptible of requiring an extra cycle and the addressing mode require one, the the Instruction require an extra cycle
-            cycles += (additional_cycle_1 & additional_cycle_2);
-            setFlag(Flags.U, true);
+        if (!halted) {
+            //If the CPU has finished the last Instruction
+            if (cycles <= 0) {
+
+                //Fetch the Operation Code
+                opcode = read(program_counter);
+                setFlag(Flags.U, true);
+                //Increment the Program Counter
+                program_counter++;
+                program_counter &= 0xFFFF;
+                //Get the Instruction
+                Instruction instr = opcodes.get(opcode);
+                //Set the required number of cycle for this instruction
+                cycles = instr.cycles;
+                //Execute the Instruction (Fetch data + treatment)
+                int additional_cycle_1 = instr.addrmode();
+                int additional_cycle_2 = instr.operate();
+                //If the Instruction is susceptible of requiring an extra cycle and the addressing mode require one, the the Instruction require an extra cycle
+                cycles += (additional_cycle_1 & additional_cycle_2);
+                setFlag(Flags.U, true);
+            }
+            //Decrement the remaining busy cycle index
+            cpu_clock++;
+            cycles--;
         }
-        //Decrement the remaining busy cycle index
-        cpu_clock++;
-        cycles--;
     }
 
     /**
      * Reset the CPU to the default state
      */
     public void reset() {
+        halted = false;
         stack_pointer -= 3;
         status |= Flags.I.value;
 
@@ -1603,6 +1799,7 @@ public class CPU_6502 {
     }
 
     public void startup() {
+        halted = false;
         accumulator = 0x00;
         x_register = 0x00;
         y_register = 0x00;
@@ -1621,7 +1818,7 @@ public class CPU_6502 {
      */
     public void irq() {
         //The Interrupt is trigger only if they aren't disable (I Flag of the Status Register)
-        if (!getFlag(Flags.I)) {
+        if (!getFlag(Flags.I) && !halted) {
             //Push the current Program Counter to the Stack LSB first
             pushStack((program_counter >> 8) & 0xFF);
             pushStack(program_counter & 0xFF);
@@ -1644,21 +1841,23 @@ public class CPU_6502 {
      * Trigger a Non Maskable Interrupt
      */
     public void nmi() {
-        //Push the current Program Counter to the Stack LSB first
-        pushStack((program_counter >> 8) & 0xFF);
-        pushStack(program_counter & 0xFF);
+        if (!halted) {
+            //Push the current Program Counter to the Stack LSB first
+            pushStack((program_counter >> 8) & 0xFF);
+            pushStack(program_counter & 0xFF);
 
-        //Push the current Status Register to the Stack
-        setFlag(Flags.B, false);
-        setFlag(Flags.U, true);
-        setFlag(Flags.I, true);
-        pushStack(status);
+            //Push the current Status Register to the Stack
+            setFlag(Flags.B, false);
+            setFlag(Flags.U, true);
+            setFlag(Flags.I, true);
+            pushStack(status);
 
-        //Jump to the NMI Routine specified at 0xFFFA
-        program_counter = nmiVector();
+            //Jump to the NMI Routine specified at 0xFFFA
+            program_counter = nmiVector();
 
-        //An NMI take 8 cycles
-        cycles = 8;
+            //An NMI take 8 cycles
+            cycles = 8;
+        }
     }
 
     /**
@@ -1735,97 +1934,99 @@ public class CPU_6502 {
      * @param separator separator sequence put between each element
      * @return a Map with addresses as Keys and Instructions as Values
      */
-    public Map<Integer, String> disassemble(int start, int before, int after, String separator) {
-        int addr = start - 3*before;
-        int start_addr = addr;
-        int line_addr;
-        int value, low, high;
+    public Map<Integer, String> disassemble(int start, int length, String separator) {
+        int addr = start;
+        int order_index = 0;
+        IntegerWrapper line_size = new IntegerWrapper();
 
         Map<Integer, String> code = new TreeMap<>();
-        do {
-            addr = start_addr--;
-            code.clear();
-            while (addr < start + 3*after) {
-                line_addr = addr;
-                String line = String.format("$%04X:" + separator, addr);
-                int opcode = nes.cpuRead(addr, true);
-                addr = (addr + 1) & 0x1FFFF;
-                Instruction instr = opcodes.get(opcode);
-                if (instr.assembly != OPCode.XXX)
-                    line += instr.assembly + separator;
-                else
-                    line += "???" + separator;
-                switch (instr.addr_mode) {
-                    case IMP:
-                        line += separator + "{IMP}" + separator + String.format("%02X", instr.opcode);
-                        break;
-                    case IMM:
-                        value = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        line += String.format("#$%02X" + separator + "{IMM}", value) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", value);
-                        break;
-                    case ZP0:
-                        low = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        line += String.format("$%02X" + separator + "{ZP0}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
-                        break;
-                    case ZPX:
-                        low = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        line += String.format("$%02X, X" + separator + "{ZPX}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
-                        break;
-                    case ZPY:
-                        low = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        line += String.format("$%02X, Y" + separator + "{ZPY}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
-                        break;
-                    case IZX:
-                        low = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        line += String.format("($%02X, X)" + separator + "{IZX}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
-                        break;
-                    case IZY:
-                        low = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        line += String.format("($%02X), Y" + separator + "{IZY}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
-                        break;
-                    case ABS:
-                        low = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        high = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        line += String.format("$%04X" + separator + "{ABS}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
-                        break;
-                    case ABX:
-                        low = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        high = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        line += String.format("$%04X, X" + separator + "{ABX}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
-                        break;
-                    case ABY:
-                        low = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        high = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        line += String.format("$%04X, Y" + separator + "{ABY}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
-                        break;
-                    case IND:
-                        low = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        high = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        line += String.format("($%04X)" + separator + "{IND}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
-                        break;
-                    case REL:
-                        value = nes.cpuRead(addr, true);
-                        addr = (addr + 1) & 0x1FFFF;
-                        line += String.format("$%02X ", value) + String.format("[$%04X]" + separator + "{IND}", addr + (byte) (value)) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", value);
-                }
-                code.put(line_addr, line);
-            }
-        } while(!code.containsKey(start));
+        while (code.size() <= length) {
+            code.put(addr | (order_index << 16), decompileInstruction(addr, line_size, separator));
+            addr += line_size.value;
+            order_index++;
+        }
         return code;
+    }
+
+    private String decompileInstruction(int addr, IntegerWrapper instrSize, String separator) {
+        int low, high;
+        String line = String.format("$%04X:" + separator, addr);
+        int opcode = nes.cpuRead(addr, true);
+        addr = (addr + 1) & 0x1FFFF;
+        Instruction instr = opcodes.get(opcode);
+        if (instr.assembly != OPCode.XXX)
+            line += instr.assembly + separator;
+        else
+            line += "???" + separator;
+        switch (instr.addr_mode) {
+            case IMP:
+                line += separator + "{IMP}" + separator + String.format("%02X", instr.opcode);
+                instrSize.value = 1;
+                break;
+            case IMM:
+                low = nes.cpuRead(addr, true);
+                instrSize.value = 2;
+                line += String.format("#$%02X" + separator + "{IMM}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
+                break;
+            case ZP0:
+                low = nes.cpuRead(addr, true);
+                instrSize.value = 2;
+                line += String.format("$%02X" + separator + "{ZP0}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
+                break;
+            case ZPX:
+                low = nes.cpuRead(addr, true);
+                instrSize.value = 2;
+                line += String.format("$%02X, X" + separator + "{ZPX}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
+                break;
+            case ZPY:
+                low = nes.cpuRead(addr, true);
+                instrSize.value = 2;
+                line += String.format("$%02X, Y" + separator + "{ZPY}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
+                break;
+            case IZX:
+                low = nes.cpuRead(addr, true);
+                instrSize.value = 2;
+                line += String.format("($%02X, X)" + separator + "{IZX}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
+                break;
+            case IZY:
+                low = nes.cpuRead(addr, true);
+                instrSize.value = 2;
+                line += String.format("($%02X), Y" + separator + "{IZY}", low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
+                break;
+            case ABS:
+                low = nes.cpuRead(addr, true);
+                addr = (addr + 1) & 0x1FFFF;
+                high = nes.cpuRead(addr, true);
+                instrSize.value = 3;
+                line += String.format("$%04X" + separator + "{ABS}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
+                break;
+            case ABX:
+                low = nes.cpuRead(addr, true);
+                addr = (addr + 1) & 0x1FFFF;
+                high = nes.cpuRead(addr, true);
+                instrSize.value = 3;
+                line += String.format("$%04X, X" + separator + "{ABX}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
+                break;
+            case ABY:
+                low = nes.cpuRead(addr, true);
+                addr = (addr + 1) & 0x1FFFF;
+                high = nes.cpuRead(addr, true);
+                instrSize.value = 3;
+                line += String.format("$%04X, Y" + separator + "{ABY}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
+                break;
+            case IND:
+                low = nes.cpuRead(addr, true);
+                addr = (addr + 1) & 0x1FFFF;
+                high = nes.cpuRead(addr, true);
+                instrSize.value = 3;
+                line += String.format("($%04X)" + separator + "{IND}", (high << 8) | low) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low) + separator + String.format("%02X", high);
+                break;
+            case REL:
+                low = nes.cpuRead(addr, true);
+                instrSize.value = 2;
+                line += String.format("$%02X ", low) + String.format("[$%04X]" + separator + "{IND}", addr + 1 + (byte) (low)) + separator + String.format("%02X", instr.opcode) + separator + String.format("%02X", low);
+        }
+        return line + separator + instr.assembly.type;
     }
 
     /**

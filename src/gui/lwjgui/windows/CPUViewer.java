@@ -149,8 +149,7 @@ public class CPUViewer extends Application implements Initializable {
             code_area.add(hex3, 6, i);
             code_fields[i] = new Label[]{addr, code, operand, mode, hex1, hex2, hex3};
         }
-        for (Label l : code_fields[code_area.getRowCount()/2])
-            l.setStyle("-fx-text-fill: #ff0000; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
+        code_fields[0][0].setStyle("-fx-background-color: #ffff00; -fx-font-size: 14; -fx-padding: 0;-fx-font-family: monospace");
         new Thread(this::updateRAM).start();
     }
 
@@ -162,8 +161,8 @@ public class CPUViewer extends Application implements Initializable {
         while(instance != null) {
             if (emulator.isEmulationRunning() || redraw && emulator.isStarted()) {
                 redraw = false;
-                if (ram_tab.isSelected()) {
-                    Platform.runLater(() -> {
+                Platform.runLater(() -> {
+                    if (ram_tab.isSelected()) {
                         int base_addr = (int) (ram_scroll.getValue()) << 4;
                         for (int i = 1; i <= 0x10; i++) {
                             for (int j = 1; j <= 0x10; j++) {
@@ -172,15 +171,16 @@ public class CPUViewer extends Application implements Initializable {
                         }
                         for (int i = 0; i < 0x10; i++)
                             ram_fields[0][i].setText(String.format("%04X", base_addr + (i << 4)));
-                    });
-                } else if (cpu_tab.isSelected()) {
-                    int pc = emulator.getNes().getCpu().getProgramCounter();
-                    int a = emulator.getNes().getCpu().getAccumulator();
-                    int x = emulator.getNes().getCpu().getXRegister();
-                    int y = emulator.getNes().getCpu().getYRegister();
-                    int stkp = emulator.getNes().getCpu().getStackPointer();
-                    int status = emulator.getNes().getCpu().getStatus();
-                    decompiled = emulator.getNes().getCpu().disassemble(pc, 8, 8, "!");
+                    }
+                });
+                if (cpu_tab.isSelected()) {
+                    final int pc = emulator.getNes().getCpu().getProgramCounter();
+                    final int a = emulator.getNes().getCpu().getAccumulator();
+                    final int x = emulator.getNes().getCpu().getXRegister();
+                    final int y = emulator.getNes().getCpu().getYRegister();
+                    final int stkp = emulator.getNes().getCpu().getStackPointer();
+                    final int status = emulator.getNes().getCpu().getStatus();
+                    decompiled = emulator.getNes().getCpu().disassemble(pc, 15, "!");
                     Platform.runLater(() -> {
                         a_field.setText(String.format("$%02X", a) + "[" + a + "]");
                         x_field.setText(String.format("$%02X", x) + "[" + x + "]");
@@ -197,27 +197,9 @@ public class CPUViewer extends Application implements Initializable {
                         z_label.setStyle("-fx-text-fill: " + ((status & 0x2) == 0x2 ? "green" : "red"));
                         c_label.setStyle("-fx-text-fill: " + ((status & 0x1) == 0x1 ? "green" : "red"));
 
-                        String currentLine = decompiled.get(pc);
-                        if (currentLine != null) {
-                            Queue<String> before = new LinkedList<>();
-                            Queue<String> after = new LinkedList<>();
-                            boolean currentLineFound = false;
-                            for (Map.Entry<Integer, String> line : decompiled.entrySet()) {
-                                if (!currentLineFound) {
-                                    if (line.getKey() == pc)
-                                        currentLineFound = true;
-                                    else
-                                        before.offer(line.getValue());
-                                    if (before.size() > code_area.getRowCount() / 2)
-                                        before.poll();
-                                } else {
-                                    after.offer(line.getValue());
-                                    if (after.size() >= code_area.getRowCount() / 2)
-                                        break;
-                                }
-                            }
+                        if (decompiled.get(pc) != null) {
                             int i = 0;
-                            for (String line : before) {
+                            for (String line : decompiled.values()) {
                                 String[] split = line.split("!");
                                 code_fields[i][0].setText(split[0]);
                                 code_fields[i][1].setText(split[1]);
@@ -226,26 +208,23 @@ public class CPUViewer extends Application implements Initializable {
                                 code_fields[i][4].setText(split[4]);
                                 code_fields[i][5].setText(split.length > 5 ? split[5] : "");
                                 code_fields[i][6].setText(split.length > 6 ? split[6] : "");
-                                i++;
-                            }
-                            String[] split = currentLine.split("!");
-                            code_fields[i][0].setText(split[0]);
-                            code_fields[i][1].setText(split[1]);
-                            code_fields[i][2].setText(split[2]);
-                            code_fields[i][3].setText(split[3]);
-                            code_fields[i][4].setText(split[4]);
-                            code_fields[i][5].setText(split.length > 5 ? split[5] : "");
-                            code_fields[i][6].setText(split.length > 6 ? split[6] : "");
-                            i++;
-                            for (String line : after) {
-                                split = line.split("!");
-                                code_fields[i][0].setText(split[0]);
-                                code_fields[i][1].setText(split[1]);
-                                code_fields[i][2].setText(split[2]);
-                                code_fields[i][3].setText(split[3]);
-                                code_fields[i][4].setText(split[4]);
-                                code_fields[i][5].setText(split.length > 5 ? split[5] : "");
-                                code_fields[i][6].setText(split.length > 6 ? split[6] : "");
+                                switch (split[split.length - 1]) {
+                                    case "0":
+                                        code_fields[i][1].setStyle("-fx-text-fill: #0000ff");
+                                        code_fields[i][2].setStyle("-fx-text-fill: #0000ff");
+                                        code_fields[i][3].setStyle("-fx-text-fill: #0000ff");
+                                        break;
+                                    case "1":
+                                        code_fields[i][1].setStyle("-fx-text-fill: #ff00ff");
+                                        code_fields[i][2].setStyle("-fx-text-fill: #ff00ff");
+                                        code_fields[i][3].setStyle("-fx-text-fill: #ff00ff");
+                                        break;
+                                    case "2":
+                                        code_fields[i][1].setStyle("-fx-text-fill: #ff0000");
+                                        code_fields[i][2].setStyle("-fx-text-fill: #ff0000");
+                                        code_fields[i][3].setStyle("-fx-text-fill: #ff0000");
+                                        break;
+                                }
                                 i++;
                             }
                         }
@@ -255,7 +234,7 @@ public class CPUViewer extends Application implements Initializable {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
-                Dialogs.showError("CPU Viewer Loop Error", "Error while drawing CPU Viewer");
+                e.printStackTrace();
             }
         }
     }

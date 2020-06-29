@@ -21,7 +21,7 @@
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <GridPane fx:id="code_area" layoutX="212.0" layoutY="17.0" prefHeight="340.0" prefWidth="360.0">
+                        <GridPane fx:id="code_area" layoutX="215.0" layoutY="17.0" prefHeight="319.0" prefWidth="357.0">
                           <columnConstraints>
                               <ColumnConstraints hgrow="SOMETIMES" maxWidth="66.0" minWidth="10.0" prefWidth="35.0" />
                             <ColumnConstraints hgrow="SOMETIMES" maxWidth="74.0" minWidth="0.0" prefWidth="30.0" />
@@ -47,7 +47,6 @@
                               <RowConstraints maxHeight="20.0" minHeight="20.0" prefHeight="30.0" vgrow="SOMETIMES" />
                               <RowConstraints maxHeight="20.0" minHeight="20.0" prefHeight="20.0" vgrow="SOMETIMES" />
                               <RowConstraints maxHeight="20.0" minHeight="20.0" prefHeight="20.0" vgrow="SOMETIMES" />
-                            <RowConstraints maxHeight="20.0" minHeight="20.0" prefHeight="20.0" vgrow="SOMETIMES" />
                             <RowConstraints maxHeight="20.0" minHeight="20.0" prefHeight="20.0" vgrow="SOMETIMES" />
                           </rowConstraints>
                         </GridPane>
@@ -129,7 +128,10 @@
                         </Label>
                         <Button layoutX="52.0" layoutY="264.0" mnemonicParsing="false" onAction="#cpuStepEvent" text="Assembly Step" />
                         <Button layoutX="63.0" layoutY="312.0" mnemonicParsing="false" onAction="#frameStepEvent" text="Frame Step" />
-                        <Separator layoutX="477.0" layoutY="17.0" orientation="VERTICAL" prefHeight="340.0" />
+                        <Separator layoutX="477.0" layoutY="17.0" orientation="VERTICAL" prefHeight="320.0" prefWidth="6.0" />
+                        <Label layoutX="214.0" layoutY="350.0" style="-fx-background-color: #FFFF00;" text="\$XXXX : Current OPCode" />
+                        <Label layoutX="369.0" layoutY="350.0" style="-fx-text-fill: #FF0000;" text="Illegal OPCode" />
+                        <Label layoutX="483.0" layoutY="350.0" style="-fx-text-fill: #FF00FF;" text="Branch OPCode" />
                      </children>
                   </AnchorPane>
             </content>

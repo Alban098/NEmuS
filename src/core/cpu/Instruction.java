@@ -140,6 +140,50 @@ public class Instruction {
                 return cpu.tya();
             case XXX:
                 return cpu.xxx();
+            case ASO:
+                return cpu.aso();
+            case RLA:
+                return cpu.rla();
+            case LSE:
+                return cpu.lse();
+            case RRA:
+                return cpu.rra();
+            case AXS:
+                return cpu.axs();
+            case LAX:
+                return cpu.lax();
+            case DCM:
+                return cpu.dcm();
+            case INS:
+                return cpu.ins();
+            case ALR:
+                return cpu.alr();
+            case ARR:
+                return cpu.arr();
+            case XAA:
+                return cpu.xaa();
+            case OAL:
+                return cpu.oal();
+            case SAX:
+                return cpu.sax();
+            case SKB:
+                return cpu.skb();
+            case SKW:
+                return cpu.skw();
+            case HLT:
+                return cpu.hlt();
+            case TAS:
+                return cpu.tas();
+            case SAY:
+                return cpu.say();
+            case XAS:
+                return cpu.xas();
+            case AXA:
+                return cpu.axa();
+            case ANC:
+                return cpu.anc();
+            case LAS:
+                return cpu.las();
         }
         return 0;
     }
