@@ -2,6 +2,7 @@ package core.ppu;
 
 import core.cartridge.Cartridge;
 import core.ppu.registers.*;
+import gui.lwjgui.windows.Tile;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import org.lwjgl.BufferUtils;
@@ -415,7 +416,7 @@ public class PPU_2C02 {
      * @param addr the address to read from
      * @return the read data
      */
-    public int ppuRead(int addr, boolean readOnly) {
+    private int ppuRead(int addr, boolean readOnly) {
         addr &= 0x3FFF;
         //A Wrapper used to store the data gathered by the Cartridge
         IntegerWrapper data = new IntegerWrapper();
@@ -888,11 +889,11 @@ public class PPU_2C02 {
     public void getPatternTable(int i, int paletteId, WritableImage dest) {
         //Create a temporary buffer because the pixels are not calculated in screen order
         //For each row of tiles starting at the top
-        for (int tileY = 0; tileY < 16; tileY++) {
+        for (int tileX = 0; tileX < 16; tileX++) {
             //For each tile starting at the left
-            for (int tileX = 0; tileX < 16; tileX++) {
+            for (int tileY = 0; tileY < 16; tileY++) {
                 //We compute the tile offset inside the Pattern Memory
-                int offset = tileY * 256 + tileX * 16;
+                int offset = tileX * 256 + tileY * 16;
                 //For each row of the tile
                 for (byte row = 0; row < 8; row++) {
                     //We get the lsb of the pixels of the row
@@ -907,7 +908,7 @@ public class PPU_2C02 {
                         tile_lsb >>= 1;
                         tile_msb >>= 1;
                         //We populate the image by getting the right color from the palette using the palette and pixel IDs
-                        dest.getPixelWriter().setColor(((tileX << 3) | (7 - col)), ((tileY << 3) | row), getColorFromPalette(paletteId, pixel));
+                        dest.getPixelWriter().setColor(((tileY << 3) | (7 - col)), ((tileX << 3) | row), getColorFromPalette(paletteId, pixel));
                     }
                 }
             }
@@ -926,26 +927,26 @@ public class PPU_2C02 {
             //For each tile starting at the left
             for (int x = 0; x < 32; x++) {
                 //For each row of the tile
+                //We read the tile ID by selecting the correct nametable using the mirroring mode
+                int offset = 0x0400 * (i & 0x3);
+                int tile_id = ppuRead(0x2000 | offset | (y << 5) | x, true);
+                //We read the tile attribute starting at offset 0x03C0 of the selected nametable, the attribute offset is calculated using the tile pos divided by 4
+                int tile_attrib = ppuRead(0x23C0 | offset | ((y >> 2) << 3) | (x >> 2), true);
+                //We select the right attribute depending on the tile pos inside the current 4x4 tile grid
+                if ((y & 0x02) == 0x02)
+                    tile_attrib = (tile_attrib >> 4) & 0x00FF;
+                if ((x & 0x02) == 0x02)
+                    tile_attrib = (tile_attrib >> 2) & 0x00FF;
+                //We only keep the 2 lsb of the attribute
+                tile_attrib &= 0x03;
+                //We use the attribute to determinate the tile palette
+                int palette = tile_attrib & 0b11;
+                int pid;
                 for (int row = 0; row < 8; row++) {
-                    //We read the tile ID by selecting the correct nametable using the mirroring mode
-                    int offset = 0x0400 * (i & 0x3);
-                    int tile_id = ppuRead(0x2000 | offset | (y << 5) | x, true);
-                    //We read the tile attribute starting at offset 0x03C0 of the selected nametable, the attribute offset is calculated using the tile pos divided by 4
-                    int tile_attrib = ppuRead(0x23C0 | offset | ((y >> 2) << 3) | (x >> 2), true);
-                    //We select the right attribute depending on the tile pos inside the current 4x4 tile grid
-                    if ((y & 0x02) == 0x02)
-                        tile_attrib = (tile_attrib >> 4) & 0x00FF;
-                    if ((x & 0x02) == 0x02)
-                        tile_attrib = (tile_attrib >> 2) & 0x00FF;
-                    //We only keep the 2 lsb of the attribute
-                    tile_attrib &= 0x03;
                     //We use the tile id and the current row index to get the lsb of the 8 pixel IDs of the row (low bitplane)
                     int tile_lsb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row, true);
                     //We use the tile id and the current row index to get the msb of the 8 pixels of the row (high bitplane)
                     int tile_msb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (tile_id << 4) + row + 8, true);
-                    //We use the attribute to determinate the tile palette
-                    int palette = tile_attrib & 0b11;
-                    int pid;
                     //For each pixel of the row
                     for (int col = 0; col < 8; col++) {
                         //We get the correct pixel ID by reading the 2 bitplanes
@@ -964,5 +965,163 @@ public class PPU_2C02 {
                 }
             }
         }
+    }
+
+    public Tile getNametableTile(int x, int y, int nametable) {
+        Tile dest = new Tile(false);
+        dest.x = x;
+        dest.y = y;
+        int offset = 0x0400 * (nametable & 0x3);
+        dest.addr = 0x2000 | offset | (y << 5) | x;
+        //We read the tile ID by selecting the correct nametable using the mirroring mode
+        dest.tile = ppuRead(dest.addr, true);
+        //We read the tile attribute starting at offset 0x03C0 of the selected nametable, the attribute offset is calculated using the tile pos divided by 4
+        dest.attribute = ppuRead(0x23C0 | offset | ((y >> 2) << 3) | (x >> 2), true);
+        //We select the right attribute depending on the tile pos inside the current 4x4 tile grid
+        if ((y & 0x02) == 0x02)
+            dest.attribute = (dest.attribute >> 4) & 0x00FF;
+        if ((x & 0x02) == 0x02)
+            dest.attribute = (dest.attribute >> 2) & 0x00FF;
+        //We only keep the 2 lsb of the attribute
+        dest.attribute &= 0x03;
+        dest.palette = dest.attribute & 0b11;
+        int pid;
+        //For each row of the tile
+        for (int row = 0; row < 8; row++) {
+            //We use the tile id and the current row index to get the lsb of the 8 pixel IDs of the row (low bitplane)
+            int tile_lsb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (dest.tile << 4) + row, true);
+            //We use the tile id and the current row index to get the msb of the 8 pixels of the row (high bitplane)
+            int tile_msb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (dest.tile << 4) + row + 8, true);
+            //We use the attribute to determinate the tile palette
+            //For each pixel of the row
+            for (int col = 0; col < 8; col++) {
+                //We get the correct pixel ID by reading the 2 bitplanes
+                int p0_pixel = (tile_lsb & 0x80) > 0 ? 0x1 : 0x0;
+                int p1_pixel = (tile_msb & 0x80) > 0 ? 0x1 : 0x0;
+                int pixel = ((p1_pixel << 1) | p0_pixel) & 0x000F;
+                pid = dest.palette;
+                //If the pixel ID is 0, then it's transparent so we use pixel 0 of palette 0
+                if (pixel == 0x00) pid = 0x00;
+                //We shift the tile registers to get the next pixel id
+                tile_lsb = (tile_lsb << 1) & 0xFFFF;
+                tile_msb = (tile_msb << 1) & 0xFFFF;
+                //We populate the image by getting the right color from the palette using the palette and pixel IDs
+                dest.colors[col | (row << 3)] = getColorFromPalette(pid, pixel);
+            }
+        }
+        return dest;
+    }
+
+    public Tile getPatterntableTile(int x, int y, int paletteId, int patterntableId) {
+        Tile dest = new Tile(false);
+        int offset = y * 256 + x * 16;
+        dest.tile = y | (x << 4);
+        dest.addr = patterntableId * 0x1000 + offset;
+        //For each row of the tile
+        for (byte row = 0; row < 8; row++) {
+            //We get the lsb of the pixels of the row
+            int tile_lsb = ppuRead(dest.addr + row, true);
+            //We get the msb of the pixels of the row
+            int tile_msb = ppuRead(dest.addr + row + 8, true);
+            //for each pixel of the row
+            for (int col = 0; col < 8; col++) {
+                //We compute the pixel id
+                int pixel = ((tile_lsb & 0x01) << 1) | (tile_msb & 0x01);
+                //We shift the tile registers to get the next pixel id
+                tile_lsb >>= 1;
+                tile_msb >>= 1;
+                //We populate the image by getting the right color from the palette using the palette and pixel IDs
+                dest.colors[(7 - col) | (row << 3)] = getColorFromPalette(paletteId, pixel);
+            }
+        }
+        return dest;
+    }
+
+    public Tile getOamTile8x8(int oamId) {
+        if (oamId < 64) {
+            Tile tile = new Tile(false);
+            ObjectAttribute entry = oams[oamId];
+            for (int row = 0; row < 8; row++) {
+                tile.addr = (control_register.isPatternSpriteSet() ? 1 << 12 : 0) | (entry.getId() << 4);
+                tile.x = entry.getX();
+                tile.y = entry.getY();
+                tile.tile = entry.getId() >> 1;
+                tile.palette = (entry.getAttribute() & 0x3) + 4;
+                tile.attribute = entry.getAttribute() & 0xE0;
+                int sprite_pattern_low, sprite_pattern_high;
+                int sprite_pattern_addr_low, sprite_pattern_addr_high;
+                //We retrieve the low bit plane address of the current sprite row
+                if ((entry.getAttribute() & 0x80) != 0x80) // Sprite normally oriented
+                    sprite_pattern_addr_low = tile.addr | row;
+                else //Sprite flipped vertically
+                    sprite_pattern_addr_low = tile.addr | (7 - row);
+
+                //The high bit plane one is offset by 8 from the low bit plane
+                sprite_pattern_addr_high = (sprite_pattern_addr_low + 8) & 0xFFFF;
+                //We read the 2 bit planes
+                sprite_pattern_low = ppuRead(sprite_pattern_addr_low, true);
+                sprite_pattern_high = ppuRead(sprite_pattern_addr_high, true);
+
+                //If the sprite is flipped horizontally
+                if ((entry.getAttribute() & 0x40) == 0x40) {
+                    sprite_pattern_low = NumberUtils.byteFlip(sprite_pattern_low);
+                    sprite_pattern_high = NumberUtils.byteFlip(sprite_pattern_high);
+                }
+                //For each pixel of the row
+                for (int col = 0; col < 8; col++) {
+                    //We compute the pixel and palette id
+                    int px = ((sprite_pattern_low & 0x80) == 0x80 ? 0x1 : 0x0) | ((((sprite_pattern_high & 0x80) == 0x80 ? 0x1 : 0x0)) << 1);
+                    //We draw the pixel
+                    tile.colors[col | (row << 3)] = getColorFromPalette(px == 0 ? 0 : tile.palette, px);
+                    //We shift the bit planes for the next pixel
+                    sprite_pattern_high <<= 1;
+                    sprite_pattern_low <<= 1;
+                }
+            }
+            return tile;
+        }
+        return null;
+    }
+
+    public Tile getOamTile8x16(int oamId) {
+        Tile tile = new Tile(true);
+        ObjectAttribute entry = oams[oamId];
+        for (int row = 0; row < 16; row++) {
+            int sprite_pattern_low, sprite_pattern_high;
+            int sprite_pattern_addr_low, sprite_pattern_addr_high;
+            if ((entry.getAttribute() & 0x80) != 0x80) {
+                if (row < 8)
+                    sprite_pattern_addr_low = ((entry.getId() & 0x1) << 12) | ((entry.getId() & 0xFE) << 4) | row;
+                else
+                    sprite_pattern_addr_low = ((entry.getId() & 0x1) << 12) | (((entry.getId() & 0xFE) + 1) << 4) | (row - 8);
+            } else {
+                if (row < 8)
+                    sprite_pattern_addr_low = ((entry.getId() & 0x1) << 12) | (((entry.getId() & 0xFE) + 1) << 4) | (7 - row);
+                else
+                    sprite_pattern_addr_low = ((entry.getId() & 0x1) << 12) | ((entry.getId() & 0xFE) << 4) | (7 - row + 8);
+            }
+            sprite_pattern_addr_high = (sprite_pattern_addr_low + 8) & 0xFFFF;
+            sprite_pattern_low = ppuRead(sprite_pattern_addr_low, true);
+            sprite_pattern_high = ppuRead(sprite_pattern_addr_high, true);
+
+            if ((entry.getAttribute() & 0x40) == 0x40) {
+                sprite_pattern_low = NumberUtils.byteFlip(sprite_pattern_low);
+                sprite_pattern_high = NumberUtils.byteFlip(sprite_pattern_high);
+            }
+            tile.addr = entry.getId();
+            tile.x = entry.getX();
+            tile.y = entry.getY();
+            tile.tile = entry.getId() >> 1;
+            tile.palette = (entry.getAttribute() & 0x3) + 4;
+            for (int col = 0; col < 8; col++) {
+                int px = ((sprite_pattern_low & 0x80) == 0x80 ? 0x1 : 0x0) | ((((sprite_pattern_high & 0x80) == 0x80 ? 0x1 : 0x0)) << 1);
+
+                tile.colors[col | (row << 3)] = getColorFromPalette(px == 0 ? 0 : tile.palette, px);
+
+                sprite_pattern_high <<= 1;
+                sprite_pattern_low <<= 1;
+            }
+        }
+        return tile;
     }
 }

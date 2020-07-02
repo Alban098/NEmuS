@@ -1544,8 +1544,6 @@ public class CPU_6502 {
         return 0;
     }
 
-    // ========================================================= Illegal OPCodes ========================================================= //
-
     int aso() {
         asl();
         ora();
@@ -1733,17 +1731,6 @@ public class CPU_6502 {
         setFlag(Flags.Z, accumulator == 0x00);
         setFlag(Flags.N, (accumulator & 0x80) != 0x00);
 
-        return 0;
-    }
-
-    /**
-     * Every Illegal OPCodes
-     * not implemented yet setFlag(Flags.Z, accumulator == 0x00);
-     *         setFlag(Flags.N, (accumulator & 0x80) != 0x00);
-     *
-     * @return always 0
-     */
-    int xxx() {
         return 0;
     }
 

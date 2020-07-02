@@ -12,16 +12,16 @@ import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.ListView;
-import javafx.scene.control.Tab;
+import javafx.scene.control.*;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import utils.Dialogs;
-import utils.NumberUtils;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -86,6 +86,7 @@ public class PPUViewer extends Application implements Initializable {
     private Canvas preview_canvas;
 
     private Canvas[] palette_images;
+    private Tooltip tooltip;
 
     /**
      * Create a new instance of PPUViewer
@@ -129,6 +130,20 @@ public class PPUViewer extends Application implements Initializable {
             palette_images[i].getGraphicsContext2D().fillRect(0, 0, palette_images[i].getWidth(), palette_images[i].getHeight());
             palette_images[i].addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent -> selected_palette = finalI);
         }
+
+        tooltip = new Tooltip();
+        tooltip.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        Label tooltip_label = new Label();
+        tooltip_label.setMaxWidth(130);
+        tooltip_label.setMinWidth(130);
+        tooltip_label.setStyle("-fx-font-size: 14px;");
+        HBox tooltip_root = new HBox();
+        Canvas tooltip_canvas = new Canvas(64, 64);
+        tooltip_root.getChildren().add(tooltip_label);
+        tooltip_root.getChildren().add(tooltip_canvas);
+        tooltip.setGraphic(tooltip_root);
+
+
         nt_1_canvas.getGraphicsContext2D().fillRect(0, 0, nt_1_canvas.getWidth(), nt_1_canvas.getHeight());
         nt_2_canvas.getGraphicsContext2D().fillRect(0, 0, nt_2_canvas.getWidth(), nt_2_canvas.getHeight());
         nt_3_canvas.getGraphicsContext2D().fillRect(0, 0, nt_3_canvas.getWidth(), nt_3_canvas.getHeight());
@@ -137,6 +152,117 @@ public class PPUViewer extends Application implements Initializable {
         pt_2_canvas.getGraphicsContext2D().fillRect(0, 0, pt_2_canvas.getWidth(), pt_2_canvas.getHeight());
         oam_canvas.getGraphicsContext2D().fillRect(0, 0, oam_canvas.getWidth(), oam_canvas.getHeight());
         preview_canvas.getGraphicsContext2D().fillRect(0, 0, preview_canvas.getWidth(), preview_canvas.getHeight());
+
+        nt_tab.getContent().addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
+            if (emulator.isEmulationRunning()) {
+                Tile tile = null;
+                if (event.getX() > nt_1_canvas.getLayoutX() && event.getX() < nt_1_canvas.getLayoutX() + nt_1_canvas.getWidth() && event.getY() > nt_1_canvas.getLayoutY() && event.getY() < nt_1_canvas.getLayoutY() + nt_1_canvas.getHeight()) {
+                    tile = nes.getPpu().getNametableTile((int) (event.getX() - nt_1_canvas.getLayoutX()) / 8, (int) (event.getY() - nt_1_canvas.getLayoutY()) / 8, 0);
+                    tooltip.show(nt_tab.getContent(), event.getScreenX() - event.getX() + nt_1_canvas.getLayoutX() + nt_1_canvas.getWidth() + 3, event.getScreenY());
+                } else if (event.getX() > nt_2_canvas.getLayoutX() && event.getX() < nt_2_canvas.getLayoutX() + nt_2_canvas.getWidth() && event.getY() > nt_2_canvas.getLayoutY() && event.getY() < nt_2_canvas.getLayoutY() + nt_2_canvas.getHeight()) {
+                    tile = nes.getPpu().getNametableTile((int) (event.getX() - nt_2_canvas.getLayoutX()) / 8, (int) (event.getY() - nt_2_canvas.getLayoutY()) / 8, 1);
+                    tooltip.show(nt_tab.getContent(), event.getScreenX() - event.getX() + nt_2_canvas.getLayoutX() - tooltip.getWidth() + 15, event.getScreenY());
+                } else if (event.getX() > nt_3_canvas.getLayoutX() && event.getX() < nt_3_canvas.getLayoutX() + nt_3_canvas.getWidth() && event.getY() > nt_3_canvas.getLayoutY() && event.getY() < nt_3_canvas.getLayoutY() + nt_3_canvas.getHeight()) {
+                    tile = nes.getPpu().getNametableTile((int) (event.getX() - nt_3_canvas.getLayoutX()) / 8, (int) (event.getY() - nt_3_canvas.getLayoutY()) / 8, 2);
+                    tooltip.show(nt_tab.getContent(), event.getScreenX() - event.getX() + nt_3_canvas.getLayoutX() + nt_3_canvas.getWidth() + 3, event.getScreenY());
+                } else if (event.getX() > nt_4_canvas.getLayoutX() && event.getX() < nt_4_canvas.getLayoutX() + nt_4_canvas.getWidth() && event.getY() > nt_4_canvas.getLayoutY() && event.getY() < nt_4_canvas.getLayoutY() + nt_4_canvas.getHeight()) {
+                    tile = nes.getPpu().getNametableTile((int) (event.getX() - nt_4_canvas.getLayoutX()) / 8, (int) (event.getY() - nt_4_canvas.getLayoutY()) / 8, 3);
+                    tooltip.show(nt_tab.getContent(), event.getScreenX() - event.getX() + nt_4_canvas.getLayoutX() - tooltip.getWidth() + 15, event.getScreenY());
+                } else
+                    tooltip.hide();
+                if (tile != null) {
+                    tooltip_label.setText(
+                            "Tile : " + String.format("$%04X : ", tile.addr) + String.format("$%02X", tile.tile) +
+                            "\nPosition : " + tile.x + ", " + tile.y +
+                            "\nAttributes : " + String.format("$%02X", tile.attribute) +
+                            "\nPalette : " + tile.palette
+                    );
+                    tooltip_canvas.setHeight(64);
+                    int x = 0, y = 0;
+                    for (Color c : tile.colors) {
+                        tooltip_canvas.getGraphicsContext2D().setFill(c);
+                        tooltip_canvas.getGraphicsContext2D().fillRect(x * 8, y * 8, 8, 8);
+                        x++;
+                        if (x >= 8) {
+                            y++;
+                            x = 0;
+                        }
+                    }
+                }
+            }
+        });
+        pt_tab.getContent().addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
+            if (emulator.isEmulationRunning()) {
+                Tile tile = null;
+                if (event.getX() > pt_1_canvas.getLayoutX() && event.getX() < pt_1_canvas.getLayoutX() + pt_1_canvas.getWidth() && event.getY() > pt_1_canvas.getLayoutY() && event.getY() < pt_1_canvas.getLayoutY() + pt_1_canvas.getHeight()) {
+                    tile = nes.getPpu().getPatterntableTile((int) (event.getX() - pt_1_canvas.getLayoutX()) / 16, (int) (event.getY() - pt_1_canvas.getLayoutY()) / 16, selected_palette, 0);
+                    tooltip.show(pt_tab.getContent(), event.getScreenX() - event.getX() + pt_1_canvas.getLayoutX() + pt_1_canvas.getWidth() + 3, event.getScreenY());
+                } else if (event.getX() > pt_2_canvas.getLayoutX() && event.getX() < pt_2_canvas.getLayoutX() + pt_2_canvas.getWidth() && event.getY() > pt_2_canvas.getLayoutY() && event.getY() < pt_2_canvas.getLayoutY() + pt_2_canvas.getHeight()) {
+                    tile = nes.getPpu().getPatterntableTile((int) (event.getX() - pt_2_canvas.getLayoutX()) / 16, (int) (event.getY() - pt_2_canvas.getLayoutY()) / 16, selected_palette, 1);
+                    tooltip.show(pt_tab.getContent(), event.getScreenX() - event.getX() + pt_2_canvas.getLayoutX() - tooltip.getWidth() + 15, event.getScreenY());
+                } else
+                    tooltip.hide();
+                if (tile != null) {
+                    tooltip_label.setText(
+                            "Tile : " + String.format("$%02X", tile.tile) +
+                            "\nAddress : " + String.format("$%04X", tile.addr)
+                    );
+                    tooltip_canvas.setHeight(64);
+                    int x = 0, y = 0;
+                    for (Color c : tile.colors) {
+                        tooltip_canvas.getGraphicsContext2D().setFill(c);
+                        tooltip_canvas.getGraphicsContext2D().fillRect(x * 8, y * 8, 8, 8);
+                        x++;
+                        if (x >= 8) {
+                            y++;
+                            x = 0;
+                        }
+                    }
+                }
+            }
+        });
+
+        oam_canvas.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
+            if (emulator.isEmulationRunning()) {
+                Tile tile;
+                if ((nes.getPpu().cpuRead(0, true) & 0x20) == 0x20)
+                    tile = nes.getPpu().getOamTile8x16((int) (event.getX() / 32) + (int) (event.getY() / 64) * 8);
+                else
+                    tile = nes.getPpu().getOamTile8x8((int) (event.getX() / 32) + (int) (event.getY() / 32) * 8);
+                if (tile != null) {
+                    tooltip.show(oam_tab.getContent(), event.getScreenX() - event.getX() - tooltip.getWidth() + 15, event.getScreenY());
+                    int sprite_x = (int) event.getX() >> 5;
+                    int sprite_y = (int) event.getY() >> 5;
+                    if ((nes.getPpu().cpuRead(0, true) & 0x20) == 0x20)
+                        sprite_y >>= 1;
+                    oam_list.getSelectionModel().clearSelection();
+                    oam_list.getSelectionModel().select((sprite_y << 3) | sprite_x);
+                    oam_list.scrollTo((sprite_y << 3) | sprite_x);
+
+                    tooltip_label.setText(
+                            "Tile : " + String.format("$%02X", tile.tile) +
+                                    "\nAddress : " + String.format("$%04X", tile.addr) +
+                                    "\nPosition : " + tile.x + ", " + tile.y +
+                                    "\nFlags : " + ((tile.attribute & 0x80) == 0x80 ? "V" : "_") + ((tile.attribute & 0x40) == 0x40 ? "H" : "_") + ((tile.attribute & 0x20) == 0x20 ? "P" : "_") +
+                                    "\nPalette : " + tile.palette
+                    );
+                    int x = 0, y = 0;
+                    tooltip_canvas.setHeight((nes.getPpu().cpuRead(0, true) & 0x20) == 0x20 ? 128 : 64);
+                    for (Color c : tile.colors) {
+                        tooltip_canvas.getGraphicsContext2D().setFill(c);
+                        tooltip_canvas.getGraphicsContext2D().fillRect(x * 8, y * 8, 8, 8);
+                        x++;
+                        if (x >= 8) {
+                            y++;
+                            x = 0;
+                        }
+                    }
+                } else
+                    tooltip.hide();
+            }
+        });
+        oam_canvas.addEventHandler(MouseEvent.MOUSE_EXITED, event -> tooltip.hide());
+
         new Thread(this::updateImages).start();
     }
 
@@ -220,41 +346,17 @@ public class PPUViewer extends Application implements Initializable {
                                     //We populate the list
                                     oam_list.getItems().add(String.format("%02X:", i) + " (" + String.format("%03d", entry.getX()) + ", " + String.format("%03d", entry.getY()) + ") ID: " + String.format("%02X", entry.getId()) + " AT: " + String.format("%02X", entry.getAttribute()));
                                     //For each row of the sprite
+                                    Tile tile = nes.getPpu().getOamTile8x8(i);
+
                                     for (int row = 0; row < 8; row++) {
-                                        int sprite_pattern_low, sprite_pattern_high;
-                                        int sprite_pattern_addr_low, sprite_pattern_addr_high;
-                                        //We retrieve the low bit plane address of the current sprite row
-                                        if ((entry.getAttribute() & 0x80) != 0x80) // Sprite normally oriented
-                                            sprite_pattern_addr_low = (((control & 0x20) == 0x20) ? 1 << 12 : 0) | (entry.getId() << 4) | row;
-                                        else //Sprite flipped vertically
-                                            sprite_pattern_addr_low = (((control & 0x20) == 0x20) ? 1 << 12 : 0) | (entry.getId() << 4) | (7 - row);
-
-                                        //The high bit plane one is offset by 8 from the low bit plane
-                                        sprite_pattern_addr_high = (sprite_pattern_addr_low + 8) & 0xFFFF;
-                                        //We read the 2 bit planes
-                                        sprite_pattern_low = nes.getPpu().ppuRead(sprite_pattern_addr_low, true);
-                                        sprite_pattern_high = nes.getPpu().ppuRead(sprite_pattern_addr_high, true);
-
-                                        //If the sprite is flipped horizontally
-                                        if ((entry.getAttribute() & 0x40) == 0x40) {
-                                            sprite_pattern_low = NumberUtils.byteFlip(sprite_pattern_low);
-                                            sprite_pattern_high = NumberUtils.byteFlip(sprite_pattern_high);
-                                        }
-                                        //For each pixel of the row
                                         for (int col = 0; col < 8; col++) {
-                                            //We compute the pixel and palette id
-                                            int px = ((sprite_pattern_low & 0x80) == 0x80 ? 0x1 : 0x0) | ((((sprite_pattern_high & 0x80) == 0x80 ? 0x1 : 0x0)) << 1);
-                                            int pal = (entry.getAttribute() & 0x3) + 4;
-                                            //We draw the pixel
-                                            g.setFill(nes.getPpu().getColorFromPalette(px == 0 ? 0 : pal, px));
+                                            g.setFill(tile.colors[col | (row << 3)]);
                                             g.fillRect(((i & 0x7) << 5) | (col << 2), ((i >> 3) << 5) | (row << 2), 4, 4);
-                                            preview.setFill(px == 0 ? Color.GREY : nes.getPpu().getColorFromPalette(pal, px));
+                                            preview.setFill(tile.colors[col | (row << 3)]);
                                             preview.fillRect(entry.getX() + col, entry.getY() + row, 1, 1);
-                                            //We shift the bit planes for the next pixel
-                                            sprite_pattern_high <<= 1;
-                                            sprite_pattern_low <<= 1;
                                         }
                                     }
+
                                     //If the current ObjectAttribute is the selected one, we highlight it
                                     if (i == selectedIndex) {
                                         g.setFill(Color.RED);
@@ -278,37 +380,14 @@ public class PPUViewer extends Application implements Initializable {
                                 for (int i = 0; i < 64; i++) {
                                     ObjectAttribute entry = nes.getPpu().getOams()[i];
                                     oam_list.getItems().add(String.format("%02X:", i) + " (" + String.format("%03d", entry.getX()) + ", " + String.format("%03d", entry.getY()) + ") ID: " + String.format("%02X", entry.getId()) + " AT: " + String.format("%02X", entry.getAttribute()));
-                                    for (int row = 0; row < 16; row++) {
-                                        int sprite_pattern_low, sprite_pattern_high;
-                                        int sprite_pattern_addr_low, sprite_pattern_addr_high;
-                                        if ((entry.getAttribute() & 0x80) != 0x80) {
-                                            if (row < 8)
-                                                sprite_pattern_addr_low = ((entry.getId() & 0x1) << 12) | ((entry.getId() & 0xFE) << 4) | row;
-                                            else
-                                                sprite_pattern_addr_low = ((entry.getId() & 0x1) << 12) | (((entry.getId() & 0xFE) + 1) << 4) | (row - 8);
-                                        } else {
-                                            if (row < 8)
-                                                sprite_pattern_addr_low = ((entry.getId() & 0x1) << 12) | (((entry.getId() & 0xFE) + 1) << 4) | (7 - row);
-                                            else
-                                                sprite_pattern_addr_low = ((entry.getId() & 0x1) << 12) | ((entry.getId() & 0xFE) << 4) | (7 - row + 8);
-                                        }
-                                        sprite_pattern_addr_high = (sprite_pattern_addr_low + 8) & 0xFFFF;
-                                        sprite_pattern_low = nes.getPpu().ppuRead(sprite_pattern_addr_low, true);
-                                        sprite_pattern_high = nes.getPpu().ppuRead(sprite_pattern_addr_high, true);
 
-                                        if ((entry.getAttribute() & 0x40) == 0x40) {
-                                            sprite_pattern_low = NumberUtils.byteFlip(sprite_pattern_low);
-                                            sprite_pattern_high = NumberUtils.byteFlip(sprite_pattern_high);
-                                        }
+                                    Tile tile = nes.getPpu().getOamTile8x16(i);
+                                    for (int row = 0; row < 16; row++) {
                                         for (int col = 0; col < 8; col++) {
-                                            int px = ((sprite_pattern_low & 0x80) == 0x80 ? 0x1 : 0x0) | ((((sprite_pattern_high & 0x80) == 0x80 ? 0x1 : 0x0)) << 1);
-                                            int pal = (entry.getAttribute() & 0x3) + 4;
-                                            g.setFill(nes.getPpu().getColorFromPalette(px == 0 ? 0 : pal, px));
+                                            g.setFill(tile.colors[col | (row << 3)]);
                                             g.fillRect(((i & 0x7) << 5) | (col << 2), ((i >> 3) << 6) | (row << 2), 4, 4);
-                                            preview.setFill(px == 0 ? Color.GREY : nes.getPpu().getColorFromPalette(pal, px));
+                                            preview.setFill(tile.colors[col | (row << 3)]);
                                             preview.fillRect(entry.getX() + col, entry.getY() + row, 1, 1);
-                                            sprite_pattern_high <<= 1;
-                                            sprite_pattern_low <<= 1;
                                         }
                                     }
                                     if (i == selectedIndex) {
@@ -339,21 +418,5 @@ public class PPUViewer extends Application implements Initializable {
                 Dialogs.showError("PPU Viewer Loop Error", "Error while drawing PPU Viewer");
             }
         }
-    }
-
-    /**
-     * Select the right ObjectAttribute from the list
-     *
-     * @param event the event triggered by the canvas
-     */
-    @FXML
-    private void selectOAM(MouseEvent event) {
-        int x = (int)event.getX() >> 5;
-        int y = (int)event.getY() >> 5;
-        if ((nes.getPpu().cpuRead(0, true) & 0x20) == 0x20)
-            y >>= 1;
-        oam_list.getSelectionModel().clearSelection();
-        oam_list.getSelectionModel().select((y << 3) | x);
-        oam_list.scrollTo((y << 3) | x);
     }
 }

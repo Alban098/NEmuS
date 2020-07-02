@@ -138,8 +138,6 @@ public class Instruction {
                 return cpu.txs();
             case TYA:
                 return cpu.tya();
-            case XXX:
-                return cpu.xxx();
             case ASO:
                 return cpu.aso();
             case RLA:

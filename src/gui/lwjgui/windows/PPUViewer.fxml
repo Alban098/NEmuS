@@ -64,7 +64,7 @@
                         <AnchorPane maxHeight="510.0" maxWidth="542.0" minHeight="510.0" minWidth="542.0" prefHeight="510.0" prefWidth="542.0">
                      <children>
                         <ListView fx:id="oam_list" layoutX="10.0" layoutY="10.0" prefHeight="248.0" prefWidth="256.0" />
-                        <Canvas fx:id="oam_canvas" height="512.0" layoutX="276.0" layoutY="-1.0" onMouseClicked="#selectOAM" width="256.0" />
+                        <Canvas fx:id="oam_canvas" height="512.0" layoutX="276.0" layoutY="-1.0" width="256.0" />
                         <Canvas fx:id="preview_canvas" height="237.0" layoutX="10.0" layoutY="266.0" width="256.0" />
                      </children></AnchorPane>
                     </content>
