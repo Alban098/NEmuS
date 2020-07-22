@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<filters>
+    <filter>
+        <name>Diagonal Flip (Top Left)</name>
+        <vertex>shaders/d1_flip_vertex.glsl</vertex>
+        <fragment>shaders/filters/no_filter.glsl</fragment>
+        <description>Flip the screen on the diagonal going from the top left to the bottom right</description>
+        <uniforms></uniforms>
+    </filter>
+    <filter>
+        <name>Diagonal Flip (Top Right)</name>
+        <vertex>shaders/d2_flip_vertex.glsl</vertex>
+        <fragment>shaders/filters/no_filter.glsl</fragment>
+        <description>Flip the screen on the diagonal going from the top right to the bottom left</description>
+        <uniforms></uniforms>
+    </filter>
+    <filter>
+        <name>Horizontal Gaussian Blur</name>
+        <vertex>shaders/vertex.glsl</vertex>
+        <fragment>shaders/filters/gaussian_horizontal.glsl</fragment>
+        <description>Apply a horizontal gaussian blur</description>
+        <uniforms></uniforms>
+    </filter>
+    <filter>
+        <name>Vertical Gaussian Blur</name>
+        <vertex>shaders/vertex.glsl</vertex>
+        <fragment>shaders/filters/gaussian_vertical.glsl</fragment>
+        <description>Apply a vertical gaussian blur</description>
+        <uniforms></uniforms>
+    </filter>
+    <filter>
+        <name>Horizontal Flip</name>
+        <vertex>shaders/h_flip_vertex.glsl</vertex>
+        <fragment>shaders/filters/no_filter.glsl</fragment>
+        <description>Flip the screen horizontally</description>
+        <uniforms></uniforms>
+    </filter>
+    <filter>
+        <name>Vertical Flip</name>
+        <vertex>shaders/v_flip_vertex.glsl</vertex>
+        <fragment>shaders/filters/no_filter.glsl</fragment>
+        <description>Flip the screen vertically</description>
+        <uniforms></uniforms>
+    </filter>
+    <filter>
+        <name>Fish Eye</name>
+        <vertex>shaders/vertex.glsl</vertex>
+        <fragment>shaders/filters/fish_eye.glsl</fragment>
+        <description>Apply a fish-eye effect at the center of the screen</description>
+        <uniforms>
+            <uniform type="float" name="strength" default="1.5"/>
+        </uniforms>
+    </filter>
+    <filter>
+        <name>Edge Detector</name>
+        <vertex>shaders/vertex.glsl</vertex>
+        <fragment>shaders/filters/edge.glsl</fragment>
+        <description>Detect and show the edges present on screen</description>
+        <uniforms></uniforms>
+    </filter>
+    <filter>
+        <name>Grayscale</name>
+        <vertex>shaders/vertex.glsl</vertex>
+        <fragment>shaders/filters/grayscale.glsl</fragment>
+        <description>Render the screen as a grayscale image</description>
+        <uniforms></uniforms>
+    </filter>
+    <filter>
+        <name>Cross Stiching</name>
+        <vertex>shaders/vertex.glsl</vertex>
+        <fragment>shaders/filters/cross_stiching.glsl</fragment>
+        <description>Replaces pixels by crosses of specified size</description>
+        <uniforms>
+            <uniform type="float" name="cross_size" default="6"/>
+            <uniform type="bool" name="invert" default="true"/>
+        </uniforms>
+    </filter>
+    <filter>
+        <name>Toonify</name>
+        <vertex>shaders/vertex.glsl</vertex>
+        <fragment>shaders/filters/toonify.glsl</fragment>
+        <description>Toonify</description>
+        <uniforms>
+            <uniform type="float" name="edge_low" default="0.2"/>
+            <uniform type="float" name="edge_high" default="5"/>
+        </uniforms>
+    </filter>
+</filters>

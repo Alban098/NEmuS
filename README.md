@@ -92,23 +92,36 @@ To add a new Filter the following steps are needed :
         out vec4 fragColor;         //pixel color
         
         uniform sampler2D tex;      //sampled texture (Name is important)
-        uniform float threshold;    //uniform variable
+        uniform int demo_int; 
+        uniform int demo_bool; 
+        uniform float demo_float;   //threshold
+        uniform vec3 demo_vec; 
+        uniform mat3 demo_mat; 
         
         void main() {
           vec3 color = texture2D(tex, pass_textureCoords).rgb; //sample the texture at the passed UVs coords
-          if (0.3 * color.r + 0.59 * color.g + 0.11 * color.b > threshold)
+          if (0.3 * color.r + 0.59 * color.g + 0.11 * color.b > demo_float)
               color = vec3(0);
           fragColor = vec4(color, 1.0);
         }
       ```
-  - When your shaders are ready you can register the filter in ```Filter.java``` as follows
-      ```java
-        public enum Filter {
-            ...
-            //If uniforms are declared either in the vertex or fragment shader, you need to add them with the same exact name, and a default value (you can add as many as you want)
-            EXAMPLE_FILTER("My Filter name", "shader/myVertex.glsl", "shader/myFragment.glsl", "My Filter description", new UniformFloat("threshold", 1f));
-            ...
-        }   
+  - When your shaders are ready you can register the filter in ```filters.xml``` as follows
+      ```xml
+      <filters>
+          <filter>
+              <name>Demo Filter</name>
+              <vertex>shader/myVertex.glsl</vertex>
+              <fragment>shader/myFragment.glsl</fragment>
+              <description>My Filter description</description>
+              <uniforms>
+                  <uniform type="int" name="demo_int" default="6"/>
+                  <uniform type="float" name="demo_float" default="6"/>
+                  <uniform type="bool" name="demo_bool" default="true"/>
+                  <uniform type="vec3" name="demo_vec" default="0; 1; 2"/>
+                  <uniform type="mat3" name="demo_mat" default="0; 1; 2; 3; 4; 5; 6; 7; 8"/>
+              </uniforms>
+          </filter>
+      </filters>
       ```
   - That's it, your Filter will appear in the Graphics Settings along with a section that will let you edit the uniforms to tweak the filter at runtime
 

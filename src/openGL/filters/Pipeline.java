@@ -36,7 +36,7 @@ public class Pipeline {
     //We need to duplicate the Filters when required, this need to be done by the OpenGL Thread
     //So we use a buffer variable to store the list of filters to apply
     private List<FilterInstance> requestedSteps;
-    private Filter default_filter = Filter.VERTICAL_FLIP;
+    private Filter default_filter;
 
     private volatile boolean locked = false;
 
@@ -50,13 +50,15 @@ public class Pipeline {
         this.fbo1 = new Fbo(PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
         this.fbo2 = new Fbo(PPU_2C02.SCREEN_WIDTH, PPU_2C02.SCREEN_HEIGHT);
         appliedFilters = new ArrayList<>();
+        default_filter = Filter.getDefault();
         shaders = new HashMap<>();
         try {
-            for (Filter filter : Filter.values()) {
+            for (Filter filter : Filter.getAll()) {
                 shaders.put(filter, new ShaderProgram(filter.vertexFile, filter.fragmentFile).storeAllUniformLocations(filter.getAllUniforms()));
             }
+            shaders.put(default_filter, new ShaderProgram(default_filter.vertexFile, default_filter.fragmentFile).storeAllUniformLocations(default_filter.getAllUniforms()));
         } catch (Exception e) {
-            Dialogs.showException("Error compiling Shaders", "An error has occured during Shader compilation", e);
+            Dialogs.showException("Error compiling Shaders", "An error has occurred during Shader compilation", e);
         }
     }
 

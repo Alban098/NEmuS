@@ -11,6 +11,7 @@ import lwjgui.scene.Scene;
 import lwjgui.scene.Window;
 import lwjgui.scene.control.*;
 import lwjgui.scene.layout.BorderPane;
+import openGL.filters.Filter;
 import org.lwjgl.glfw.GLFWWindowCloseCallback;
 import utils.Dialogs;
 
@@ -34,6 +35,7 @@ public class NEmuSUnified extends LWJGUIApplication {
         ModernOpenGL = false;
         //Just to initialize JavaFX
         new JFXPanel();
+        Filter.init();
         Platform.setImplicitExit(false);
         launch(args);
     }

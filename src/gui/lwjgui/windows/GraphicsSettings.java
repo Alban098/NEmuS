@@ -71,7 +71,7 @@ public class GraphicsSettings extends Application implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         instance = this;
-        postProcessingComboBox.getItems().addAll(Filter.values());
+        postProcessingComboBox.getItems().addAll(Filter.getAll());
         postProcessingList.getSelectionModel().selectedItemProperty().addListener((observableValue, oldValue, newValue) -> {
             filter_desc.clear();
             filter_panel.getChildren().clear();

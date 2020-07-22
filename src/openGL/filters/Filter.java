@@ -1,31 +1,30 @@
 package openGL.filters;
 
+import exceptions.InvalidFileException;
 import openGL.shader.uniform.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import org.joml.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import utils.Dialogs;
 
-public enum Filter {
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.File;
+import java.util.*;
 
-    DIAGONAL_FLIP_TL("Diagonal Flip (Top Left)", "shaders/d1_flip_vertex.glsl", "shaders/filters/no_filter.glsl", "Flip the screen on the diagonal going from the top left to the bottom right"),
-    DIAGONAL_FLIP_TR("Diagonal Flip (Top Right)", "shaders/d2_flip_vertex.glsl", "shaders/filters/no_filter.glsl", "Flip the screen on the diagonal going from the top right to the bottom left"),
-    GAUSSIAN_HORIZONTAL("Horizontal Gaussian Blur", "shaders/vertex.glsl", "shaders/filters/gaussian_horizontal.glsl", "Apply a horizontal gaussian blur"),
-    GAUSSIAN_VERTICAL("Vertical Gaussian Blur", "shaders/vertex.glsl", "shaders/filters/gaussian_vertical.glsl", "Apply a vertical gaussian blur"),
-    HORIZONTAL_FLIP("Horizontal Flip", "shaders/h_flip_vertex.glsl", "shaders/filters/no_filter.glsl", "Flip the screen vertically"),
-    VERTICAL_FLIP("Vertical Flip", "shaders/v_flip_vertex.glsl", "shaders/filters/no_filter.glsl", "Flip the screen horizontally"),
-    FISH_EYE("Fish Eye", "shaders/vertex.glsl", "shaders/filters/fish_eye.glsl", "Apply a fish-eye effect at the center of the screen", new UniformFloat("strength", 1.5f)),
-    EDGES("Edge Detector", "shaders/vertex.glsl", "shaders/filters/edge.glsl", "Detect and show the edges present on screen"),
-    GRAYSCALE("Grayscale", "shaders/vertex.glsl", "shaders/filters/grayscale.glsl", "Render the screen as a grayscale image"),
-    CROSS_STICHING("Cross Stiching", "shaders/vertex.glsl", "shaders/filters/cross_stiching.glsl", "Replaces pixels by crosses of specified size", new UniformFloat("cross_size", 6f), new UniformBoolean("invert", true)),
-    TOONIFY("Toonify", "shaders/vertex.glsl", "shaders/filters/toonify.glsl", "", new UniformFloat("edge_low", 0.2f), new UniformFloat("edge_high", 5.0f));
+public class Filter {
 
-    String name;
+    private static final Filter defaultFilter = new Filter("Vertical Flip", "shaders/v_flip_vertex.glsl", "shaders/filters/no_filter.glsl", "Flip the screen vertically");
+    private static final List<Filter> allFilters = new ArrayList<>();
+
+    private String name;
     String vertexFile;
     String fragmentFile;
-    String description;
-    Map<String, Uniform> uniforms;
+    private String description;
+    private Map<String, Uniform> uniforms;
 
-    Filter(String name, String vertex, String fragment, String description, Uniform... uniforms) {
+    private Filter(String name, String vertex, String fragment, String description, Uniform... uniforms) {
         this.name = name;
         this.vertexFile = vertex;
         this.fragmentFile = fragment;
@@ -70,5 +69,97 @@ public enum Filter {
     @Override
     public String toString() {
         return name;
+    }
+
+    public static List<Filter> getAll() {
+        return allFilters;
+    }
+
+    public static Filter getDefault() {
+        return defaultFilter;
+    }
+
+    public static void init() {
+        try {
+            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            File fileXML = new File("filters.xml");
+            Document xml;
+            xml = builder.parse(fileXML);
+            Element filtersList = (Element) xml.getElementsByTagName("filters").item(0);
+            if (filtersList == null)
+                throw new InvalidFileException("filters.xml file corrupted (filters node not found)");
+            NodeList filters = filtersList.getElementsByTagName("filter");
+
+            for (int i = 0; i < filters.getLength(); i++) {
+                Element filter = (Element) filters.item(i);
+                Element name = (Element)filter.getElementsByTagName("name").item(0);
+                Element vertex = (Element)filter.getElementsByTagName("vertex").item(0);
+                Element fragment = (Element)filter.getElementsByTagName("fragment").item(0);
+                Element desc = (Element)filter.getElementsByTagName("description").item(0);
+                NodeList uniforms = ((Element)filter.getElementsByTagName("uniforms").item(0)).getElementsByTagName("uniform");
+                Uniform[] tmp = new Uniform[uniforms.getLength()];
+                for (int j = 0; j < uniforms.getLength(); j++) {
+                    Element e = (Element) uniforms.item(j);
+                    switch (e.getAttribute("type")) {
+                        case "float":
+                            tmp[j] = new UniformFloat(e.getAttribute("name").replaceAll(" ", "_"), Float.parseFloat(e.getAttribute("default")));
+                            break;
+                        case "bool":
+                            tmp[j] = new UniformBoolean(e.getAttribute("name").replaceAll(" ", "_"), Boolean.parseBoolean(e.getAttribute("default")));
+                            break;
+                        case "int":
+                            tmp[j] = new UniformInteger(e.getAttribute("name").replaceAll(" ", "_"), Integer.parseInt(e.getAttribute("default")));
+                            break;
+                        case "mat2":
+                            String[] defMat2 = e.getAttribute("default").replaceAll(" ", "").split(";");
+                            if (defMat2.length != 4)
+                                throw new Exception("Invalid default value size (mat2 must be 4 float)");
+                            Matrix2f mat2 = new Matrix2f(Integer.parseInt(defMat2[0]),Integer.parseInt(defMat2[1]),Integer.parseInt(defMat2[2]),Integer.parseInt(defMat2[3]));
+                            tmp[j] = new UniformMat2(e.getAttribute("name").replaceAll(" ", "_"), mat2);
+                            break;
+                        case "mat3":
+                            String[] defMat3 = e.getAttribute("default").replaceAll(" ", "").split(";");
+                            if (defMat3.length != 9)
+                                throw new Exception("Invalid default value size (mat3 must be 9 float)");
+                            Matrix3f mat3 = new Matrix3f(Integer.parseInt(defMat3[0]),Integer.parseInt(defMat3[1]),Integer.parseInt(defMat3[2]),Integer.parseInt(defMat3[3]),Integer.parseInt(defMat3[4]),Integer.parseInt(defMat3[5]),Integer.parseInt(defMat3[6]),Integer.parseInt(defMat3[7]),Integer.parseInt(defMat3[8]));
+                            tmp[j] = new UniformMat3(e.getAttribute("name").replaceAll(" ", "_"), mat3);
+                            break;
+                        case "mat4":
+                            String[] defMat4 = e.getAttribute("default").replaceAll(" ", "").split(";");
+                            if (defMat4.length != 16)
+                                throw new Exception("Invalid default value size (mat4 must be 16 float)");
+                            Matrix4f mat4 = new Matrix4f(Integer.parseInt(defMat4[0]),Integer.parseInt(defMat4[1]),Integer.parseInt(defMat4[2]),Integer.parseInt(defMat4[3]),Integer.parseInt(defMat4[4]),Integer.parseInt(defMat4[5]),Integer.parseInt(defMat4[6]),Integer.parseInt(defMat4[7]),Integer.parseInt(defMat4[8]),Integer.parseInt(defMat4[9]),Integer.parseInt(defMat4[10]),Integer.parseInt(defMat4[11]),Integer.parseInt(defMat4[12]),Integer.parseInt(defMat4[13]),Integer.parseInt(defMat4[14]),Integer.parseInt(defMat4[15]));
+                            tmp[j] = new UniformMat4(e.getAttribute("name").replaceAll(" ", "_"), mat4);
+                            break;
+                        case "vec2":
+                            String[] defVec2 = e.getAttribute("default").replaceAll(" ", "").split(";");
+                            if (defVec2.length != 2)
+                                throw new Exception("Invalid default value size (vec2 must be 2 float)");
+                            Vector2f vec2 = new Vector2f(Integer.parseInt(defVec2[0]),Integer.parseInt(defVec2[1]));
+                            tmp[j] = new UniformVec2(e.getAttribute("name").replaceAll(" ", "_"), vec2);
+                            break;
+                        case "vec3":
+                            String[] defVec3 = e.getAttribute("default").replaceAll(" ", "").split(";");
+                            if (defVec3.length != 3)
+                                throw new Exception("Invalid default value size (vec3 must be 3 float)");
+                            Vector3f vec3 = new Vector3f(Integer.parseInt(defVec3[0]),Integer.parseInt(defVec3[1]),Integer.parseInt(defVec3[2]));
+                            tmp[j] = new UniformVec3(e.getAttribute("name").replaceAll(" ", "_"), vec3);
+                            break;
+                        case "vec4":
+                            String[] defVec4 = e.getAttribute("default").replaceAll(" ", "").split(";");
+                            if (defVec4.length != 4)
+                                throw new Exception("Invalid default value size (vec4 must be 4 float)");
+                            Vector4f vec4 = new Vector4f(Integer.parseInt(defVec4[0]),Integer.parseInt(defVec4[1]),Integer.parseInt(defVec4[2]),Integer.parseInt(defVec4[3]));
+                            tmp[j] = new UniformVec4(e.getAttribute("name").replaceAll(" ", "_"), vec4);
+                            break;
+                        default:
+                            throw new Exception("Invalid uniform type : " + e.getNodeName());
+                    }
+                }
+                allFilters.add(new Filter(name.getTextContent(), vertex.getTextContent(), fragment.getTextContent(), desc.getTextContent(), tmp));
+            }
+        } catch (Exception e) {
+            Dialogs.showException("Error Loading Filters", "An error has occurred during Filters loading", e);
+        }
     }
 }
