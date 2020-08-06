@@ -176,7 +176,7 @@ public class NES {
      * the PPU is clocked every times
      * the CPU is clocked one every 3 times
      */
-    public boolean clock() {
+    public boolean clock(boolean update_apu_visual) {
         //The PPU and APU are clocked every tick
         ppu.clock();
         apu.clock(sound_rendering, time_per_NES_cycle);
@@ -228,7 +228,10 @@ public class NES {
         if (audio_time >= time_per_system_sample) {
             //If so we set the time for the next audio sample and compute the current one
             audio_time -= time_per_system_sample;
-            final_audio_sample = apu.getSample();
+            if (sound_rendering)
+                final_audio_sample = apu.getSample(update_apu_visual);
+            else
+                final_audio_sample = 0;
             audioSampleReady = true;
         }
 

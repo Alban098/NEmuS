@@ -84,7 +84,7 @@ public class APU_2A03 {
      *
      * @return the current audio sample as a value between -1 and 1
      */
-    public double getSample() {
+    public double getSample(boolean update_visual) {
         double sample;
         double p1 = pulse_1_rendered ? pulse_1.sample * 15 : 0;
         double p2 = pulse_2_rendered ? pulse_2.sample * 15 : 0;
@@ -98,23 +98,24 @@ public class APU_2A03 {
             double tnd = (t == 0 && n == 0 && d == 0) ? 0 : 159.79 / (1.0 / (t/8227.0 + n/12241.0 + d/22638.0) + 100);
             sample = pulse + tnd;
         }
-        if (cycles_until_visualizer_sample == 0) {
-            if (audio_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
-                audio_visualizer_queue.poll();
+        if (update_visual) {
+            if (cycles_until_visualizer_sample == 0) {
+                if (audio_visualizer_queue.size() >= VISUALIZER_SAMPLE_SIZE)
+                    audio_visualizer_queue.poll();
 
-            AudioSampleCollection sampleCollection = new AudioSampleCollection();
-            sampleCollection.pulse1 = pulse_1_rendered ? pulse_1.sample : 0;
-            sampleCollection.pulse2 = pulse_2_rendered ? pulse_2.sample : 0;
-            sampleCollection.triangle = triangle_rendered ? triangle.sample : 0;
-            sampleCollection.noise = noise_rendered ? noise.sample : 0;
-            sampleCollection.dmc = dmc_rendered ? dmc.output : 0;
-            sampleCollection.mixer = sample * 1.5;
-            audio_visualizer_queue.offer(sampleCollection);
+                AudioSampleCollection sampleCollection = new AudioSampleCollection();
+                sampleCollection.pulse1 = pulse_1_rendered ? pulse_1.sample : 0;
+                sampleCollection.pulse2 = pulse_2_rendered ? pulse_2.sample : 0;
+                sampleCollection.triangle = triangle_rendered ? triangle.sample : 0;
+                sampleCollection.noise = noise_rendered ? noise.sample : 0;
+                sampleCollection.dmc = dmc_rendered ? dmc.output : 0;
+                sampleCollection.mixer = sample * 1.5;
+                audio_visualizer_queue.offer(sampleCollection);
 
-            cycles_until_visualizer_sample = 1280 / VISUALIZER_SAMPLE_SIZE;
+                cycles_until_visualizer_sample = 1280 / VISUALIZER_SAMPLE_SIZE;
+            }
+            cycles_until_visualizer_sample--;
         }
-
-        cycles_until_visualizer_sample--;
         return sample * 2 * volume;
     }
 
@@ -198,103 +199,67 @@ public class APU_2A03 {
      * @param addr the address to write to
      */
     public void cpuWrite(int addr, int data) {
+        //If bit 7 is set quarter and half frame signals ar triggered
         switch (addr) {
-            case 0x4000:
-                pulse_1.writeDutyCycle(data);
-                break;
-            case 0x4001:
-                pulse_1.writeSweep(data);
-                break;
-            case 0x4002:
-                pulse_1.writeTimerLow(data);
-                break;
-            case 0x4003:
+            case 0x4000 -> pulse_1.writeDutyCycle(data);
+            case 0x4001 -> pulse_1.writeSweep(data);
+            case 0x4002 -> pulse_1.writeTimerLow(data);
+            case 0x4003 -> {
                 pulse_1.writeTimerHigh(data);
                 pulse_1.writeLengthCounter(data);
-                break;
-            case 0x4004:
-                pulse_2.writeDutyCycle(data);
-                break;
-            case 0x4005:
-                pulse_2.writeSweep(data);
-                break;
-            case 0x4006:
-                pulse_2.writeTimerLow(data);
-                break;
-            case 0x4007:
+            }
+            case 0x4004 -> pulse_2.writeDutyCycle(data);
+            case 0x4005 -> pulse_2.writeSweep(data);
+            case 0x4006 -> pulse_2.writeTimerLow(data);
+            case 0x4007 -> {
                 pulse_2.writeTimerHigh(data);
                 pulse_2.writeLengthCounter(data);
-                break;
-            case 0x4008:
-                triangle.writeLinearCounter(data);
-                break;
-            case 0x400A:
-                triangle.writeTimerLow(data);
-                break;
-            case 0x400B:
+            }
+            case 0x4008 -> triangle.writeLinearCounter(data);
+            case 0x400A -> triangle.writeTimerLow(data);
+            case 0x400B -> {
                 triangle.writeTimerHigh(data);
                 triangle.loadLengthCounter(data);
-                break;
-            case 0x400C:
-                noise.writeEnvelope(data);
-                break;
-            case 0x400E:
-                noise.updateReload(data);
-                break;
-            case 0x400F:
-                noise.writeLengthCounter(data);
-                break;
-            case 0x4010:
-                dmc.writeRate(data);
-                break;
-            case 0x4011:
-                dmc.directLoad(data);
-                break;
-            case 0x4012:
-                dmc.writeSampleAddr(data);
-                break;
-            case 0x4013:
-                dmc.writeSampleLength(data);
-                break;
-            case 0x4015:
+            }
+            case 0x400C -> noise.writeEnvelope(data);
+            case 0x400E -> noise.updateReload(data);
+            case 0x400F -> noise.writeLengthCounter(data);
+            case 0x4010 -> dmc.writeRate(data);
+            case 0x4011 -> dmc.directLoad(data);
+            case 0x4012 -> dmc.writeSampleAddr(data);
+            case 0x4013 -> dmc.writeSampleLength(data);
+            case 0x4015 -> {
                 pulse_1.enable(false);
                 pulse_2.enable(false);
                 triangle.enable(false);
                 noise.enable(false);
                 dmc.clearIrq();
-
                 if ((data & 0x10) == 0x00)
                     dmc.clearReader();
-
                 if ((data & 0x1) == 0x1)
                     pulse_1.enable(true);
                 else
                     pulse_1.resetLengthCounter();
-
                 if ((data & 0x2) == 0x2)
                     pulse_2.enable(true);
                 else
                     pulse_2.resetLengthCounter();
-
                 if ((data & 0x4) == 0x4)
                     triangle.enable(true);
                 else {
                     triangle.resetLengthCounter();
                     triangle.resetLinearCounter();
                 }
-
                 if ((data & 0x8) == 0x8)
                     noise.enable(true);
                 else
                     noise.resetLengthCounter();
-
-                break;
-            case 0x4017:
+            }
+            case 0x4017 -> {
                 flag_5_step_mode = (data & 0x80) == 0x80;
                 flag_IRQ_inhibit = (data & 0x40) == 0x40;
                 if (flag_IRQ_inhibit) frame_IRQ = false;
                 cycle_remaining_since_4017_write = 4;
-                //If bit 7 is set quarter and half frame signals ar triggered
                 if (flag_5_step_mode) {
                     pulse_1.clockLengthCounter();
                     pulse_1.clockEnvelope();
@@ -310,7 +275,7 @@ public class APU_2A03 {
                     noise.clockEnvelope();
                     noise.clockLengthCounter();
                 }
-                break;
+            }
         }
     }
 

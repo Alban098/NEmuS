@@ -511,17 +511,13 @@ public class PPU_2C02 {
      * @return an 8bit unsigned value pointed by the current OAM address
      */
     private int getOamData() {
-        switch (oam_addr & 0x03) {
-            case 0x0:
-                return oams[oam_addr >> 2].getY() & 0xFF;
-            case 0x1:
-                return oams[oam_addr >> 2].getId() & 0xFF;
-            case 0x2:
-                return oams[oam_addr >> 2].getAttribute() & 0xFF;
-            case 0x3:
-                return oams[oam_addr >> 2].getX() & 0xFF;
-        }
-        return 0x00;
+        return switch (oam_addr & 0x03) {
+            case 0x0 -> oams[oam_addr >> 2].getY() & 0xFF;
+            case 0x1 -> oams[oam_addr >> 2].getId() & 0xFF;
+            case 0x2 -> oams[oam_addr >> 2].getAttribute() & 0xFF;
+            case 0x3 -> oams[oam_addr >> 2].getX() & 0xFF;
+            default -> 0x00;
+        };
     }
 
     /**
@@ -605,36 +601,30 @@ public class PPU_2C02 {
                 updateShifter.run();
                 //All of the following action will be executed once and in order for each tile
                 //We are fetching the information required for the next tile (8 pixels)
+                //At the beginning of a tile we load the Background Shifters with the previously fetched tile ID and tile attribute
+                //We fetch the next tile ID
+                //We then fetch the next tile attribute
+                //We use the Coarses 2 lsb to get select the correct 2 bits of the attribute depending on the position of the tile in the 4*4 grid
+                //We only keep the 2 lsb of the attribute
+                //We use the next tile ID and row index (fineY) to fetch the next 8 pixels lsb
+                //Same but we fetch the msb
+                //We pass to next tile rendering
                 switch ((cycle - 1) % 8) {
-                    case 0:
-                        //At the beginning of a tile we load the Background Shifters with the previously fetched tile ID and tile attribute
+                    case 0 -> {
                         loadBackgroundShifter.run();
-                        //We fetch the next tile ID
                         bg_next_tile_id = ppuRead(0x2000 | (vram_addr.get() & 0x0FFF), false);
-                        break;
-                    case 2:
-                        //We then fetch the next tile attribute
+                    }
+                    case 2 -> {
                         bg_next_tile_attrib = ppuRead(0x23C0 | (vram_addr.isNametableYSet() ? 0x1 << 11 : 0x0) | (vram_addr.isNametableXSet() ? 0x1 << 10 : 0x0) | ((vram_addr.getCoarseY() >> 2) << 3) | (vram_addr.getCoarseX() >> 2), false);
-                        //We use the Coarses 2 lsb to get select the correct 2 bits of the attribute depending on the position of the tile in the 4*4 grid
                         if ((vram_addr.getCoarseY() & 0x02) == 0x02)
                             bg_next_tile_attrib = (bg_next_tile_attrib >> 4) & 0xFF;
                         if ((vram_addr.getCoarseX() & 0x02) == 0x02)
                             bg_next_tile_attrib = (bg_next_tile_attrib >> 2) & 0xFF;
-                        //We only keep the 2 lsb of the attribute
                         bg_next_tile_attrib &= 0x03;
-                        break;
-                    case 4:
-                        //We use the next tile ID and row index (fineY) to fetch the next 8 pixels lsb
-                        bg_next_tile_lsb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY(), false);
-                        break;
-                    case 6:
-                        //Same but we fetch the msb
-                        bg_next_tile_msb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY() + 8, false);
-                        break;
-                    case 7:
-                        //We pass to next tile rendering
-                        incrementScrollX.run();
-                        break;
+                    }
+                    case 4 -> bg_next_tile_lsb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY(), false);
+                    case 6 -> bg_next_tile_msb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY() + 8, false);
+                    case 7 -> incrementScrollX.run();
                 }
             }
             //If we are at the end of a visible scanline we pass to the next one

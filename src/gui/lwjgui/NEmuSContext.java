@@ -7,6 +7,7 @@ import exceptions.InvalidFileException;
 import exceptions.UnsupportedMapperException;
 import gui.inputs.InputMapper;
 import gui.inputs.NESInputs;
+import gui.lwjgui.windows.APUViewer;
 import javafx.application.Platform;
 import lwjgui.gl.Renderer;
 import lwjgui.scene.Context;
@@ -84,12 +85,11 @@ public class NEmuSContext implements Renderer {
                 if (emulation_running) {
                     boolean sample_ready = false;
                     while (!sample_ready)
-                        sample_ready = nes.clock();
+                        sample_ready = nes.clock(APUViewer.hasInstance());
                 }
                 return emulation_running ? (float) nes.final_audio_sample : 0;
             }
         };
-
         ac.out.addInput(function);
         ac.start();
     }
@@ -253,10 +253,10 @@ public class NEmuSContext implements Renderer {
     public void frameStepEvent() {
         if (!emulation_running && started) {
             do {
-                nes.clock();
+                nes.clock(false);
             } while (!nes.getPpu().frame_complete);
             do {
-                nes.clock();
+                nes.clock(false);
             } while (nes.getCpu().complete());
             nes.getPpu().frame_complete = false;
             redraw = true;
@@ -269,10 +269,10 @@ public class NEmuSContext implements Renderer {
     public void cpuStepEvent() {
         if (!emulation_running && started) {
             do {
-                nes.clock();
+                nes.clock(false);
             } while (!nes.getCpu().complete());
             do {
-                nes.clock();
+                nes.clock(false);
             } while (nes.getCpu().complete());
             if (nes.getPpu().frame_complete) {
                 nes.getPpu().frame_complete = false;
