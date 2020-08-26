@@ -128,11 +128,10 @@ public class ShaderProgram {
     /**
      * Allocate the memory on the GPU's RAM for all the Uniforms variables of this shader
      */
-    public ShaderProgram storeAllUniformLocations(Uniform ... uniforms){
+    public void storeAllUniformLocations(Uniform ... uniforms){
         for(Uniform uniform : uniforms){
             uniform.storeUniformLocation(programId);
         }
-        return this;
     }
 
     /**

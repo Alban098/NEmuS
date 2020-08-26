@@ -10,7 +10,7 @@ public class UniformVec4 extends Uniform {
 	private float currentY;
 	private float currentZ;
 	private float currentW;
-	private Vector4f defaultValue;
+	private final Vector4f defaultValue;
 
 	/**
 	 * Create a new Uniform of type vec4

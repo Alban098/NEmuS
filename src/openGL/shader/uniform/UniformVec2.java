@@ -7,7 +7,7 @@ public class UniformVec2 extends Uniform {
 
 	private float currentX;
 	private float currentY;
-	private Vector2f defaultValue;
+	private final Vector2f defaultValue;
 
 	/**
 	 * Create a new Uniform of type vec2

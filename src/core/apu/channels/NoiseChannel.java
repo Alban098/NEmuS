@@ -61,54 +61,22 @@ public class NoiseChannel {
         if (enabled) {
             mode = (data & 0x80) == 0x80;
             switch (data & 0x0F) {
-                case 0x00:
-                    sequencer.reload = 0;
-                    break;
-                case 0x01:
-                    sequencer.reload = 4;
-                    break;
-                case 0x02:
-                    sequencer.reload = 8;
-                    break;
-                case 0x03:
-                    sequencer.reload = 16;
-                    break;
-                case 0x04:
-                    sequencer.reload = 32;
-                    break;
-                case 0x05:
-                    sequencer.reload = 64;
-                    break;
-                case 0x06:
-                    sequencer.reload = 96;
-                    break;
-                case 0x07:
-                    sequencer.reload = 128;
-                    break;
-                case 0x08:
-                    sequencer.reload = 160;
-                    break;
-                case 0x09:
-                    sequencer.reload = 202;
-                    break;
-                case 0x0A:
-                    sequencer.reload = 254;
-                    break;
-                case 0x0B:
-                    sequencer.reload = 380;
-                    break;
-                case 0x0C:
-                    sequencer.reload = 508;
-                    break;
-                case 0x0D:
-                    sequencer.reload = 1016;
-                    break;
-                case 0x0E:
-                    sequencer.reload = 2034;
-                    break;
-                case 0x0F:
-                    sequencer.reload = 4068;
-                    break;
+                case 0x00 -> sequencer.reload = 0;
+                case 0x01 -> sequencer.reload = 4;
+                case 0x02 -> sequencer.reload = 8;
+                case 0x03 -> sequencer.reload = 16;
+                case 0x04 -> sequencer.reload = 32;
+                case 0x05 -> sequencer.reload = 64;
+                case 0x06 -> sequencer.reload = 96;
+                case 0x07 -> sequencer.reload = 128;
+                case 0x08 -> sequencer.reload = 160;
+                case 0x09 -> sequencer.reload = 202;
+                case 0x0A -> sequencer.reload = 254;
+                case 0x0B -> sequencer.reload = 380;
+                case 0x0C -> sequencer.reload = 508;
+                case 0x0D -> sequencer.reload = 1016;
+                case 0x0E -> sequencer.reload = 2034;
+                case 0x0F -> sequencer.reload = 4068;
             }
         }
     }

@@ -84,33 +84,15 @@ public class GraphicsSettings extends Application implements Initializable {
                     field_pane.getChildren().add(title);
                     field_pane.setPadding(new Insets(5,5,5,5));
                     switch (param.type) {
-                        case BOOLEAN:
-                            field_pane.getChildren().add(new BooleanField(param));
-                            break;
-                        case INTEGER:
-                            field_pane.getChildren().add(new IntegerField(param));
-                            break;
-                        case FLOAT:
-                            field_pane.getChildren().add(new FloatField(param));
-                            break;
-                        case VEC2:
-                            field_pane.getChildren().add(new Vec2Field(param));
-                            break;
-                        case VEC3:
-                            field_pane.getChildren().add(new Vec3Field(param));
-                            break;
-                        case VEC4:
-                            field_pane.getChildren().add(new Vec4Field(param));
-                            break;
-                        case MAT2:
-                            field_pane.getChildren().add(new Mat2Field(param));
-                            break;
-                        case MAT3:
-                            field_pane.getChildren().add(new Mat3Field(param));
-                            break;
-                        case MAT4:
-                            field_pane.getChildren().add(new Mat4Field(param));
-                            break;
+                        case BOOLEAN -> field_pane.getChildren().add(new BooleanField(param));
+                        case INTEGER -> field_pane.getChildren().add(new IntegerField(param));
+                        case FLOAT -> field_pane.getChildren().add(new FloatField(param));
+                        case VEC2 -> field_pane.getChildren().add(new Vec2Field(param));
+                        case VEC3 -> field_pane.getChildren().add(new Vec3Field(param));
+                        case VEC4 -> field_pane.getChildren().add(new Vec4Field(param));
+                        case MAT2 -> field_pane.getChildren().add(new Mat2Field(param));
+                        case MAT3 -> field_pane.getChildren().add(new Mat3Field(param));
+                        case MAT4 -> field_pane.getChildren().add(new Mat4Field(param));
                     }
                     filter_panel.getChildren().add(field_pane);
                 }

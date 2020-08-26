@@ -12,5 +12,5 @@ public enum AddressingMode {
     ABX,
     ABY,
     IND,
-    REL;
+    REL
 }

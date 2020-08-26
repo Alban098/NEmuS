@@ -101,7 +101,7 @@ public class NEmuSContext implements Renderer {
         pipeline.cleanUp();
         default_shader.cleanUp();
         screen_texture.cleanUp();
-
+        fbo.cleanUp();
         ac.stop();
     }
 
@@ -181,6 +181,7 @@ public class NEmuSContext implements Renderer {
             nes.reset();
             emulation_running = running;
         }
+
 
         //If we need to render the screen
         if ((emulation_running && nes.getPpu().frame_complete) || redraw) {

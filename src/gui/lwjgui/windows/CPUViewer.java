@@ -15,12 +15,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import utils.Dialogs;
 
 import java.net.URL;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
 import java.util.ResourceBundle;
 
 /**
@@ -209,21 +206,21 @@ public class CPUViewer extends Application implements Initializable {
                                 code_fields[i][5].setText(split.length > 5 ? split[5] : "");
                                 code_fields[i][6].setText(split.length > 6 ? split[6] : "");
                                 switch (split[split.length - 1]) {
-                                    case "0":
+                                    case "0" -> {
                                         code_fields[i][1].setStyle("-fx-text-fill: #0000ff");
                                         code_fields[i][2].setStyle("-fx-text-fill: #0000ff");
                                         code_fields[i][3].setStyle("-fx-text-fill: #0000ff");
-                                        break;
-                                    case "1":
+                                    }
+                                    case "1" -> {
                                         code_fields[i][1].setStyle("-fx-text-fill: #ff00ff");
                                         code_fields[i][2].setStyle("-fx-text-fill: #ff00ff");
                                         code_fields[i][3].setStyle("-fx-text-fill: #ff00ff");
-                                        break;
-                                    case "2":
+                                    }
+                                    case "2" -> {
                                         code_fields[i][1].setStyle("-fx-text-fill: #ff0000");
                                         code_fields[i][2].setStyle("-fx-text-fill: #ff0000");
                                         code_fields[i][3].setStyle("-fx-text-fill: #ff0000");
-                                        break;
+                                    }
                                 }
                                 i++;
                             }

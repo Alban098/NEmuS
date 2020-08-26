@@ -74,11 +74,10 @@ public class Mapper001 extends Mapper {
                     return true;
                 }
                 mapped.value = (selected_PRG_bank_high_16K * 0x4000) + (addr & 0x3FFF);
-                return true;
             } else {
                 mapped.value = (selected_PRG_bank_32K * 0x8000) + (addr & 0x7FFF);
-                return true;
             }
+            return true;
         }
         return false;
     }
@@ -122,18 +121,10 @@ public class Mapper001 extends Mapper {
                         //The mirroring mode is being changed
                         control_register = load_register & 0x1F;
                         switch (control_register & 0x03) {
-                            case 0:
-                                mirroring_mode = Mirror.ONE_SCREEN_LOW;
-                                break;
-                            case 1:
-                                mirroring_mode = Mirror.ONE_SCREEN_HIGH;
-                                break;
-                            case 2:
-                                mirroring_mode = Mirror.VERTICAL;
-                                break;
-                            case 3:
-                                mirroring_mode = Mirror.HORIZONTAL;
-                                break;
+                            case 0 -> mirroring_mode = Mirror.ONE_SCREEN_LOW;
+                            case 1 -> mirroring_mode = Mirror.ONE_SCREEN_HIGH;
+                            case 2 -> mirroring_mode = Mirror.VERTICAL;
+                            case 3 -> mirroring_mode = Mirror.HORIZONTAL;
                         }
                     } else if (targetRegister == 1) { // 0xA000 - 0xBFFF
                         if ((control_register & 0b10000) == 0b10000) //We change the lower half of the CHR Memory range
@@ -180,7 +171,6 @@ public class Mapper001 extends Mapper {
             //If their is not banks we simply return the provided address
             if (nb_CHR_banks == 0) {
                 mapped.value = addr;
-                return true;
             } else {
                 //We select the right Bank by reading the control register
                 if ((control_register & 0b10000) == 0b10000) {
@@ -189,12 +179,11 @@ public class Mapper001 extends Mapper {
                         return true;
                     }
                     mapped.value = (selected_CHR_bank_high_4K * 0x1000) + (addr & 0x0FFF);
-                    return true;
                 } else {
                     mapped.value = (selected_CHR_bank_8K * 0x2000) + (addr & 0x1FFF);
-                    return true;
                 }
             }
+            return true;
         }
         return false;
     }

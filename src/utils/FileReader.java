@@ -14,7 +14,7 @@ import java.nio.file.Paths;
 public class FileReader {
 
     private int currentIndex;
-    private byte[] file;
+    private final byte[] file;
 
     public FileReader(String filename) throws InvalidFileException {
         try {

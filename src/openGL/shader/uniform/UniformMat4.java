@@ -8,8 +8,8 @@ import org.lwjgl.opengl.GL20;
 
 public class UniformMat4 extends Uniform{
 	
-	private static FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
-	private Matrix4f defaultValue;
+	private static final FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
+	private final Matrix4f defaultValue;
 
 	public UniformMat4(String name, Matrix4f defaultValue) {
 		super(name);

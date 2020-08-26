@@ -86,41 +86,29 @@ public class Mapper009 extends Mapper {
      */
     @Override
     public boolean cpuMapWrite(int addr, IntegerWrapper mapped, int data) {
-        //The CPU try to write to internal RAM
-        if (addr >= 0x6000 && addr <= 0x7FFF) {
+        if (addr >= 0x6000 && addr <= 0x7FFF) { // Cartridge RAM
             mapped.value = -1;
             internal_ram[addr & 0x1FFF] = (byte) data;
             return true;
-        }
-        //The CPU try to configure the Mapper circuit
-        if (addr >= 0xA000 && addr <= 0xAFFF) {
+        } else if (addr >= 0xA000 && addr <= 0xAFFF) {
             selected_PRG_bank = data & 0x0F;
             return true;
-        }
-        if (addr >= 0xB000 && addr <= 0xBFFF) {
+        } else if (addr >= 0xB000 && addr <= 0xBFFF) {
             selected_CHR_bank_l0_FD = data & 0x1F;
             return true;
-        }
-        if (addr >= 0xC000 && addr <= 0xCFFF) {
+        } else if (addr >= 0xC000 && addr <= 0xCFFF) {
             selected_CHR_bank_l0_FE = data & 0x1F;
             return true;
-        }
-        if (addr >= 0xD000 && addr <= 0xDFFF) {
+        } else if (addr >= 0xD000 && addr <= 0xDFFF) {
             selected_CHR_bank_l1_FD = data & 0x1F;
             return true;
-        }
-        if (addr >= 0xE000 && addr <= 0xEFFF) {
+        } else if (addr >= 0xE000 && addr <= 0xEFFF) {
             selected_CHR_bank_l1_FE = data & 0x1F;
             return true;
-        }
-        if (addr >= 0xF000 && addr <= 0xFFFF) {
+        } else if (addr >= 0xF000 && addr <= 0xFFFF) {
             switch (data & 0x01) {
-                case 0:
-                    mirroring_mode = Mirror.VERTICAL;
-                    break;
-                case 1:
-                    mirroring_mode = Mirror.HORIZONTAL;
-                    break;
+                case 0 -> mirroring_mode = Mirror.VERTICAL;
+                case 1 -> mirroring_mode = Mirror.HORIZONTAL;
             }
             return true;
         }

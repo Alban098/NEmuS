@@ -649,7 +649,7 @@ public class PPU_2C02 {
             if (cycle == 320 && scanline >= 0) {
                 //We clear all visible Object Attribute
                 for (ObjectAttribute visible_oam : visible_oams) visible_oam.clear(0xFF);
-                //And reset the scripte count
+                //And reset the sprite count
                 sprite_count = 0;
 
                 for (int i = 0; i < 8; i++) {

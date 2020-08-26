@@ -41,22 +41,22 @@ public class PulseChannel {
      */
     public void writeDutyCycle(int data) {
         switch ((data & 0xC0) >> 6) {
-            case 0x00:
+            case 0x00 -> {
                 sequencer.sequence = 0b00000001;
                 oscillator.duty_cycle = 0.125f;
-                break;
-            case 0x01:
+            }
+            case 0x01 -> {
                 sequencer.sequence = 0b00000011;
                 oscillator.duty_cycle = 0.250f;
-                break;
-            case 0x02:
+            }
+            case 0x02 -> {
                 sequencer.sequence = 0b00001111;
                 oscillator.duty_cycle = 0.500f;
-                break;
-            case 0x03:
+            }
+            case 0x03 -> {
                 sequencer.sequence = 0b11111100;
                 oscillator.duty_cycle = 0.750f;
-                break;
+            }
         }
         halted = (data & 0x20) == 0x20;
         envelope.volume = (data & 0x0F);
@@ -116,7 +116,6 @@ public class PulseChannel {
             sequencer.clock(true, s -> (((s & 0x01) << 7) | ((s & 0xFE) >> 1)));
             if (sequencer.timer >= 8) {
                 if (raw) {
-                    if (sample >= 1) System.out.println(sample);
                     sample = sequencer.output * ((envelope.output - 1) / 22.0);
                 } else {
                     oscillator.frequency = 1789773.0f / (16.0f * (sequencer.reload + 1));

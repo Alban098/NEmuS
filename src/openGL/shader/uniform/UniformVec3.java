@@ -8,7 +8,7 @@ public class UniformVec3 extends Uniform {
 	private float currentX;
 	private float currentY;
 	private float currentZ;
-	private Vector3f defaultValue;
+	private final Vector3f defaultValue;
 
 	/**
 	 * Create a new Uniform of type vec3

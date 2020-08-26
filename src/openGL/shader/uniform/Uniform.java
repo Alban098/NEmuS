@@ -6,7 +6,7 @@ public abstract class Uniform {
 	
 	private static final int NOT_FOUND = -1;
 	
-	private String name;
+	private final String name;
 	private int location;
 
 	/**

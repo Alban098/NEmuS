@@ -5,7 +5,7 @@ import org.lwjgl.opengl.GL20;
 public class UniformInteger extends Uniform{
 
 	private int currentValue;
-	private int defaultValue;
+	private final int defaultValue;
 
 	/**
 	 * Create a new Uniform of type int

@@ -4,7 +4,7 @@ import javafx.scene.paint.Color;
 
 public class Tile {
 
-    public Color[] colors;
+    public final Color[] colors;
     public int tile = 0x00;
     public int addr = 0x0000;
     public int x = 0x00;

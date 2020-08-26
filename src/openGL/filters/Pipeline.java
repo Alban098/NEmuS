@@ -29,14 +29,14 @@ public class Pipeline {
     private final List<FilterInstance> appliedFilters;
 
     private boolean fboLatch = false;
-    private Quad quad;
-    private Fbo fbo1;
-    private Fbo fbo2;
+    private final Quad quad;
+    private final Fbo fbo1;
+    private final Fbo fbo2;
 
     //We need to duplicate the Filters when required, this need to be done by the OpenGL Thread
     //So we use a buffer variable to store the list of filters to apply
     private List<FilterInstance> requestedSteps;
-    private Filter default_filter;
+    private final Filter default_filter;
 
     private volatile boolean locked = false;
 

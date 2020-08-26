@@ -28,8 +28,8 @@ public class Cartridge {
     private byte[] prg_memory;
     private byte[] chr_memory;
 
-    private Mapper mapper;
-    private Mirror mirror;
+    private final Mapper mapper;
+    private final Mirror mirror;
 
     /**
      * Create a Cartridge and load a ROM into the emulator
@@ -80,29 +80,14 @@ public class Cartridge {
         }
         //Initialize the right Mapper
         switch (mapperId) {
-            case 0:
-                mapper = new Mapper000(nb_PRG_banks, nb_CHR_banks);
-                break;
-            case 1:
-                mapper = new Mapper001(nb_PRG_banks, nb_CHR_banks, filename + ".sav");
-                break;
-            case 2:
-                mapper = new Mapper002(nb_PRG_banks, nb_CHR_banks);
-                break;
-            case 3:
-                mapper = new Mapper003(nb_PRG_banks, nb_CHR_banks);
-                break;
-            case 4:
-                mapper = new Mapper004(nb_PRG_banks, nb_CHR_banks, filename + ".sav");
-                break;
-            case 9:
-                mapper = new Mapper009(nb_PRG_banks, nb_CHR_banks, filename + ".sav");
-                break;
-            case 66:
-                mapper = new Mapper066(nb_PRG_banks, nb_CHR_banks);
-                break;
-            default:
-                throw new UnsupportedMapperException("Mapper " + (mapperId & 0xFF) + " not implemented yet");
+            case 0 -> mapper = new Mapper000(nb_PRG_banks, nb_CHR_banks);
+            case 1 -> mapper = new Mapper001(nb_PRG_banks, nb_CHR_banks, filename + ".sav");
+            case 2 -> mapper = new Mapper002(nb_PRG_banks, nb_CHR_banks);
+            case 3 -> mapper = new Mapper003(nb_PRG_banks, nb_CHR_banks);
+            case 4 -> mapper = new Mapper004(nb_PRG_banks, nb_CHR_banks, filename + ".sav");
+            case 9 -> mapper = new Mapper009(nb_PRG_banks, nb_CHR_banks, filename + ".sav");
+            case 66 -> mapper = new Mapper066(nb_PRG_banks, nb_CHR_banks);
+            default -> throw new UnsupportedMapperException("Mapper " + (mapperId & 0xFF) + " not implemented yet");
         }
     }
 

@@ -20,6 +20,7 @@ public class APU_2A03 {
     private static final double CLOCK_TIME = .333333333 / 1789773.0;
 
     private static double volume = 1;
+    private static int skip_audio_sample = 2;
 
     public static final int[] length_table = {10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30};
 
@@ -48,6 +49,7 @@ public class APU_2A03 {
     private boolean linear_out = false;
 
     private int cycles_until_visualizer_sample = 0;
+    private int audio_sample_until_skip = 0;
 
     /**
      * Create a new instance of an APU
@@ -79,6 +81,10 @@ public class APU_2A03 {
         return volume;
     }
 
+    public static void setSampleSkip(int sampleSkip) {
+        skip_audio_sample = sampleSkip;
+    }
+
     /**
      * Return the current audio sample as a value between -1 and 1
      *
@@ -92,10 +98,10 @@ public class APU_2A03 {
         double n = noise_rendered ? noise.sample * 15 : 0;
         double d = dmc_rendered ? dmc.output * 128 : 0;
         if (linear_out)
-            sample = (0.00752*(p1 + p2) + 0.00851*t + 0.00494*n + 0.00335*d) * 1.5;
+            sample = (0.00752 * (p1 + p2) + 0.00851 * t + 0.00494 * n + 0.00335 * d) * 1.5;
         else {
-            double pulse = (p1 + p2 == 0) ? 0 : 95.88 / ((8128.0/(p1 + p2)) + 100);
-            double tnd = (t == 0 && n == 0 && d == 0) ? 0 : 159.79 / (1.0 / (t/8227.0 + n/12241.0 + d/22638.0) + 100);
+            double pulse = (p1 + p2 == 0) ? 0 : 95.88 / ((8128.0 / (p1 + p2)) + 100);
+            double tnd = (t == 0 && n == 0 && d == 0) ? 0 : 159.79 / (1.0 / (t / 8227.0 + n / 12241.0 + d / 22638.0) + 100);
             sample = pulse + tnd;
         }
         if (update_visual) {
@@ -184,8 +190,8 @@ public class APU_2A03 {
      * Set the APU to its startup state
      */
     public void startup() {
-       for (int i = 0x4000; i < 0x4007; i++)
-           cpuWrite(i, 0x00);
+        for (int i = 0x4000; i < 0x4007; i++)
+            cpuWrite(i, 0x00);
         for (int i = 0x4010; i < 0x4013; i++)
             cpuWrite(i, 0x00);
         noise.setSequence(0xDBDB);
@@ -329,31 +335,14 @@ public class APU_2A03 {
 
                 frame_counter++;
                 if (flag_5_step_mode) {
-                    if (frame_counter == 3729)
-                        quarter_frame = true;
-                    if (frame_counter == 7457) {
-                        quarter_frame = true;
-                        half_frame = true;
-                    }
-                    if (frame_counter == 11186)
-                        quarter_frame = true;
-                    if (frame_counter == 18641) {
-                        quarter_frame = true;
-                        half_frame = true;
+                    quarter_frame = frame_counter == 3729 || frame_counter == 7457 || frame_counter == 11186 || frame_counter == 18641;
+                    half_frame = frame_counter == 7457 || frame_counter == 18641;
+                    if (frame_counter == 18641)
                         frame_counter = 0;
-                    }
                 } else {
-                    if (frame_counter == 3729)
-                        quarter_frame = true;
-                    if (frame_counter == 7457) {
-                        quarter_frame = true;
-                        half_frame = true;
-                    }
-                    if (frame_counter == 11186)
-                        quarter_frame = true;
+                    quarter_frame = frame_counter == 3729 || frame_counter == 7457 || frame_counter == 11186 || frame_counter == 14916;
+                    half_frame = frame_counter == 7457 || frame_counter == 14916;
                     if (frame_counter == 14916) {
-                        quarter_frame = true;
-                        half_frame = true;
                         frame_counter = 0;
                         if (!flag_IRQ_inhibit)
                             frame_IRQ = true;
@@ -376,10 +365,14 @@ public class APU_2A03 {
                     pulse_2.clockSweeper(1);
                 }
                 if (enable_sampling) {
-                    pulse_1.computeSample(total_time, raw_audio);
-                    pulse_2.computeSample(total_time, raw_audio);
-                    noise.computeSample();
-                    dmc.computeSample();
+                    if (audio_sample_until_skip >= skip_audio_sample) {
+                        pulse_1.computeSample(total_time, raw_audio);
+                        pulse_2.computeSample(total_time, raw_audio);
+                        noise.computeSample();
+                        dmc.computeSample();
+                        audio_sample_until_skip = 0;
+                    }
+                    audio_sample_until_skip++;
                 }
             }
         }

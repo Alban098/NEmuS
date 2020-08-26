@@ -210,22 +210,10 @@ public class InputMapper {
             if (buttons != null && buttons.capacity() > mappedControlsJoystick.get(input)) {
                 if (axes != null) {
                     switch (input) {
-                        case CONTROLLER_1_UP:
-                        case CONTROLLER_2_UP:
-                            pressed = axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_Y && axes.get(GLFW_GAMEPAD_AXIS_LEFT_Y) < -DEAD_ZONE_RADIUS;
-                            break;
-                        case CONTROLLER_1_DOWN:
-                        case CONTROLLER_2_DOWN:
-                            pressed = axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_Y && axes.get(GLFW_GAMEPAD_AXIS_LEFT_Y) > DEAD_ZONE_RADIUS;
-                            break;
-                        case CONTROLLER_1_RIGHT:
-                        case CONTROLLER_2_RIGHT:
-                            pressed = axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_X && axes.get(GLFW_GAMEPAD_AXIS_LEFT_X) > DEAD_ZONE_RADIUS;
-                            break;
-                        case CONTROLLER_1_LEFT:
-                        case CONTROLLER_2_LEFT:
-                            pressed = axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_X && axes.get(GLFW_GAMEPAD_AXIS_LEFT_X) < -DEAD_ZONE_RADIUS;
-                            break;
+                        case CONTROLLER_1_UP, CONTROLLER_2_UP -> pressed = axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_Y && axes.get(GLFW_GAMEPAD_AXIS_LEFT_Y) < -DEAD_ZONE_RADIUS;
+                        case CONTROLLER_1_DOWN, CONTROLLER_2_DOWN -> pressed = axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_Y && axes.get(GLFW_GAMEPAD_AXIS_LEFT_Y) > DEAD_ZONE_RADIUS;
+                        case CONTROLLER_1_RIGHT, CONTROLLER_2_RIGHT -> pressed = axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_X && axes.get(GLFW_GAMEPAD_AXIS_LEFT_X) > DEAD_ZONE_RADIUS;
+                        case CONTROLLER_1_LEFT, CONTROLLER_2_LEFT -> pressed = axes.capacity() > GLFW_GAMEPAD_AXIS_LEFT_X && axes.get(GLFW_GAMEPAD_AXIS_LEFT_X) < -DEAD_ZONE_RADIUS;
                     }
                 }
                 pressed = pressed || buttons.get(mappedControlsJoystick.get(input)) == GLFW_PRESS;

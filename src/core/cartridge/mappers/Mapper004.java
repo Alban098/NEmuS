@@ -195,32 +195,25 @@ public class Mapper004 extends Mapper {
         if (addr <= 0x03FF) {
             mapped.value = chr_banks[0] + (addr & 0x03FF);
             return true;
-        }
-        if (addr <= 0x07FF) {
+        } else if (addr <= 0x07FF) {
             mapped.value = chr_banks[1] + (addr & 0x03FF);
             return true;
-        }
-        if (addr <= 0x0BFF) {
+        } else if (addr <= 0x0BFF) {
             mapped.value = chr_banks[2] + (addr & 0x03FF);
             return true;
-        }
-        if (addr <= 0x0FFF) {
+        } else if (addr <= 0x0FFF) {
             mapped.value = chr_banks[3] + (addr & 0x03FF);
             return true;
-        }
-        if (addr <= 0x13FF) {
+        } else if (addr <= 0x13FF) {
             mapped.value = chr_banks[4] + (addr & 0x03FF);
             return true;
-        }
-        if (addr <= 0x17FF) {
+        } else if (addr <= 0x17FF) {
             mapped.value = chr_banks[5] + (addr & 0x03FF);
             return true;
-        }
-        if (addr <= 0x1BFF) {
+        } else if (addr <= 0x1BFF) {
             mapped.value = chr_banks[6] + (addr & 0x03FF);
             return true;
-        }
-        if (addr <= 0x1FFF) {
+        } else if (addr <= 0x1FFF) {
             mapped.value = chr_banks[7] + (addr & 0x03FF);
             return true;
         }

@@ -33,6 +33,8 @@ public class AudioSettings extends Application implements Initializable {
     @FXML
     private Slider soundQualitySlider;
     @FXML
+    private Slider audioSampleSkipSlider;
+    @FXML
     private CheckBox audioRenderingCheck;
     @FXML
     private CheckBox rawAudioCheck;
@@ -48,6 +50,7 @@ public class AudioSettings extends Application implements Initializable {
     private CheckBox dmcCheckbox;
     @FXML
     private CheckBox linearCheck;
+
 
     /**
      * Create a new instance of AudioSettings
@@ -80,8 +83,10 @@ public class AudioSettings extends Application implements Initializable {
         instance = this;
         volumeSlider.valueProperty().addListener((observableValue, oldValue, newValue) -> APU_2A03.setVolume(newValue.intValue() / 100.0));
         soundQualitySlider.valueProperty().addListener((observableValue, oldValue, newValue) -> Oscillator.setHarmonics(newValue.intValue() + 5));
+        audioSampleSkipSlider.valueProperty().addListener((observableValue, oldValue, newValue) -> APU_2A03.setSampleSkip(newValue.intValue()));
         volumeSlider.setValue(APU_2A03.getVolume() * 100);
         soundQualitySlider.setValue(Oscillator.getHarmonics() - 5);
+        audioSampleSkipSlider.setValue(0);
         audioRenderingCheck.setSelected(emulator.isAudioRenderingEnabled());
         rawAudioCheck.setSelected(emulator.isRAWAudioEnabled());
         pulse1Checkbox.setSelected(emulator.isPulse1Rendered());

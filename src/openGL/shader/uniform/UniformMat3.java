@@ -8,8 +8,8 @@ import java.nio.FloatBuffer;
 
 public class UniformMat3 extends Uniform{
 
-	private static FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(9);
-	private Matrix3f defaultValue;
+	private static final FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(9);
+	private final Matrix3f defaultValue;
 
 	public UniformMat3(String name, Matrix3f defaultValue) {
 		super(name);

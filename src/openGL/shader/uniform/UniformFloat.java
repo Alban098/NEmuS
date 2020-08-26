@@ -5,7 +5,7 @@ import org.lwjgl.opengl.GL20;
 public class UniformFloat extends Uniform{
 	
 	private float currentValue;
-	private float defaultValue;
+	private final float defaultValue;
 
 	/**
 	 * Create a new Uniform of type float

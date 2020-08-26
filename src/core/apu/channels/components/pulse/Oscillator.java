@@ -42,8 +42,8 @@ public class Oscillator {
 
         for (float n = 1; n < harmonics; n++) {
             float c = (float) (n * frequency * 6.2918530f * t);
-            a += -sin(c) / n;
-            b += -sin(c - p * n) / n;
+            a -= sin(c) / n;
+            b -= sin(c - p * n) / n;
         }
         return (amplitude / 3.14159265f) * (a - b) + amplitude * (1 - duty_cycle);
     }
