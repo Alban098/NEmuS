@@ -1,5 +1,6 @@
 package gui.lwjgui;
 
+import core.AudioEngine;
 import core.NES;
 import core.cartridge.Cartridge;
 import core.ppu.PPU_2C02;
@@ -8,6 +9,7 @@ import exceptions.UnsupportedMapperException;
 import gui.inputs.InputMapper;
 import gui.inputs.NESInputs;
 import gui.lwjgui.windows.APUViewer;
+import gui.lwjgui.windows.AudioSettings;
 import javafx.application.Platform;
 import lwjgui.gl.Renderer;
 import lwjgui.scene.Context;
@@ -21,6 +23,9 @@ import openGL.filters.Pipeline;
 import openGL.shader.ShaderProgram;
 import openGL.Texture;
 import utils.Dialogs;
+
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Mixer;
 import java.io.EOFException;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -31,19 +36,19 @@ import static org.lwjgl.opengl.GL11.*;
  */
 public class NEmuSContext implements Renderer {
 
-    private final NES nes;
+    public final NES nes;
     private final InputMapper inputMapper;
     private final Fbo fbo;
     private final Texture screen_texture;
     private final Quad screen_quad;
-    private final AudioContext ac;
+    private final AudioEngine audioEngine;
 
     private ShaderProgram default_shader;
     private Pipeline pipeline;
     private String requested_rom;
     private boolean load_rom_requested = false;
     private boolean reset_requested = false;
-    private boolean emulation_running = false;
+    public boolean emulation_running = false;
     private boolean redraw = false;
     private boolean started = false;
 
@@ -55,12 +60,7 @@ public class NEmuSContext implements Renderer {
     NEmuSContext(long windowHandle) {
         nes = new NES();
         inputMapper = new InputMapper(windowHandle);
-
-        //We select the 3rd Mixer
-        //no idea why 1 and 2 don't work ??
-        JavaSoundAudioIO jsaIO = new JavaSoundAudioIO();
-        jsaIO.selectMixer(3);
-        ac = new AudioContext(jsaIO);
+        audioEngine = new AudioEngine(this);
 
         //We enable texture and create the quad, fbo and texture used to render
         glEnable(GL_TEXTURE_2D);
@@ -78,20 +78,8 @@ public class NEmuSContext implements Renderer {
             System.exit(-1);
         }
 
-        //We initialize the Audio Engine
-        nes.setSampleFreq((int) ac.getSampleRate());
-        Function function = new Function(new WaveShaper(ac)) {
-            public float calculate() {
-                if (emulation_running) {
-                    boolean sample_ready = false;
-                    while (!sample_ready)
-                        sample_ready = nes.clock(APUViewer.hasInstance());
-                }
-                return emulation_running ? (float) nes.final_audio_sample : 0;
-            }
-        };
-        ac.out.addInput(function);
-        ac.start();
+        //We start the Audio Engine
+        audioEngine.start();
     }
 
     /**
@@ -102,7 +90,7 @@ public class NEmuSContext implements Renderer {
         default_shader.cleanUp();
         screen_texture.cleanUp();
         fbo.cleanUp();
-        ac.stop();
+        audioEngine.stop();
     }
 
     /**

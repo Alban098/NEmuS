@@ -1,19 +1,29 @@
 package gui.lwjgui.windows;
 
+import core.AudioEngine;
 import core.apu.APU_2A03;
 import core.apu.channels.components.pulse.Oscillator;
 import gui.lwjgui.NEmuSUnified;
 import gui.lwjgui.NEmuSContext;
 import javafx.application.Application;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Slider;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Pair;
+import net.beadsproject.beads.core.AudioContext;
+import net.beadsproject.beads.core.io.JavaSoundAudioIO;
+import net.beadsproject.beads.ugens.Function;
+import net.beadsproject.beads.ugens.WaveShaper;
 
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Mixer;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -23,7 +33,7 @@ import java.util.ResourceBundle;
 public class AudioSettings extends Application implements Initializable {
 
     private static AudioSettings instance;
-
+    private static AudioEngine audioEngine;
     private final NEmuSContext emulator;
 
     private Stage stage;
@@ -50,6 +60,8 @@ public class AudioSettings extends Application implements Initializable {
     private CheckBox dmcCheckbox;
     @FXML
     private CheckBox linearCheck;
+    @FXML
+    private ComboBox<AudioOutput> audioOutCombo;
 
 
     /**
@@ -57,6 +69,10 @@ public class AudioSettings extends Application implements Initializable {
      */
     public AudioSettings() {
         this.emulator = NEmuSUnified.getInstance().getEmulator();
+    }
+
+    public static void linkSoundIO(AudioEngine audioEngine) {
+        AudioSettings.audioEngine = audioEngine;
     }
 
     /**
@@ -95,6 +111,8 @@ public class AudioSettings extends Application implements Initializable {
         noiseCheckbox.setSelected(emulator.isNoiseRendered());
         dmcCheckbox.setSelected(emulator.isDMCRendered());
         linearCheck.setSelected(emulator.isLinear());
+        audioOutCombo.getItems().addAll(audioEngine.getValidOutputs());
+        audioOutCombo.getSelectionModel().select(audioEngine.getSelectedOutput());
     }
 
     @Override
@@ -173,5 +191,15 @@ public class AudioSettings extends Application implements Initializable {
     @FXML
     public void dmcEvent() {
         emulator.dmcEvent(dmcCheckbox.isSelected());
+    }
+
+    @FXML
+    public void switchAudioOutput() throws InterruptedException {
+        audioEngine.stop();
+        Thread.sleep(500);
+        if (audioOutCombo.getSelectionModel().getSelectedItem() != null) {
+            audioEngine.selectIO(audioOutCombo.getSelectionModel().getSelectedItem());
+        }
+        audioEngine.start();
     }
 }

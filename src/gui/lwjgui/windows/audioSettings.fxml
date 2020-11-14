@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="237.0" prefWidth="568.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.lwjgui.windows.AudioSettings">
+<AnchorPane prefHeight="284.0" prefWidth="568.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.lwjgui.windows.AudioSettings">
    <children>
-      <SplitPane dividerPositions="0.5865724381625441" prefHeight="385.0" prefWidth="568.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <SplitPane dividerPositions="0.5865724381625441" prefHeight="313.0" prefWidth="568.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <items>
-          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="383.0" prefWidth="333.0">
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="199.0" prefWidth="330.0">
                <children>
                   <Slider fx:id="volumeSlider" blockIncrement="1.0" layoutX="15.0" layoutY="47.0" majorTickUnit="50.0" minorTickCount="4" prefHeight="38.0" prefWidth="300.0" showTickLabels="true" showTickMarks="true" value="100.0" />
                   <Slider fx:id="soundQualitySlider" blockIncrement="1.0" layoutX="15.0" layoutY="107.0" majorTickUnit="15.0" max="8.0" minorTickCount="14" prefHeight="24.0" prefWidth="300.0" showTickMarks="true" snapToTicks="true" value="6.0" />
@@ -27,6 +28,8 @@
                   <CheckBox fx:id="linearCheck" layoutX="252.0" layoutY="196.0" mnemonicParsing="false" onAction="#fireLinearEvent" text="Linear" />
                   <Slider fx:id="audioSampleSkipSlider" blockIncrement="1.0" layoutX="14.0" layoutY="160.0" majorTickUnit="5.0" max="5.0" minorTickCount="5" prefHeight="14.0" prefWidth="300.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" />
                   <Label layoutX="14.0" layoutY="141.0" text="Skip Audio Sample" />
+                  <ComboBox fx:id="audioOutCombo" layoutX="103.0" layoutY="237.0" onAction="#switchAudioOutput" prefHeight="26.0" prefWidth="210.0" />
+                  <Label layoutX="19.0" layoutY="241.0" text="Audio Output" />
                </children>
             </AnchorPane>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="323.0" prefWidth="227.0">

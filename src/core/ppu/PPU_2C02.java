@@ -67,13 +67,6 @@ public class PPU_2C02 {
     private boolean odd_frame = false;
     private boolean nmi;
 
-    private final Runnable incrementScrollX;
-    private final Runnable incrementScrollY;
-    private final Runnable transferAddressX;
-    private final Runnable transferAddressY;
-    private final Runnable updateShifter;
-    private final Runnable loadBackgroundShifter;
-
     /**
      * Create a new PPU, instantiate its components and fill up the palettes
      */
@@ -165,82 +158,6 @@ public class PPU_2C02 {
         system_palette[0x3D] = new Color(160 / 255.0, 162 / 255.0, 160 / 255.0, 1);
         system_palette[0x3E] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
         system_palette[0x3F] = new Color(0 / 255.0, 0 / 255.0, 0 / 255.0, 1);
-
-        incrementScrollX = () -> {
-            //If we are rendering sprites or background
-            if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
-                //If we cross a nametable boundary we invert the nametableX bit to fetch from the other nametable
-                if (vram_addr.getCoarseX() == 31) {
-                    vram_addr.setCoarseX(0);
-                    vram_addr.setNametableX(!vram_addr.isNametableXSet());
-                    //Or we just continue in the same one
-                } else {
-                    vram_addr.setCoarseX(vram_addr.getCoarseX() + 1);
-                }
-            }
-        };
-        incrementScrollY = () -> {
-            //If we are rendering sprites or background
-            if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
-                //If we are still in the same tile row
-                if (vram_addr.getFineY() < 7) {
-                    vram_addr.setFineY(vram_addr.getFineY() + 1);
-                    //If we have passed to the next tile row
-                } else {
-                    //reset the offset inside the row to 0
-                    vram_addr.setFineY(0);
-                    //If we are at le last tile row, we skip the OAM and switch to the next nametable
-                    if (vram_addr.getCoarseY() == 29) {
-                        vram_addr.setCoarseY(0);
-                        vram_addr.setNametableY(!vram_addr.isNametableYSet());
-                        //Just in case we've gone behond the nametable
-                    } else if (vram_addr.getCoarseY() == 31) {
-                        vram_addr.setCoarseY(0);
-                        //Or we simply switch to the next tile row
-                    } else {
-                        vram_addr.setCoarseY(vram_addr.getCoarseY() + 1);
-                    }
-                }
-            }
-        };
-        transferAddressX = () -> {
-            if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
-                vram_addr.setNametableX(tram_addr.isNametableXSet());
-                vram_addr.setCoarseX(tram_addr.getCoarseX());
-            }
-        };
-        transferAddressY = () -> {
-            if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
-                vram_addr.setNametableY(tram_addr.isNametableYSet());
-                vram_addr.setCoarseY(tram_addr.getCoarseY());
-                vram_addr.setFineY(tram_addr.getFineY());
-            }
-        };
-        loadBackgroundShifter = () -> {
-            bg_shift_pattern_low = ((bg_shift_pattern_low & 0xFF00) | bg_next_tile_lsb) & 0xFFFF;
-            bg_shift_pattern_high = ((bg_shift_pattern_high & 0xFF00) | bg_next_tile_msb) & 0xFFFF;
-            bg_shift_attrib_low = ((bg_shift_attrib_low & 0xFF00) | (((bg_next_tile_attrib & 0b01) == 0b01) ? 0xFF : 0x00)) & 0xFFFF;
-            bg_shift_attrib_high = ((bg_shift_attrib_high & 0xFF00) | (((bg_next_tile_attrib & 0b10) == 0b10) ? 0xFF : 0x00)) & 0xFFFF;
-        };
-        updateShifter = () -> {
-            if (mask_register.isRenderBackgroundSet()) {
-                bg_shift_pattern_low = (bg_shift_pattern_low << 1) & 0xFFFF;
-                bg_shift_pattern_high = (bg_shift_pattern_high << 1) & 0xFFFF;
-                bg_shift_attrib_low = (bg_shift_attrib_low << 1) & 0xFFFF;
-                bg_shift_attrib_high = (bg_shift_attrib_high << 1) & 0xFFFF;
-            }
-            if (mask_register.isRenderSpritesSet() && cycle >= 1 && cycle < 258) {
-                for (int i = 0; i < sprite_count; i++) {
-                    //for all visible sprites, we decrement the position by one until it is time to render it
-                    if (visible_oams[i].getX() > 0)
-                        visible_oams[i].setX(visible_oams[i].getX() - 1);
-                    else {
-                        sprite_shift_pattern_low[i] = (sprite_shift_pattern_low[i] << 1) & 0xFF;
-                        sprite_shift_pattern_high[i] = (sprite_shift_pattern_high[i] << 1) & 0xFF;
-                    }
-                }
-            }
-        };
     }
 
     /**
@@ -598,7 +515,23 @@ public class PPU_2C02 {
             //If we need to compute a pixel color
             if ((cycle >= 2 && cycle < 258) || (cycle >= 321 && cycle < 338)) {
                 //We shift all the Shift Registers by 1
-                updateShifter.run();
+                if (mask_register.isRenderBackgroundSet()) {
+                    bg_shift_pattern_low = (bg_shift_pattern_low << 1) & 0xFFFF;
+                    bg_shift_pattern_high = (bg_shift_pattern_high << 1) & 0xFFFF;
+                    bg_shift_attrib_low = (bg_shift_attrib_low << 1) & 0xFFFF;
+                    bg_shift_attrib_high = (bg_shift_attrib_high << 1) & 0xFFFF;
+                }
+                if (mask_register.isRenderSpritesSet() && cycle >= 1 && cycle < 258) {
+                    for (int i = 0; i < sprite_count; i++) {
+                        //for all visible sprites, we decrement the position by one until it is time to render it
+                        if (visible_oams[i].getX() > 0)
+                            visible_oams[i].setX(visible_oams[i].getX() - 1);
+                        else {
+                            sprite_shift_pattern_low[i] = (sprite_shift_pattern_low[i] << 1) & 0xFF;
+                            sprite_shift_pattern_high[i] = (sprite_shift_pattern_high[i] << 1) & 0xFF;
+                        }
+                    }
+                }
                 //All of the following action will be executed once and in order for each tile
                 //We are fetching the information required for the next tile (8 pixels)
                 //At the beginning of a tile we load the Background Shifters with the previously fetched tile ID and tile attribute
@@ -611,7 +544,10 @@ public class PPU_2C02 {
                 //We pass to next tile rendering
                 switch ((cycle - 1) % 8) {
                     case 0 -> {
-                        loadBackgroundShifter.run();
+                        bg_shift_pattern_low = ((bg_shift_pattern_low & 0xFF00) | bg_next_tile_lsb) & 0xFFFF;
+                        bg_shift_pattern_high = ((bg_shift_pattern_high & 0xFF00) | bg_next_tile_msb) & 0xFFFF;
+                        bg_shift_attrib_low = ((bg_shift_attrib_low & 0xFF00) | (((bg_next_tile_attrib & 0b01) == 0b01) ? 0xFF : 0x00)) & 0xFFFF;
+                        bg_shift_attrib_high = ((bg_shift_attrib_high & 0xFF00) | (((bg_next_tile_attrib & 0b10) == 0b10) ? 0xFF : 0x00)) & 0xFFFF;
                         bg_next_tile_id = ppuRead(0x2000 | (vram_addr.get() & 0x0FFF), false);
                     }
                     case 2 -> {
@@ -624,17 +560,56 @@ public class PPU_2C02 {
                     }
                     case 4 -> bg_next_tile_lsb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY(), false);
                     case 6 -> bg_next_tile_msb = ppuRead((control_register.isPatternBackgroundSet() ? 0x1 << 12 : 0) + (bg_next_tile_id << 4) + vram_addr.getFineY() + 8, false);
-                    case 7 -> incrementScrollX.run();
+                    case 7 -> { // Increment Scroll X
+                        //If we are rendering sprites or background
+                        if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
+                            //If we cross a nametable boundary we invert the nametableX bit to fetch from the other nametable
+                            if (vram_addr.getCoarseX() == 31) {
+                                vram_addr.setCoarseX(0);
+                                vram_addr.setNametableX(!vram_addr.isNametableXSet());
+                                //Or we just continue in the same one
+                            } else {
+                                vram_addr.setCoarseX(vram_addr.getCoarseX() + 1);
+                            }
+                        }
+                    }
                 }
             }
             //If we are at the end of a visible scanline we pass to the next one
-            if (cycle == 256) {
-                incrementScrollY.run();
+            if (cycle == 256) { // Increment Scroll Y
+                //If we are rendering sprites or background
+                if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
+                    //If we are still in the same tile row
+                    if (vram_addr.getFineY() < 7) {
+                        vram_addr.setFineY(vram_addr.getFineY() + 1);
+                        //If we have passed to the next tile row
+                    } else {
+                        //reset the offset inside the row to 0
+                        vram_addr.setFineY(0);
+                        //If we are at le last tile row, we skip the OAM and switch to the next nametable
+                        if (vram_addr.getCoarseY() == 29) {
+                            vram_addr.setCoarseY(0);
+                            vram_addr.setNametableY(!vram_addr.isNametableYSet());
+                            //Just in case we've gone behond the nametable
+                        } else if (vram_addr.getCoarseY() == 31) {
+                            vram_addr.setCoarseY(0);
+                            //Or we simply switch to the next tile row
+                        } else {
+                            vram_addr.setCoarseY(vram_addr.getCoarseY() + 1);
+                        }
+                    }
+                }
             }
             //If we are at the first pixel of the horizontal blank we reset the X coordinates to the start of a line
             if (cycle == 257) {
-                loadBackgroundShifter.run();
-                transferAddressX.run();
+                bg_shift_pattern_low = ((bg_shift_pattern_low & 0xFF00) | bg_next_tile_lsb) & 0xFFFF;
+                bg_shift_pattern_high = ((bg_shift_pattern_high & 0xFF00) | bg_next_tile_msb) & 0xFFFF;
+                bg_shift_attrib_low = ((bg_shift_attrib_low & 0xFF00) | (((bg_next_tile_attrib & 0b01) == 0b01) ? 0xFF : 0x00)) & 0xFFFF;
+                bg_shift_attrib_high = ((bg_shift_attrib_high & 0xFF00) | (((bg_next_tile_attrib & 0b10) == 0b10) ? 0xFF : 0x00)) & 0xFFFF;
+                if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
+                    vram_addr.setNametableX(tram_addr.isNametableXSet());
+                    vram_addr.setCoarseX(tram_addr.getCoarseX());
+                }
             }
 
             if (cycle == 338 || cycle == 340) {
@@ -642,7 +617,11 @@ public class PPU_2C02 {
             }
             //At the start of a new frame we reset the Y coordinates to the top of the screen
             if (scanline == -1 && cycle >= 280 && cycle < 305) {
-                transferAddressY.run();
+                if (mask_register.isRenderBackgroundSet() || mask_register.isRenderSpritesSet()) {
+                    vram_addr.setNametableY(tram_addr.isNametableYSet());
+                    vram_addr.setCoarseY(tram_addr.getCoarseY());
+                    vram_addr.setFineY(tram_addr.getFineY());
+                }
             }
 
             //At the end of a scanline, we fetch the sprite that will be visible on the next scanline

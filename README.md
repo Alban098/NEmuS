@@ -40,6 +40,7 @@
   - Pause / Resume emulation
   - Reset the emulator
 * Audio Settings Window allowing you to :
+  - Select the Audio Output Peripheral (If a new device is plugged, it will not be detected until NEmuS is restarted)
   - Set the volume
   - Set the audio quality
   - Enable / Disable audio rendering
