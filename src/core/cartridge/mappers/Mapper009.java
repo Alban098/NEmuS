@@ -165,6 +165,7 @@ public class Mapper009 extends Mapper {
         }
         return false;
     }
+
     /**
      * Update the latch if the mapper has some
      *
@@ -180,7 +181,6 @@ public class Mapper009 extends Mapper {
             latch_1 = 0xFD;
         else if (addr >= 0x1FE8 && addr <= 0x1FEF)
             latch_1 = 0xFE;
-
     }
 
     /**
